@@ -20,25 +20,27 @@ class SafetyShield(gym.Wrapper):
                  punishment: Optional[float] = None):
 
         super(SafetyShield, self).__init__(env)
+        self.env_unwrapped = self.unwrapped
 
         # TODO VecEnv
         if isinstance(is_safe_action_fn, str):
             found_method = getattr(self.env, is_safe_action_fn)
             if not callable(found_method):
                 raise ValueError(f"Environment attribute {is_safe_action_fn} is not a method")
-            self._is_safe_action_fn = found_method
+            self.env_unwrapped.is_safe_action = found_method
 
         else:
-            self._is_safe_action_fn = is_safe_action_fn
+            # self.env could be wrapped, if defined in env is useless
+            self.env.is_safe_action = is_safe_action_fn
 
         if isinstance(safe_action_fn, str):
             found_method = getattr(self.env, safe_action_fn)
             if not callable(found_method):
                 raise ValueError(f"Environment attribute {safe_action_fn} is not a method")
-            self._safe_action_fn = found_method
+            self.env_unwrapped._safe_action_fn = found_method
 
         else:
-            self._safe_action_fn = safe_action_fn
+            self.env.is_safe_action = is_safe_action_fn = safe_action_fn
 
         self._safe_region = safe_region
         self._punishment = punishment
@@ -46,7 +48,7 @@ class SafetyShield(gym.Wrapper):
     def step(self, action: Union[float, np.ndarray]) -> GymStepReturn:
 
 
-        if self.env._is_safe_action_fn(self._safe_region, action):
+        if self.unwrapped._is_safe_action_fn(self._safe_region, action):
 
             action_shield = self._safe_action_fn(self.env, self._safe_region)
 
