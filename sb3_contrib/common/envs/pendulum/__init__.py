@@ -1,1 +1,1 @@
-from sb3_contrib.common.envs.pendulum.pendulum_env import PendulumEnv
+from sb3_contrib.common.envs.pendulum.math_pendulum_env import MathPendulumEnv

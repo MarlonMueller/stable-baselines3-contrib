@@ -1,15 +1,17 @@
 from typing import Union, Optional, Tuple
 
 from os import path
+import numpy as np
 from gym import Env
 from stable_baselines3.common.type_aliases import GymObs, GymStepReturn
+from gym.spaces import Box
 
 from sb3_contrib.common.safety.safe_region import SafeRegion
 
 import numpy as np
 from numpy import sin, cos, pi
 
-class PendulumEnv(Env):
+class MathPendulumEnv(Env):
 
     metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 30}
 
@@ -34,6 +36,24 @@ class PendulumEnv(Env):
         # TODO
         self.safe_region = safe_region
 
+        max_torque = 30.898877999566082
+        self.action_space = Box(
+            low=-max_torque,
+            high=max_torque,
+            shape=(1,),
+            dtype=np.float32
+        )
+
+        obs_high = np.array([1., 1., np.inf], dtype=np.float32)
+        self.observation_space = Box(
+            low=-obs_high,
+            high=obs_high,
+            dtype=np.float32
+        )
+
+        self.last_action = None
+        self.viewer = None
+
         self.reset()
 
 
@@ -50,13 +70,18 @@ class PendulumEnv(Env):
 
     def step(self, action: Union[float, np.ndarray]) -> GymStepReturn:
         theta, thdot = self.state
-        self.state[:] = self._dynamics(theta, thdot, action)
+
+        #self.state[:] = self._dynamics(theta, thdot, action)
+        theta, thdot =  self._dynamics(theta, thdot, action)
+        self.state = [theta, thdot]
+
         self.last_action = action
         return self._get_obs(theta, thdot), self._get_reward(theta, thdot, action), False, {}
 
     def _dynamics(self, theta: float, thdot: float, torque: float) -> Tuple[float, float]:
         thdot += self.dt * ((self.g / self.l) * sin(theta) + 1. / (self.m * self.l ** 2) * torque)
         theta += self.dt * thdot
+        return [theta, thdot]
 
     def _get_obs(self, theta, thdot) -> GymObs:
         return np.array([cos(theta), sin(theta), thdot])
@@ -94,7 +119,7 @@ class PendulumEnv(Env):
             rod.add_attr(self.pole_transform)
             self.viewer.add_geom(rod)
 
-            self.mass = rendering.make_circle(.025)
+            self.mass = rendering.make_circle(.15)
             self.mass.set_color(152 / 255, 198 / 255, 234 / 255)
             self.mass_transform = rendering.Transform()
             self.mass.add_attr(self.mass_transform)

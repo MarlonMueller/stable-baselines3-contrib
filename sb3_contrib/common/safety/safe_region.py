@@ -16,7 +16,7 @@ class SafeRegion():
             b: Optional[np.ndarray] = None,
             vertices: Optional[np.ndarray] = None
     ):
-        if vertices is None or A is None and b is None:
+        if vertices is None and (A is None or b is None):
             raise ValueError("No representation provided")
 
         if vertices is not None:
