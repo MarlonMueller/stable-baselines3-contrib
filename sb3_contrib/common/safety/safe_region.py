@@ -48,5 +48,12 @@ class SafeRegion():
     def halfspaces(self, Ab:Tuple[np.ndarray, np.ndarray]) -> None:
         self._A, self._b = Ab
 
+    @classmethod
+    def compute_safe_region(cls):
+        raise NotImplementedError
+
+    def linspace(self):
+        raise NotImplementedError
+
     def sample(self):
         raise NotImplementedError

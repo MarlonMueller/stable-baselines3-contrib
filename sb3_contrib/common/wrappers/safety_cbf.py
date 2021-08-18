@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Callable
 
 import gym
 import numpy as np
@@ -11,8 +11,6 @@ from stable_baselines3.common.type_aliases import GymStepReturn
 from sb3_contrib.common.safety.safe_region import SafeRegion
 
 # state from observations
-#punishment function (e.g. punish based on state)
-
 class SafetyCBF(gym.Wrapper):
 
     def __init__(self,
@@ -21,7 +19,7 @@ class SafetyCBF(gym.Wrapper):
                  f: np.ndarray,
                  g: np.ndarray,
                  gamma: float = .5,
-                 punishment: Optional[float] = None):
+                 punishment_fn: Optional[Union[str, Callable[[gym.Env, SafeRegion, float, float], float]]] = None):
 
         super(SafetyCBF, self).__init__(env)
 
@@ -29,8 +27,16 @@ class SafetyCBF(gym.Wrapper):
         self._g = g
         self._gamma = gamma
 
+        if isinstance(punishment_fn, str):
+            found_method = getattr(self.env, punishment_fn)
+            if not callable(found_method):
+                raise ValueError(f"Environment attribute {punishment_fn} is not a method")
+            self._punishment_fn = found_method
+
+        else:
+            self._punishment_fn = punishment_fn
+
         self._safe_region = safe_region
-        self._punishment = punishment
 
         self._A, self._b = self.env.safe_region.halfspaces
         self._P = matrix([[1., 0], [0, 1e25]], tc='d')
@@ -51,7 +57,7 @@ class SafetyCBF(gym.Wrapper):
         obs, reward, done, info = self.env.step(action + action_bar)
 
         if self._punishment is not None:
-            reward = self._punishment
+            reward += self._punishment_fn(self.env, self._safe_region, action, action_bar)
 
         info['b'] = abs(action_bar - action)
 

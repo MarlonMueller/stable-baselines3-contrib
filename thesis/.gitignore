@@ -2,11 +2,14 @@
 tensorboard/DEBUG_1
 tensorboard/DEBUG_E_1
 
+# Models
+models/
+
 # CORA/AROC/MPT
-pendulum/mathematical_pendulum/envs/matlab/CORA_2020
-pendulum/mathematical_pendulum/envs/matlab/AROC_2020
-pendulum/mathematical_pendulum/envs/matlab/tbxmanager
-pendulum/mathematical_pendulum/envs/matlab/install_mpt3.m
+matlab/AROC_2020
+matlab/CORA_2020
+matlab/tbxmanager
+matlab/install_mpt3.m
 
 # MATLAB
 *.asv

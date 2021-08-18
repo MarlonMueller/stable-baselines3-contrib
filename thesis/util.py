@@ -1,18 +1,18 @@
 """Utilities for working with plots and tf events."""
-
+from matplotlib.lines import Line2D
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 import matplotlib.pyplot as plt
 import os, shutil, logging
+import matlab
 import numpy as np
+from matplotlib.path import Path
+import matplotlib.patches as patches
+from matplotlib import colors as clr
+from numpy import pi, sin, cos
 import pandas as pd
-import seaborn as sns
+
 
 logger = logging.getLogger(__name__)
-
-#TODO: Refactor!
-
-# if not env_util.is_wrapped(self.env, SafetyWrapper):
-            #raise RuntimeError("Environment is not wrapped with a ``SafetyWrapper``")
 
 # https://gist.github.com/lnksz/51e3566af2df5c7aa678cd4dfc8305f7
 COLORS = {
@@ -28,110 +28,239 @@ COLORS_HEX = {
     'LIGHTER_BLUE': '#98c6ea'
 }
 
+def gain_matrix():
+    """ Gain matrix (K) of the pendulum's LQR controller."""
+    path_matlab = f'{os.path.dirname(os.path.abspath(__file__))}/matlab'
+    eng = matlab.engine.start_matlab()
+    path_matlab = eng.genpath(path_matlab)
+    eng.addpath(path_matlab, nargout=0)
+    K = eng.gainMatrix()
+    eng.quit()
+    return K
+
+def torque_given_state(gain_matrix, state):
+    return np.dot(gain_matrix, state)
+
 def setup_plot(fig, width, height, font_size=11):
     """ Used to initialize uniform plots.
-
-    Parameters
-    ----------
-    fig
-    width
-    height
-    font_size
-
     """
-
     fig.set_size_inches(width, height)
-
     plt.rcParams["text.usetex"] = True
     plt.rcParams["font.family"] = "serif"
     plt.rcParams["font.size"] = font_size
-
-
-
     # plt.gca().tick_params(axis="x", direction="in")
     # plt.gca().tick_params(axis="y", direction="in")
 
-
 def finalize_plot(fig=None, width=.0, height=.0, x_label='', y_label='', path=None):
     """ Finalize and save plots.
-
-    Parameters
-    ----------
-    fig
-    width
-    height
-    x_label
-    y_label
-    path
-
     """
-
-    # plt.grid
-
     plt.gca().tick_params(axis="x", direction="out", zorder=10)  # =0)
     plt.gca().tick_params(axis="y", direction="out", zorder=10)  # length=0)
-
     plt.xlabel(x_label)
     plt.ylabel(y_label)
-
     if path:
         plt.savefig(path, dpi=1000, bbox_inches='tight')
     plt.show()
 
+def phase_plot(width=2.5, height=2.5, l=1, m=1, g=9.81, K=None, max_torque=None, max_thdot=None, vertices=None, boxes=None,
+               save_as=None):
+    """ Generates (and saves) a phase plot of a (controlled) mathematical / simple gravity pendulum."""
+
+
+    theta, thetadot = np.meshgrid(np.linspace(-1.5 * np.pi, 1.5 * np.pi, 375), np.linspace(-4 * np.pi, 4 * np.pi, 350))
+
+    if K is None:
+
+        start_points = [
+            [0, 3 * pi],
+            [0, -3 * pi],
+            [0, 2 * pi],
+            [0, -2 * pi],
+            [0, 1 * pi],
+            [0, -1 * pi],
+            [-pi, 1.7*pi],
+            [pi, 1.7 * pi],
+            [-pi, 1.2 * pi],
+            [pi, 1.2 * pi],
+            [-pi, 0.7 * pi],
+            [pi, 0.7 * pi],
+        ]
+        # Uncontrolled system
+        thetadotdot = g / l * sin(theta)
+        color =  (abs(np.sin(theta)) + (1.5/4)*abs(thetadot)) ** 0.5
+        cmap = clr.LinearSegmentedColormap.from_list("", [COLORS_HEX['BLUE'], COLORS_HEX['ORANGE']])
+
+    else:
+
+        # Custom starting points for clean/useful plots
+        start_points = [
+            [pi/2, 0],
+            [-pi/2, 0],
+            [0, -2*pi],
+            [0, 2 * pi],
+            [-0.55*pi, -4*pi],
+            [0.55*pi, 4*pi],
+            [-pi, -4 * pi],
+            [pi, 4 * pi],
+            [-1.5*pi, 2*pi],
+            [1.5 * pi, -2 * pi],
+            [-0.8*pi, 4*pi],
+            [0.8 * pi, -4 * pi]
+
+        ]
+
+        # Controlled system
+        if max_torque and max_thdot:
+
+            u = np.dot(np.moveaxis([theta, thetadot], 0, -1), K)
+            thetadotdot = g / l * sin(theta) - (1 / (m * l ** 2)) * u
+
+            orange = (abs(np.dot(np.moveaxis([theta, thetadot], 0, -1), K)) <= max_torque)
+            orange2 = (abs(thetadot) > max_thdot)#.astype(int)
+            orange = -10000*np.logical_and(orange, orange2).astype(int)
+            green1 = (abs(np.dot(np.moveaxis([theta, thetadot], 0, -1), K)) <= max_torque)
+            green2 = (abs(theta) <= pi) #Artefacts in plot
+            green3 = (abs(thetadot) <= max_thdot)
+            green = np.logical_and(green1, green2)
+            green = 10000*np.logical_and(green, green3).astype(int)
+            color = orange + green
+            cmap = clr.ListedColormap(['orange', 'red', 'green'])
+
+        else:
+
+            thetadotdot = g / l * sin(theta) - (1 / (m * l ** 2)) * np.dot(np.moveaxis([theta, thetadot], 0, -1), K)
+            color = (abs(theta) + (1.5/4)*abs(thetadot)) ** 0.5
+            cmap = clr.LinearSegmentedColormap.from_list("", [COLORS_HEX['BLUE'], COLORS_HEX['ORANGE']])
+
+    fig = plt.figure()
+    setup_plot(fig=fig, width=width, height=height)
+    linewidth = 1
+
+    if vertices is not None:
+        codes = [Path.MOVETO]
+        for _ in range(len(vertices) - 1):
+            codes.append(Path.LINETO)
+        codes.append(Path.CLOSEPOLY)
+        vertices = np.vstack((vertices, [0., 0.]))
+        path = Path(vertices, codes)
+        polytope = patches.PathPatch(path,
+                                     facecolor='none',
+                                     edgecolor='magenta',
+                                     linewidth=linewidth,
+                                     linestyle='-',  # {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
+                                     alpha=1.0,
+                                     zorder=3)
+        plt.gca().add_patch(polytope)
+
+    if boxes is not None:
+
+        max_thdot = 5.890486225480862 #TODO: E.g. pass as parameter
+        b_manual = np.array([[[1.57079633, -max_thdot], [1.96349541, -3.92699082]],
+                             [[1.96349541, -max_thdot], [2.35619449, -3.92699082]],
+                             [[-1.57079633, 3.92699082], [-1.96349541, max_thdot]],
+                             [[-1.96349541, 3.92699082], [-2.35619449, max_thdot]]])
+        boxes = np.concatenate((boxes, b_manual), axis=0)
+
+        for b in boxes:
+            w, h = b[1] - b[0]
+
+            if abs(b[0,0]) == max_thdot or abs(b[0,1]) == max_thdot:
+                print(b[0], b[1])
+
+            if abs(b[1,1]) <= max_thdot and abs(b[0,1]) <= max_thdot:
+                box = patches.Rectangle(b[0], w, h,
+                                        facecolor='none',
+                                        edgecolor='darkturquoise',
+                                        linewidth=.85,
+                                        linestyle='-',  # {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
+                                        alpha=1.0,
+                                        zorder=2)
+                plt.gca().add_patch(box)
+
+    plt.streamplot(theta, thetadot, thetadot, thetadotdot,
+                   density=30,
+                   linewidth=linewidth,
+                   cmap=cmap,
+                   arrowstyle="-|>",
+                   arrowsize=0.65,
+                   start_points=start_points,
+                   color=color,
+                   )
+
+    if K is None:
+        equilibrium = np.array([[-np.pi, 0, np.pi], [0, 0, 0]])
+    else:
+        equilibrium = np.array([[0], [0]])
+
+    plt.gca().scatter(equilibrium[0], equilibrium[1], s=8, c=COLORS_HEX['BLUE'], zorder=4)
+
+    plt.yticks([-3* np.pi, -2 * np.pi, -1 * np.pi, 0, 1 * np.pi,2 * np.pi, 3* np.pi])
+    plt.gca().set_yticklabels(["$-3\pi$", "$-2\pi$", "$-\pi$", "0", "$\pi$", "$2\pi$", "$3\pi$"])
+    plt.xticks([-np.pi, 0, np.pi])
+    plt.xticks([-np.pi, -np.pi / 2, 0, np.pi / 2, np.pi])
+    plt.xlim([-1.5*pi, 1.5*pi])
+    plt.ylim([-3.5*pi, 3.5*pi])
+    plt.gca().set_xticklabels(
+        ["$-\pi$", "$-\\frac{\pi}{2}$", "0", "$\\frac{\pi}{2}$", "$\pi$"])
+
+    plt.gca().xaxis.grid(True, linestyle='dotted', linewidth=0.5)
+    plt.gca().yaxis.grid(True, linestyle='dotted', linewidth=0.5)
+    #plt.gca().axhline(0, color='gray', linewidth=0.5)
+
+    if save_as:
+        finalize_plot(x_label='$\\theta[\mathrm{rad}]$',
+                      y_label='$\dot{\\theta}[\\frac{\mathrm{rad}}{\mathrm{s}}]$',
+                      path=f'{os.getcwd()}/../../report/thesis/figures/{save_as}.pdf')
+    else:
+        finalize_plot(x_label='$\\theta[\mathrm{rad}]$',
+                      y_label='$\dot{\\theta}[\\frac{\mathrm{rad}}{\mathrm{s}}]$')
+
+
+def external_legend(save_as=None, width=1., height=.25):
+
+    fig = plt.figure()
+    setup_plot(fig=fig, width=width, height=height)
+    plt.gca().axis('off')
+
+    b_line = Line2D([0], [0], color="white", markerfacecolor=COLORS_HEX['BLUE'], marker='o', label='Equilibrium')
+    g_line = Line2D([0], [0], color='green', label='$\\tau\\leq\\tau_{\mathrm{max}}\;\mathrm{and}\;\dot{\\theta}\\leq\dot{\\theta}_{\mathrm{max}}$')
+    o_line = Line2D([0], [0], color='orange', label='$\\tau\\leq\\tau_{\mathrm{max}}\;\mathrm{and}\;\dot{\\theta}>\dot{\\theta}_{\mathrm{max}}$')
+    r_line = Line2D([0], [0], color='red', label='$\\tau >\\tau_{\mathrm{max}}$')
+    t_line = Line2D([0], [0], color='darkturquoise', label='ROA (Subpaving)')
+    m_line = Line2D([0], [0], color='magenta', label='ROA (Polygon)')
+
+    plt.gca().legend(handles=[g_line, o_line, r_line, b_line, t_line, m_line], frameon=True, loc='center', ncol=2)
+
+    if save_as:
+        plt.savefig(f'{os.getcwd()}/../../report/thesis/figures/{save_as}.pdf', dpi=1000, bbox_inches='tight')
+    plt.show()
 
 def remove_tf_logs(*dirs):
     """ Removes directories within ./tensorboard.
-
-    Parameters
-    ----------
-    dirs
-        Names of the directories within ./tensorboard to be removed.
-        If no dirs are given, all directories are renamed.
-
     """
-
     cwd = os.getcwd() + '/tensorboard/'
-
     if not dirs:
         dirs = os.listdir(cwd)
-
     for dir in dirs:
         shutil.rmtree(cwd + dir, ignore_errors=True)
 
 
 def rename_tf_events(*dirs):
     """ Renames the tf events within ./tensorboard/*dirs to tfevents.event.
-
-    Notes
-    ----------
-    One directory only contains one tf event.
-
-    Parameters
-    ----------
-    dirs
-        Names of the directories within ./tensorboard containing the tf events.
-        If no dirs are given, all events within all dirs are renamed.
-
     """
-
     cwd = os.getcwd() + '/tensorboard/'
-
     if not dirs:
         dirs = [dir for dir in os.listdir(cwd) if os.path.isdir(cwd + dir)]
-
     for dir in dirs:
         files = os.listdir(cwd + dir + '/')
         if len(files) != 1:
             logger.warning(f'No unique event file found within {cwd + dir}')
-
         os.rename(cwd + dir + '/' + files[0],
                   cwd + dir + '/' + 'tfevents.event')
 
 def smooth_data(ys, window_size=5):
-
     if window_size <= 0 or window_size % 2 != 1:
         raise ValueError('Choose window_size > 0 and window_size % 2 == 1')
-
     w = np.ones(window_size)
     # Adapted from https://github.com/openai/spinningup/blob/master/spinup/utils/plot.py
     return np.convolve(ys, w, mode='same') / np.convolve(np.ones(len(ys)), w, mode='same')
@@ -139,22 +268,9 @@ def smooth_data(ys, window_size=5):
 
 def tf_event_to_plot(dir, tags, x_label='Episode', y_label='', width=5, height=2.5, window_size=1, episode_length=100, save_as=None):
     """ Exports the tf event within ./tensorboard/dir as plotted pdf to ../report/thesis/data/.
-
-    Parameters
-    ----------
-    dir
-        Names of the directories within ./tensorboard containing the tf event.
-    tags
-        Variable amount of tags.
-        For every given tag a new .pdf file is generated in ../report/thesis/data/.
-    x_label
-    y_label
-    width
-    height
     """
 
     cwd = os.getcwd() + '/tensorboard/'
-
     if not os.path.isdir(cwd + dir):
         logger.error(f'{cwd + dir} is no valid event file')
         return
@@ -165,7 +281,6 @@ def tf_event_to_plot(dir, tags, x_label='Episode', y_label='', width=5, height=2
     if not tags:
         logger.error(f'No tags specified: {scalar_tags}')
         return
-
     else:
         for tag in tags:
             event_tags = scalar_tags
@@ -193,24 +308,16 @@ def tf_event_to_plot(dir, tags, x_label='Episode', y_label='', width=5, height=2
 
 
         if x_label == "Episode":
-
             #Safety Violation
-
             plt.xlim([df['step'].min()/episode_length, df['step'].max()/episode_length])
-            #plt.ylim([df['value'].min(), df['value'].max()])
             plt.ylim(0, 1)
-            #plt.ylim(-.25, 1.25)
-
             assert (df['step'].max()/episode_length).is_integer()
-
             plt.xticks([100 * i for i in range(int(df['step'].max()/(100 * episode_length)) + 1)])
             plt.yticks([0, 1])
             plt.gca().set_yticklabels(['$0\%$', '$100\%$'])
 
-        #plt.gca().xaxis.grid(True)
         plt.gca().xaxis.grid(True, color='black', linestyle='dotted', linewidth=0.5)
         plt.gca().yaxis.grid(True, color='black', linestyle='dotted', linewidth=0.5)
-        #plt.gca().yaxis.grid(True)
 
     path = None
     if save_as:
@@ -219,9 +326,10 @@ def tf_event_to_plot(dir, tags, x_label='Episode', y_label='', width=5, height=2
                   y_label=y_label,
                   path=path)
 
-        # Export as csv
-        # file = f'{dir}_{tag}.dat'.replace('/', '_')
-        # df.to_csv(f'{os.getcwd()}/../report/thesis/data/{file}', sep='\t', encoding='utf-8', index=False)
+
+
+
+
 
 
 if __name__ == '__main__':
