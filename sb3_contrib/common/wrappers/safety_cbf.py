@@ -27,14 +27,15 @@ class SafetyCBF(gym.Wrapper):
         self._g = g
         self._gamma = gamma
 
-        if isinstance(punishment_fn, str):
-            found_method = getattr(self.env, punishment_fn)
-            if not callable(found_method):
-                raise ValueError(f"Environment attribute {punishment_fn} is not a method")
-            self._punishment_fn = found_method
+        if punishment_fn is not None:
+            if isinstance(punishment_fn, str):
+                found_method = getattr(self.env, punishment_fn)
+                if not callable(found_method):
+                    raise ValueError(f"Environment attribute {punishment_fn} is not a method")
+                self._punishment_fn = found_method
 
-        else:
-            self._punishment_fn = punishment_fn
+            else:
+                self._punishment_fn = punishment_fn
 
         self._safe_region = safe_region
 
@@ -56,7 +57,7 @@ class SafetyCBF(gym.Wrapper):
 
         obs, reward, done, info = self.env.step(action + action_bar)
 
-        if self._punishment is not None:
+        if self._punishment_fn is not None:
             reward += self._punishment_fn(self.env, self._safe_region, action, action_bar)
 
         info['b'] = abs(action_bar - action)

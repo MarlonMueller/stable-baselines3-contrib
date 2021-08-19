@@ -8,7 +8,7 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_util import is_wrapped
 from stable_baselines3.ppo.policies import MlpPolicy
 from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv
-from thesis.util import remove_tf_logs, rename_tf_events
+from thesis.util import remove_tf_logs, rename_tf_events, load_model, save_model
 import gym
 import numpy as np
 from numpy import pi
@@ -43,6 +43,7 @@ def main(**kwargs):
 
     # Define safe regions
     from sb3_contrib.common.safety.safe_region import SafeRegion
+    #TODO: PendulumSafeRegion
     max_thdot = 5.890486225480862
     vertices = np.array([
         [-pi, max_thdot],  # LeftUp
@@ -65,7 +66,7 @@ def main(**kwargs):
                 safe_region=safe_region,
                 is_safe_action_fn="is_safe_action",
                 safe_action_fn="safe_action",
-                punishment=None
+                punishment_fn=None
             )
 
         elif kwargs['safety'] == "cbf":
@@ -75,20 +76,18 @@ def main(**kwargs):
                 return -abs(action - action_bar)
 
             #TODO, f und g as other methods in env?
+            #TODO Erklärung Problem
+            #TODO Liste Thesis
 
             env = SafetyCBF(
                 env=env,
                 safe_region=safe_region,
-                punishment=None
+                punishment_fn=None
             )
 
         elif kwargs['safety'] == "mask":
             from sb3_contrib.common.wrappers import SafetyMask
             pass
-
-        #TODO: Finish Main/Util Refactor/UtilPendulum/PendulumROA
-        #Refactor/Finish Main /Util/UtilPendulum
-        #notebook
 
     if not is_wrapped(env, Monitor):
         env = Monitor(env)
@@ -147,7 +146,7 @@ def main(**kwargs):
     rename_tf_events()
 
 
-def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, env_safe_action=False, render=False, sleep=0.):
+def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, env_safe_action=False, render=False, rgb_array=False, sleep=0.05):
 
     is_vec_env = isinstance(env, VecEnv)
     if is_vec_env:
@@ -160,6 +159,7 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
     if not is_monitor_wrapped:
         logger.warning(f"Evaluation environment is not wrapped with a ``Monitor`` wrapper.")
 
+    frames = []
     reset = True
     for episode in range(num_episodes):
 
@@ -179,7 +179,11 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
 
             if render:
                 # Does not render last step
-                env.render()
+                if rgb_array:
+                    frame = env.render(mode='rgb_array')
+                    frames.append(frame)
+                else:
+                    env.render()
 
             if model is not None:
                 action, state = model.predict(obs, state=state) #deterministic=deterministic
@@ -188,7 +192,10 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
                 #TODO: Fix/Easier? / Could check for callable etc.
                 action = env.get_attr('safe_action')[0](env, safe_region)
             else:
+                #TODO: Sample is [] for box and otherwise not?
                 action = env.action_space.sample()
+                if isinstance(action, np.ndarray):
+                    action = action.item()
 
             obs, reward, done, info = env.step([action])
 
@@ -206,18 +213,9 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
 
             time.sleep(sleep)
 
+    if rgb_array:
+        return frames
 
-def save_model(name, model):
-    path = os.getcwd() + '/models/'
-    os.makedirs(path, exist_ok=True)
-    model.save(path + name)  # TODO: Check if save_to_zip_file
-
-def load_model(name, base: BaseAlgorithm):
-    path = os.getcwd() + '/models/'
-    if os.path.isfile(path + name):
-        return base.load(path + name)
-    else:
-        raise FileNotFoundError(f'No such model {name}')
 
 def parse_arguments():
     parser = argparse.ArgumentParser()

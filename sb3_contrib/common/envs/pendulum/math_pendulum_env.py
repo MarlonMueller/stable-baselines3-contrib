@@ -127,6 +127,7 @@ class MathPendulumEnv(Env):
                 [0.785398163397448, -max_thdot]  # LeftLow
             ])
             self._safe_region = SafeRegion(vertices=vertices)
+            #self._safe_region = None #TODO: Remove
 
             from gym.envs.classic_control import rendering
             self.viewer = rendering.Viewer(500, 500)
@@ -166,6 +167,6 @@ class MathPendulumEnv(Env):
                 self.mass.set_color(227 / 255, 114 / 255, 34 / 255)
 
         if self.last_action:
-            self.imgtrans.scale = (self.last_action / 4, abs(self.last_action) / 4)
+            self.imgtrans.scale = (self.last_action / 6, abs(self.last_action) / 6)
 
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')

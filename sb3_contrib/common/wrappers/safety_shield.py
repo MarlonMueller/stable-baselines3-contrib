@@ -41,14 +41,15 @@ class SafetyShield(gym.Wrapper):
         else:
             self._safe_action_fn = safe_action_fn
 
-        if isinstance(punishment_fn, str):
-            found_method = getattr(self.env, punishment_fn)
-            if not callable(found_method):
-                raise ValueError(f"Environment attribute {punishment_fn} is not a method")
-            self._punishment_fn = found_method
+        if punishment_fn is not None:
+            if isinstance(punishment_fn, str):
+                found_method = getattr(self.env, punishment_fn)
+                if not callable(found_method):
+                    raise ValueError(f"Environment attribute {punishment_fn} is not a method")
+                self._punishment_fn = found_method
 
-        else:
-            self._punishment_fn = punishment_fn
+            else:
+                self._punishment_fn = punishment_fn
 
         self._safe_region = safe_region
 
@@ -62,7 +63,7 @@ class SafetyShield(gym.Wrapper):
             obs, reward, done, info = self.env.step(action_shield)
             info['s'] = abs(action_shield - action)
 
-            if self._punishment is not None:
+            if self._punishment_fn is not None:
                 reward += self._punishment_fn(self.env, self._safe_region, action, action_shield)
 
         else:

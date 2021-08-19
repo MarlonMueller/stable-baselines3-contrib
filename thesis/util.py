@@ -1,8 +1,10 @@
 """Utilities for working with plots and tf events."""
 from matplotlib.lines import Line2D
+from stable_baselines3.common.base_class import BaseAlgorithm
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 import matplotlib.pyplot as plt
 import os, shutil, logging
+from matplotlib import animation
 import matlab
 import numpy as np
 from matplotlib.path import Path
@@ -27,6 +29,18 @@ COLORS_HEX = {
     'LIGHT_BLUE': '#64a0c8',
     'LIGHTER_BLUE': '#98c6ea'
 }
+
+def save_model(name, model):
+    path = os.getcwd() + '/models/'
+    os.makedirs(path, exist_ok=True)
+    model.save(path + name)  # TODO: Check if save_to_zip_file
+
+def load_model(name, base: BaseAlgorithm):
+    path = os.getcwd() + '/models/'
+    if os.path.isfile(path + name):
+        return base.load(path + name)
+    else:
+        raise FileNotFoundError(f'No such model {name}')
 
 def gain_matrix():
     """ Gain matrix (K) of the pendulum's LQR controller."""
@@ -326,6 +340,23 @@ def tf_event_to_plot(dir, tags, x_label='Episode', y_label='', width=5, height=2
                   y_label=y_label,
                   path=path)
 
+def animate(frames, interval=50, dpi=100):
+    """
+    Returns an animation object given a list of frames.
+    Interval adjusts the delay between frames in milliseconds.
+    See also: https://matplotlib.org/stable/api/_as_gen/matplotlib.animation.FuncAnimation.html
+    """
+
+    fig = plt.figure(dpi=dpi)
+    im = plt.imshow(frames[0])
+    ax = plt.gca()
+    ax.get_xaxis().set_ticks([])
+    ax.get_yaxis().set_ticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    plt.close()
+
+    return animation.FuncAnimation(fig, lambda i: im.set_data(frames[i]), frames=len(frames), interval=interval)
 
 
 
