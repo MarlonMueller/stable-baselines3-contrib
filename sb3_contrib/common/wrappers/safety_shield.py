@@ -19,7 +19,7 @@ class SafetyShield(gym.Wrapper):
                  punishment_fn: Optional[Union[str, Callable[[gym.Env, SafeRegion, float, float], float]]] = None):
 
         super(SafetyShield, self).__init__(env)
-        self.env_unwrapped = self.unwrapped
+        print(env.action_space)
 
         # TODO VecEnv
         if isinstance(is_safe_action_fn, str):
@@ -50,6 +50,8 @@ class SafetyShield(gym.Wrapper):
 
             else:
                 self._punishment_fn = punishment_fn
+        else:
+            self._punishment_fn = None
 
         self._safe_region = safe_region
 

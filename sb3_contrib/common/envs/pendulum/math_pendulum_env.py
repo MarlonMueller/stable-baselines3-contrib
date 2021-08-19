@@ -105,8 +105,8 @@ class MathPendulumEnv(Env):
 
     def close(self):
         #TODO: Pot. remove
-        if self.eng in locals():
-            self.eng.quit()
+        #if self.eng in locals():
+         #   self.eng.quit()
 
         if self.viewer:
             self.viewer.close()

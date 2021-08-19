@@ -36,6 +36,8 @@ class SafetyCBF(gym.Wrapper):
 
             else:
                 self._punishment_fn = punishment_fn
+        else:
+            self._punishment_fn = None
 
         self._safe_region = safe_region
 
