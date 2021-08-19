@@ -9,6 +9,8 @@ from stable_baselines3.common.env_util import is_wrapped
 from stable_baselines3.ppo.policies import MlpPolicy
 from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv
 from thesis.util import remove_tf_logs, rename_tf_events, load_model, save_model
+from stable_baselines3.a2c import A2C
+from sb3_contrib.ppo_mask import MaskablePPO
 import gym
 import numpy as np
 from numpy import pi
@@ -20,7 +22,9 @@ def main(**kwargs):
     logger.info(f"kargs {kwargs}")
 
     module = importlib.import_module('stable_baselines3')
-    base_algorithm = getattr(module, kwargs['algorithm'])
+    #base_algorithm = getattr(module, kwargs['algorithm'])
+    #TODO: Remove
+    base_algorithm = MaskablePPO
 
     if kwargs['name'] == 'DEBUG':
         name = 'DEBUG'
@@ -58,8 +62,8 @@ def main(**kwargs):
         if kwargs['safety'] == "shield":
             from sb3_contrib.common.wrappers import SafetyShield
 
-            def punishment_fn(env: gym.Env, safe_region: SafeRegion, action: float, action_bar: float) -> float:
-                return -abs(action - action_bar)
+            def punishment_fn(env: gym.Env, safe_region: SafeRegion, action: float, action_shield: float) -> float:
+                return -abs(action - action_shield)
 
             env = SafetyShield(
                 env=env,
@@ -87,25 +91,50 @@ def main(**kwargs):
 
         elif kwargs['safety'] == "mask":
             from sb3_contrib.common.wrappers import SafetyMask
-            pass
+
+            def safe_mask_fn(env: gym.Env, safe_region: SafeRegion) -> np.ndarray:
+                theta, thdot = env.state
+
+                # TODO: Discrete actions
+                mask = np.ones(15) #15-1
+                for i in range(15):
+                    if env.dynamics(theta, thdot, 2 * (i - 7)) not in safe_region:
+                        mask[i] = False
+
+                #mask[(np.swapaxes(env.dynamics(theta, thdot, 2 * (mask - 7)), 0, 1)) in safe_region] = False
+
+                return mask
+
+            env = SafetyMask(
+                env=env,
+                safe_region=safe_region,
+                safe_mask_fn=safe_mask_fn,
+                safe_action_fn="safe_action",
+                punishment_fn=None
+            )
+
 
     if not is_wrapped(env, Monitor):
         env = Monitor(env)
 
-    if 'train' in kwargs and kwargs['train']:
+    from sb3_contrib.common.wrappers import ActionDiscretizer
+    from gym.spaces import Discrete
+    env = ActionDiscretizer(
+        env=env,
+        disc_action_space=Discrete(15),
+        transform_fn=lambda a: 2 * (a - 7)
+    )
 
-        from sb3_contrib.common.wrappers import ActionDiscretizer
-        from gym.spaces import Discrete
-        env = ActionDiscretizer(
-            env=env,
-            disc_action_space=Discrete(15),
-            transform_fn=lambda a: 2 * (a - 7)
-        )
+    if 'train' in kwargs and kwargs['train']:
 
         env = DummyVecEnv([lambda: env])
 
-        model = base_algorithm(MlpPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
-        callback = CallbackList([PendulumTrainCallback()])
+        #model = base_algorithm(MlpPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
+        #TODO: Remove
+        from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
+        model = base_algorithm(MaskableActorCriticPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
+
+        callback = CallbackList([PendulumTrainCallback(safe_region=safe_region)])
 
         model.learn(total_timesteps=kwargs['total_timesteps'],
                     tb_log_name=name,
@@ -126,11 +155,15 @@ def main(**kwargs):
             model = load_model(name + '.zip', base_algorithm)
             model.set_env(env)
 
-            callback = CallbackList([PendulumRolloutCallback()])
+
+            callback = CallbackList([PendulumRolloutCallback(safe_region=safe_region)])
+
+            # TODO: Not needed for training(?)
+            _logger = configure_logger(verbose=0, tb_log_name=name + '_E', tensorboard_log=os.getcwd() + '/tensorboard/')
+            model.set_logger(logger=_logger)
+
             callback.init_callback(model=model)
 
-            configure_logger(verbose=0, tb_log_name=name + '_E',
-                             tensorboard_log=os.getcwd() + '/tensorboard/')
 
         render = False
         if 'render' in kwargs and kwargs['render']:
@@ -213,6 +246,8 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
 
             time.sleep(sleep)
 
+    env.close()
+
     if rgb_array:
         return frames
 
@@ -223,7 +258,7 @@ def parse_arguments():
                         help='RL algorithm')
     parser.add_argument('-e', '--env_id', type=str, default='MathPendulum-v0', required=False,
                         help='ID of a registered environment')
-    parser.add_argument('-t', '--total_timesteps', type=int, default=8e4, required=False,  # 400
+    parser.add_argument('-t', '--total_timesteps', type=int, default=5e4, required=False,  # 400
                         help='Total timesteps to train model') #TODO: Episodes
     parser.add_argument('-n', '--name', type=str, default='DEBUG', required=False,
                         help='Base name for generated data')
@@ -240,8 +275,14 @@ if __name__ == '__main__':
     #args['render'] = True
     #args['safety'] = "shield"
 
+    #args['train'] = True
+    #args['safety'] = 'mask'
+    #args['name'] = 'maskTest'
+
     args['rollout'] = True
     args['render'] = True
-    args['safety'] = 'env_safe_action'
+    args['safety'] = 'mask'
+
+    args['name'] = 'maskTest'
 
     main(**args)

@@ -14,7 +14,7 @@ class PendulumRolloutCallback(BaseCallback):
     As a result, the passed information is 'info' instead of 'infos'.
     """
 
-    def __init__(self, verbose=0):
+    def __init__(self, safe_region, verbose=0):
         super(PendulumRolloutCallback, self).__init__(verbose)
 
         # TODO: Could (Maybe) directly via Monitor (guarantee that top wrapper?) / check VecEnvs
@@ -24,8 +24,9 @@ class PendulumRolloutCallback(BaseCallback):
         self.num_steps = -1
 
         #TODO: As in Train
-        from pendulum.mathematical_pendulum.envs.pendulum_region_of_attraction import RegionOfAttraction
-        self.roa = RegionOfAttraction()
+        #from pendulum.mathematical_pendulum.envs.pendulum_region_of_attraction import RegionOfAttraction
+        #self.roa = RegionOfAttraction()
+        self._safe_region = safe_region
 
 
 

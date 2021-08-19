@@ -9,7 +9,7 @@ class PendulumTrainCallback(BaseCallback):
     #TODO: HandleVecEnvs
     """
 
-    def __init__(self, verbose=0):
+    def __init__(self, safe_region, verbose=0):
         super(PendulumTrainCallback, self).__init__(verbose)
 
         # TODO: Could (Maybe) directly via Monitor (guarantee that top wrapper?) / check VecEnvs
@@ -22,11 +22,13 @@ class PendulumTrainCallback(BaseCallback):
         #self.roa = self.locals
         self.safe_episode = True
 
+        self._safe_region = safe_region
+
     def _on_training_start(self) -> None:
         """
         This method is called before the first rollout starts.
         """
-        self.roa = self.training_env.get_attr('roa')[0] #[0] due to VecEnvs
+       # self.roa = self.training_env.get_attr('safe_region')[0] #[0] due to VecEnvs
 
     def _on_step(self) -> bool:
         """
@@ -62,7 +64,7 @@ class PendulumTrainCallback(BaseCallback):
             self.logger.dump(step=self.num_steps)
 
         # Only get_attr not __getattr_
-        if self.training_env.get_attr('state')[0] not in self.roa: #[0][0] not necessary
+        if self.training_env.get_attr('state')[0] not in self._safe_region: #[0][0] not necessary
             self.safe_episode = False
 
         if 's' in infos.keys():
