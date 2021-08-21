@@ -6,6 +6,7 @@ tensorboard/DEBUG_E_1
 models/
 
 tensorboard/
+gifs/
 
 # CORA/AROC/MPT
 matlab/AROC_2020

@@ -10,21 +10,33 @@ from stable_baselines3.ppo.policies import MlpPolicy
 from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv
 from thesis.util import remove_tf_logs, rename_tf_events, load_model, save_model
 from stable_baselines3.a2c import A2C
+from stable_baselines3 import HER, A2C, PPO, DQN
+
 from sb3_contrib.ppo_mask import MaskablePPO
+from sb3_contrib.a2c_mask import MaskableA2C
+
 import gym
 import numpy as np
 from numpy import pi
 
 logger = logging.getLogger(__name__)
+#Try different optimizers
 
 def main(**kwargs):
 
     logger.info(f"kargs {kwargs}")
 
     module = importlib.import_module('stable_baselines3')
-    #base_algorithm = getattr(module, kwargs['algorithm'])
-    #TODO: Remove
-    base_algorithm = MaskablePPO
+
+    if 'safety' in kwargs and kwargs['safety'] == "mask":
+        if kwargs['algorithm'] == "A2C":
+            base_algorithm = MaskableA2C
+        elif kwargs['algorithm'] == "PPO":
+            base_algorithm = MaskablePPO
+        else:
+            raise ValueError(f"No masking support for {kwargs['algorithm']}")
+    else:
+        base_algorithm = getattr(module, kwargs['algorithm'])
 
     if kwargs['name'] == 'DEBUG':
         name = 'DEBUG'
@@ -129,10 +141,11 @@ def main(**kwargs):
 
         env = DummyVecEnv([lambda: env])
 
-        #model = base_algorithm(MlpPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
+        model = base_algorithm(MlpPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
+
         #TODO: Remove
-        from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
-        model = base_algorithm(MaskableActorCriticPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
+        #from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
+        #model = base_algorithm(MaskableActorCriticPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
 
         callback = CallbackList([PendulumTrainCallback(safe_region=safe_region)])
 
@@ -173,13 +186,15 @@ def main(**kwargs):
         if 'safety' in kwargs and kwargs['safety'] == "env_safe_action":
             env_safe_action = True
 
-        rollout(env, model, safe_region=safe_region, num_episodes=1, callback=callback, env_safe_action=env_safe_action, render=render, sleep=.05)
+        #rollout(env, model, safe_region=safe_region, num_episodes=1, callback=callback, env_safe_action=env_safe_action, render=render, sleep=.05)
+        rollout(env, model, safe_region=safe_region, num_episodes=1, callback=callback, env_safe_action=env_safe_action,
+                render=render, sleep=.1)
 
     if 'env' in locals(): env.close()
     rename_tf_events()
 
 
-def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, env_safe_action=False, render=False, rgb_array=False, sleep=0.05):
+def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, env_safe_action=False, render=False, rgb_array=False, sleep=0.1):
 
     is_vec_env = isinstance(env, VecEnv)
     if is_vec_env:
@@ -218,6 +233,8 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
                 else:
                     env.render()
 
+            time.sleep(sleep)
+
             if model is not None:
                 action, state = model.predict(obs, state=state) #deterministic=deterministic
                 action = action[0] #Action is dict
@@ -244,8 +261,7 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
                 if callback.on_step() is False:
                     return False
 
-            time.sleep(sleep)
-
+    time.sleep(sleep)
     env.close()
 
     if rgb_array:
@@ -275,14 +291,16 @@ if __name__ == '__main__':
     #args['render'] = True
     #args['safety'] = "shield"
 
+
+
     #args['train'] = True
     #args['safety'] = 'mask'
-    #args['name'] = 'maskTest'
+    #args['name'] = 'noSafetyTest'
 
     args['rollout'] = True
     args['render'] = True
     args['safety'] = 'mask'
 
-    args['name'] = 'maskTest'
+    #args['name'] = 'maskTest'
 
     main(**args)

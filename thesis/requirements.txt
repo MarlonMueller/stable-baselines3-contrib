@@ -2,3 +2,4 @@ TODO
 # Matlab / CORA / SymbolicMath
 #'stable-baselines3[extra]'
 #pyglet==1.5.11 BigSur (https://github.com/openai/gym/issues/2101)
+#imagemagick

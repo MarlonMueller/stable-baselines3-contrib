@@ -10,13 +10,14 @@ from sb3_contrib.common.wrappers import ActionMasker
 # TODO: Fix Callable typing
 # state from observations
 # TODO: Maybe do not rely on action masker
+#TODO: Check if matches action space
 
 class SafetyMask(gym.Wrapper):
 
     def __init__(self,
                  env: gym.Env,
                  safe_region: Union[SafeRegion, np.ndarray],
-                 safe_mask_fn: Union[str, Callable[[gym.Env, SafeRegion, float], bool]],
+                 safe_mask_fn: Union[str, Callable[[gym.Env, SafeRegion, float], np.ndarray]],
                  safe_action_fn: Union[str, Callable[[gym.Env, SafeRegion], np.ndarray]],
                  punishment_fn: Optional[Union[str, Callable[[gym.Env, SafeRegion, float, float], float]]] = None):
 
@@ -56,9 +57,21 @@ class SafetyMask(gym.Wrapper):
 
         self._safe_region = safe_region
 
+        print(self.env.action_space)
+
         def _mask_fn(env: gym.Env) -> np.ndarray:
 
             mask = self._safe_mask_fn(env, self._safe_region)
+
+            # Extend discrete action space by one
+            # Mask out always except if not any
+            # If chosen as action -> choose fail safe (cont.)
+
+            # SafetyFlag: If set allow cont. actions
+            # Discrete Wrapper
+
+            if not mask.any():
+                pass
 
             #TODO: Remove
             if not mask.any():

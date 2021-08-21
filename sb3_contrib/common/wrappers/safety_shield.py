@@ -19,7 +19,7 @@ class SafetyShield(gym.Wrapper):
                  punishment_fn: Optional[Union[str, Callable[[gym.Env, SafeRegion, float, float], float]]] = None):
 
         super(SafetyShield, self).__init__(env)
-        print(env.action_space)
+        #print(env.action_space)
 
         # TODO VecEnv
         if isinstance(is_safe_action_fn, str):
@@ -55,6 +55,7 @@ class SafetyShield(gym.Wrapper):
 
         self._safe_region = safe_region
 
+    #TODO: Auch für int wenn safe_action auch int?
     def step(self, action: Union[float, np.ndarray]) -> GymStepReturn:
 
 

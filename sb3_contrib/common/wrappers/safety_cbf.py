@@ -41,7 +41,7 @@ class SafetyCBF(gym.Wrapper):
 
         self._safe_region = safe_region
 
-        self._A, self._b = self.env.safe_region.halfspaces
+        self._A, self._b = safe_region.halfspaces
         self._P = matrix([[1., 0], [0, 1e25]], tc='d')
         self._q = matrix([0, 0], tc='d')
 

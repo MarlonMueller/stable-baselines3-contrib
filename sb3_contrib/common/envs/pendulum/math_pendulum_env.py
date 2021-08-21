@@ -25,6 +25,7 @@ class MathPendulumEnv(Env):
     @staticmethod
     def safe_action(env: Env, safe_region: SafeRegion):
         # LQR controller
+        # TODO: Maybe restrict torque here? Visuals.
         #gain_matrix = [19.670836678497427, 6.351509533724627]
         gain_matrix = [18.224698834878474, 5.874625145435321]
 
@@ -71,7 +72,8 @@ class MathPendulumEnv(Env):
     def reset(self) -> GymObs:
 
         # Start at theta=0; thdot=0
-        self.state = np.array([0,0])
+        #self.state = np.array([0,0])
+        self.state = np.array([0, 0])
         # Start within safe space
         # self.state = self.safe_region.sample()
 
