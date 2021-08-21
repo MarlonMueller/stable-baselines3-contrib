@@ -1,88 +1,139 @@
-from typing import Optional, Union, Callable
+from typing import Union, Callable, Optional
 
-import gym
+import gym, warnings
 import numpy as np
-
-from stable_baselines3.common.type_aliases import GymStepReturn
 from sb3_contrib.common.safety.safe_region import SafeRegion
-from sb3_contrib.common.wrappers import ActionMasker
+from stable_baselines3.common.type_aliases import GymStepReturn
+from sb3_contrib.common.wrappers.action_masker import ActionMasker
+
 
 # TODO: Fix Callable typing
 # state from observations
 # TODO: Maybe do not rely on action masker
-#TODO: Check if matches action space
+# TODO: Check if matches action
+# TODO: Punishment function
+# Contunuous (CBF and Shield should work)
+# Check for discrete action space
 
 class SafetyMask(gym.Wrapper):
+    """
+
+    :param env: Gym environment to be wrapped
+    :param safe_region: Safe region object
+    :param dynamics_fn: Unbounded function ...
+    :param safe_action_fn: Unbounded function ...
+    (:param punishment_fn: Unbounded function ...)
+    :param alter_action_space: ...
+    :param transform_action_space_fn ...
+    """
 
     def __init__(self,
                  env: gym.Env,
-                 safe_region: Union[SafeRegion, np.ndarray],
-                 safe_mask_fn: Union[str, Callable[[gym.Env, SafeRegion, float], np.ndarray]],
-                 safe_action_fn: Union[str, Callable[[gym.Env, SafeRegion], np.ndarray]],
-                 punishment_fn: Optional[Union[str, Callable[[gym.Env, SafeRegion, float, float], float]]] = None):
+                 safe_region: SafeRegion,
+                 dynamics_fn: Union[Callable[[gym.Env, Union[int, float, np.ndarray]], np.ndarray], str],
+                 safe_action_fn: Union[Callable[[gym.Env, SafeRegion, Union[int, float, np.ndarray]], Union[
+                     int, float, np.ndarray]], str],
+                 punishment_fn: Optional[Union[Callable[[gym.Env, SafeRegion, Union[int, float, np.ndarray],
+                                                         Union[int, float, np.ndarray]], float], str]] = None,
+                 alter_action_space: Optional[gym.Space] = None,
+                 transform_action_space_fn: Optional[Union[Callable, str]] = None):
 
         super(SafetyMask, self).__init__(env)
 
-        # TODO VecEnv
-        if isinstance(safe_mask_fn, str):
-            found_method = getattr(self.env, safe_mask_fn)
-            if not callable(found_method):
-                raise ValueError(f"Environment attribute {safe_mask_fn} is not a method")
-            self._safe_mask_fn = found_method
+        self._safe_region = safe_region
 
+        if not hasattr(self.env, "action_space"):
+            warnings.warn("Environment does not have attribute ``action_space``")
+        if alter_action_space is not None:
+            self.action_space = alter_action_space
+
+        if not isinstance(self.action_space, gym.spaces.Discrete):
+            raise ValueError("Action space is not ``gym.spaces.Discrete`` instance")
+
+        self._num_actions = self.action_space.n + 1
+        self.action_space = gym.spaces.Discrete(self._num_actions)
+
+        def _mask_fn(_: gym.Env) -> np.ndarray:
+
+            mask = np.zeros(self._num_actions)
+            for i in range(self._num_actions):
+                if self._transform_action_space_fn is not None:
+                    action = self._transform_action_space_fn(i)
+                else:
+                    action = i
+                if self._dynamics_fn(self.env, action) in self._safe_region:
+                    mask[i] = True
+
+            if not mask.any():
+                mask[-1] = True
+
+            self._last_mask = mask
+            return mask
+
+        self.env = ActionMasker(self.env, action_mask_fn=_mask_fn)
+
+        if isinstance(dynamics_fn, str):
+            fn = getattr(self.env, dynamics_fn)
+            if not callable(fn):
+                raise ValueError(f"Attribute {fn} is not a method")
+            self._dynamics_fn = fn
         else:
-            # self.env could be wrapped, if defined in env is useless
-            self._safe_mask_fn = safe_mask_fn
+            self._dynamics_fn = dynamics_fn
 
         if isinstance(safe_action_fn, str):
-            found_method = getattr(self.env, safe_action_fn)
-            if not callable(found_method):
-                raise ValueError(f"Environment attribute {safe_action_fn} is not a method")
-            self._safe_action_fn = found_method
-
+            fn = getattr(self.env, safe_action_fn)
+            if not callable(fn):
+                raise ValueError(f"Attribute {fn} is not a method")
+            self._safe_action_fn = fn
         else:
-            self._safe_action_fn = safe_action_fn
+            self._safe_action_fn = dynamics_fn
 
         if punishment_fn is not None:
             if isinstance(punishment_fn, str):
-                found_method = getattr(self.env, punishment_fn)
-                if not callable(found_method):
-                    raise ValueError(f"Environment attribute {punishment_fn} is not a method")
-                self._punishment_fn = found_method
-
+                fn = getattr(self.env, punishment_fn)
+                if not callable(fn):
+                    raise ValueError(f"Attribute {fn} is not a method")
+                self._punishment_fn = fn
             else:
                 self._punishment_fn = punishment_fn
         else:
             self._punishment_fn = None
 
-        self._safe_region = safe_region
+        if transform_action_space_fn is not None:
+            if isinstance(transform_action_space_fn, str):
+                fn = getattr(self.env, transform_action_space_fn)
+                if not callable(fn):
+                    raise ValueError(f"Attribute {fn} is not a method")
+                self._transform_action_space_fn = fn
+            else:
+                self._transform_action_space_fn = transform_action_space_fn
+        else:
+            self._transform_action_space_fn = None
 
-        print(self.env.action_space)
+    def step(self, action) -> GymStepReturn:
 
-        def _mask_fn(env: gym.Env) -> np.ndarray:
+        if action == self._num_actions - 1:
+            zero_mask = True
+        else:
+            zero_mask = False
 
-            mask = self._safe_mask_fn(env, self._safe_region)
+        if self._transform_action_space_fn is not None:
+            action = self._transform_action_space_fn(action)
 
-            # Extend discrete action space by one
-            # Mask out always except if not any
-            # If chosen as action -> choose fail safe (cont.)
+        if zero_mask:
+            action_mask = self._safe_action_fn(self.env, self._safe_region, action)
+            obs, reward, done, info = self.env.step(action_mask)
+            info["mask"] = {"action": action, "action_mask": action_mask, "mask": self._last_mask}
 
-            # SafetyFlag: If set allow cont. actions
-            # Discrete Wrapper
+            if self._punishment_fn is not None:
+                reward += self._punishment_fn(self.env, self._safe_region, action, action_mask)
 
-            if not mask.any():
-                pass
+        else:
 
-            #TODO: Remove
-            if not mask.any():
-                print("BackUp needed?")
+            if self._transform_action_space_fn is not None:
+                action = self._transform_action_space_fn(action)
 
-            return mask
+            obs, reward, done, info = self.env.step(action)
+            info["mask"] = {"action": action, "action_mask": None, "mask": self._last_mask}
 
-        self.env = ActionMasker(self.env, action_mask_fn=_mask_fn)
-
-
-
-
-
-
+        return obs, reward, done, info
