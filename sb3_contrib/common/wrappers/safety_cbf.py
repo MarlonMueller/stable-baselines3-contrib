@@ -9,6 +9,7 @@ from stable_baselines3.common.type_aliases import GymStepReturn
 
 # State from Observation
 # State requiered?
+# Safe function not needed?
 
 class SafetyCBF(gym.Wrapper):
     """
@@ -38,8 +39,7 @@ class SafetyCBF(gym.Wrapper):
                  transform_action_space_fn: Optional[Union[Callable, str]] = None,
                  gamma: float = .5):
 
-        super(SafetyCBF, self).__init__(env)
-
+        super().__init__(env)
         self._A, self._b = safe_region.halfspaces
         self._P = matrix([[1., 0], [0, 1e25]], tc='d')
         self._q = matrix([0, 0], tc='d')
@@ -94,6 +94,9 @@ class SafetyCBF(gym.Wrapper):
 
         if self._transform_action_space_fn is not None:
             action = self._transform_action_space_fn(action)
+
+        # If discrete, needs safety backup
+        # Could also try only constraint
 
         G = matrix(np.asarray([[np.dot(p, self._g), -1] for p in self._A], dtype=np.double), tc='d')
         h = matrix(np.asarray([-np.dot(self._A[i], self._unactuated_dynamics(self.env))

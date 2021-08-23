@@ -23,7 +23,7 @@ class MathPendulumEnv(Env):
         return state in safe_region
 
     @staticmethod
-    def safe_action(env: Env, safe_region: SafeRegion):
+    def safe_action(env: Env, safe_region: SafeRegion, action: float):
         # LQR controller
         # TODO: Maybe restrict torque here? Visuals.
         #gain_matrix = [19.670836678497427, 6.351509533724627]
@@ -48,13 +48,16 @@ class MathPendulumEnv(Env):
 
         self.rng = np.random.default_rng()
 
-        max_torque = 30.898877999566082
-        self.action_space = Box(
-            low=-max_torque,
-            high=max_torque,
-            shape=(1,),
-            dtype=np.float32
-        )
+        #TODO: Remove
+        from gym.spaces import Discrete
+        self.action_space = Discrete(15)
+        #max_torque = 30.898877999566082
+        #self.action_space = Box(
+       #     low=-max_torque,
+       #     high=max_torque,
+       #     shape=(1,),
+       #     dtype=np.float32
+       # )
 
         obs_high = np.array([1., 1., np.inf], dtype=np.float32)
         self.observation_space = Box(
@@ -86,7 +89,7 @@ class MathPendulumEnv(Env):
 
         #self.state[:] = self.dynamics(theta, thdot, action)
         theta, thdot =  self.dynamics(theta, thdot, action)
-        self.state = [theta, thdot]
+        self.state = np.array([theta, thdot])
 
         self.last_action = action
         return self._get_obs(theta, thdot), self._get_reward(theta, thdot, action), False, {}

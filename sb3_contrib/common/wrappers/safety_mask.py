@@ -14,6 +14,7 @@ from sb3_contrib.common.wrappers.action_masker import ActionMasker
 # TODO: Punishment function
 # Contunuous (CBF and Shield should work)
 # Check for discrete action space
+#Experiment fail safe backup not implemented?
 
 class SafetyMask(gym.Wrapper):
     """
@@ -38,8 +39,7 @@ class SafetyMask(gym.Wrapper):
                  alter_action_space: Optional[gym.Space] = None,
                  transform_action_space_fn: Optional[Union[Callable, str]] = None):
 
-        super(SafetyMask, self).__init__(env)
-
+        super().__init__(env)
         self._safe_region = safe_region
 
         if not hasattr(self.env, "action_space"):
@@ -56,7 +56,7 @@ class SafetyMask(gym.Wrapper):
         def _mask_fn(_: gym.Env) -> np.ndarray:
 
             mask = np.zeros(self._num_actions)
-            for i in range(self._num_actions):
+            for i in range(self._num_actions-1):
                 if self._transform_action_space_fn is not None:
                     action = self._transform_action_space_fn(i)
                 else:
@@ -129,9 +129,6 @@ class SafetyMask(gym.Wrapper):
                 reward += self._punishment_fn(self.env, self._safe_region, action, action_mask)
 
         else:
-
-            if self._transform_action_space_fn is not None:
-                action = self._transform_action_space_fn(action)
 
             obs, reward, done, info = self.env.step(action)
             info["mask"] = {"action": action, "action_mask": None, "mask": self._last_mask}

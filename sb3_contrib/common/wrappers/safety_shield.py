@@ -33,8 +33,7 @@ class SafetyShield(gym.Wrapper):
                  alter_action_space: Optional[gym.Space] = None,
                  transform_action_space_fn: Optional[Union[Callable, str]] = None):
 
-        super(SafetyShield, self).__init__(env)
-
+        super().__init__(env)
         self._safe_region = safe_region
 
         if not hasattr(self.env, "action_space"):
