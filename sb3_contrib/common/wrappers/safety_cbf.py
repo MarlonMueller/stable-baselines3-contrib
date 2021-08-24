@@ -98,7 +98,7 @@ class SafetyCBF(gym.Wrapper):
         # If discrete, needs safety backup
         # Could also try only constraint
 
-        G = matrix(np.asarray([[np.dot(p, self._g), -1] for p in self._A], dtype=np.double), tc='d')
+        G = matrix(np.asarray([[np.dot(p, self._actuated_dynamics(self.env, action)), -1] for p in self._A], dtype=np.double), tc='d')
         h = matrix(np.asarray([-np.dot(self._A[i], self._unactuated_dynamics(self.env))
                                - np.dot(self._A[i], self._actuated_dynamics(self.env, action))
                                + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
