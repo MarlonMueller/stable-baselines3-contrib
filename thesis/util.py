@@ -16,6 +16,13 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+COLORS_PLOTS = [
+    '#0065bd', #blue
+    '#e37222', #orange
+    '#008f7c', #green
+    '#f0266b' #magenta
+]
+
 # https://gist.github.com/lnksz/51e3566af2df5c7aa678cd4dfc8305f7
 COLORS = {
     'BLUE': (0 / 255, 101 / 255, 189 / 255),
@@ -246,7 +253,7 @@ def external_legend(save_as=None, width=1., height=.25):
     plt.gca().legend(handles=[g_line, o_line, r_line, b_line, t_line, m_line], frameon=True, loc='center', ncol=2)
 
     if save_as:
-        plt.savefig(f'{os.getcwd()}/../../report/thesis/figures/{save_as}.pdf', dpi=1000, bbox_inches='tight')
+        plt.savefig(path = f'{os.getcwd()}/{save_as}.pdf', dpi=1000, bbox_inches='tight')
     plt.show()
 
 def remove_tf_logs(*dirs):
@@ -259,12 +266,12 @@ def remove_tf_logs(*dirs):
         shutil.rmtree(cwd + dir, ignore_errors=True)
 
 
-def rename_tf_events(*dirs):
+def rename_tf_events(group):
     """ Renames the tf events within ./tensorboard/*dirs to tfevents.event.
     """
-    cwd = os.getcwd() + '/tensorboard/'
-    if not dirs:
-        dirs = [dir for dir in os.listdir(cwd) if os.path.isdir(cwd + dir)]
+    cwd = os.getcwd() + f"/tensorboard/{group}/"
+
+    dirs = [dir for dir in os.listdir(cwd) if os.path.isdir(cwd + dir)]
     for dir in dirs:
         files = os.listdir(cwd + dir + '/')
         if len(files) != 1:
@@ -272,12 +279,146 @@ def rename_tf_events(*dirs):
         os.rename(cwd + dir + '/' + files[0],
                   cwd + dir + '/' + 'tfevents.event')
 
+
+
+
 def smooth_data(ys, window_size=5):
     if window_size <= 0 or window_size % 2 != 1:
         raise ValueError('Choose window_size > 0 and window_size % 2 == 1')
     w = np.ones(window_size)
     # Adapted from https://github.com/openai/spinningup/blob/master/spinup/utils/plot.py
     return np.convolve(ys, w, mode='same') / np.convolve(np.ones(len(ys)), w, mode='same')
+
+def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, height=2.5, episodes =20e2, episode_length=100, window_size=1, save_as=None):
+
+    cwd = os.getcwd() + '/tensorboard/'
+
+    fig = plt.figure()
+    setup_plot(fig=fig, width=width, height=height)
+
+    num_plots = 0
+
+    if not tags:
+        logger.error(f'No tags specified: {tags}')
+        return
+
+    else:
+
+        x_min = None
+        x_max = None
+
+        safety_only = True
+
+        for tag in tags:
+
+
+            for dirs in dirss:
+
+                label = None
+                if isinstance(dirs, str):
+                    label = dirs
+                    cwd = os.getcwd() + f"/tensorboard/{dirs}/"
+                    dirs = [dir for dir in os.listdir(cwd) if os.path.isdir(cwd + dir)]
+
+                summary_df = pd.DataFrame()
+                num_runs = len(dirs)
+
+                values = []
+
+                for dir in dirs:
+
+                    summary_iterator = EventAccumulator(cwd + dir).Reload()
+                    scalar_tags = summary_iterator.Tags()['scalars']
+
+                    if tag not in scalar_tags:
+                        logger.warning(f'{tag} not found in {cwd}{dir}')
+                        continue
+
+                    if label == "standard":
+                        safety_only = False
+
+                    df = pd.DataFrame.from_records(summary_iterator.Scalars(tag),
+                                                   columns=summary_iterator.Scalars(tag)[0]._fields)
+
+                    values.append(df["value"].to_list())
+
+                    #if summary_df.empty:
+
+                        #summary_df["episode"] = df["step"] / episode_length
+
+
+
+                        #summary_df["value"] = df["value"]/num_runs
+
+
+                        #if x_min is None:
+                        #    x_min = summary_df['episode'].min()
+                        #if x_max is None:
+                        #    x_max = summary_df['episode'].max()
+
+                    #else:
+                        #summary_df["value"] += df["value"] / num_runs
+
+                if values:
+
+                    values = np.array(values)
+
+                    mean = np.mean(values, axis=0)
+                    std_dev = np.std(values, axis=0)
+
+                    if window_size > 1:
+                        mean = smooth_data(mean, window_size)
+
+                    #TODO: Check PPO Episodes/Steps
+
+                    if label == "standard":
+                        color = COLORS_PLOTS[0]
+                    elif label == "shield":
+                        color = COLORS_PLOTS[2]
+                    elif label == "mask":
+                        color = COLORS_PLOTS[1]
+                    elif label == "cbf":
+                        color = COLORS_PLOTS[3]
+
+
+                    linewidth = 1
+                    plt.plot(range(1, len(mean)+1), mean, color=color, label=label, linewidth=linewidth)
+                    plt.fill_between(range(1, len(mean)+1), mean - std_dev, mean + std_dev, color=color, alpha=0.25)
+                    num_plots += 1
+
+
+
+        #if x_label == "Episode":
+            #TODO: 0/1
+            #plt.xlim([0, episodes])
+            #assert (x_max).is_integer()
+            #print(int(summary_df['episode'].max()))
+            #plt.xticks([200 * i for i in range(int(episodes / (200)) + 1)])
+
+        #plt.gca().set_ylim(bottom=-1)
+        #plt.gca().set_ylim(top=-1)
+
+        #plt.gca().set_xscale("log")
+        #if not safety_only and "main/episode_reward" not in tags: #TODO: Remove if positive reward
+        #    try:
+        #        plt.gca().set_yscale("log")
+        #    except:
+        #        print(tags)
+
+        plt.gca().xaxis.grid(True, color='black', linestyle='dotted', linewidth=0.5)
+        plt.gca().yaxis.grid(True, color='black', linestyle='dotted', linewidth=0.5)
+
+        plt.legend(loc="upper right")
+
+        path = None
+        if save_as:
+            path = f'{os.getcwd()}/{save_as}.pdf'
+        finalize_plot(x_label=x_label,
+                      y_label=y_label,
+                      path=path)
+
+
+
 
 
 def tf_event_to_plot(dir, tags, x_label='Episode', y_label='', width=5, height=2.5, window_size=1, episode_length=100, save_as=None):
@@ -297,9 +438,8 @@ def tf_event_to_plot(dir, tags, x_label='Episode', y_label='', width=5, height=2
         return
     else:
         for tag in tags:
-            event_tags = scalar_tags
-            if tag not in event_tags:
-                logger.error(f'{tag} not in {event_tags}')
+            if tag not in scalar_tags:
+                logger.error(f'{tag} not in {scalar_tags}')
                 return
 
     fig = plt.figure()
@@ -326,7 +466,7 @@ def tf_event_to_plot(dir, tags, x_label='Episode', y_label='', width=5, height=2
             plt.xlim([df['step'].min()/episode_length, df['step'].max()/episode_length])
             plt.ylim(0, 1)
             assert (df['step'].max()/episode_length).is_integer()
-            plt.xticks([100 * i for i in range(int(df['step'].max()/(100 * episode_length)) + 1)])
+            plt.xticks([200 * i for i in range(int(df['step'].max()/(200 * episode_length)) + 1)])
             plt.yticks([0, 1])
             plt.gca().set_yticklabels(['$0\%$', '$100\%$'])
 
@@ -335,7 +475,7 @@ def tf_event_to_plot(dir, tags, x_label='Episode', y_label='', width=5, height=2
 
     path = None
     if save_as:
-        path = f'{os.getcwd()}/../report/thesis/figures/{save_as}.pdf'
+        path = f'{os.getcwd()}/{save_as}.pdf'
     finalize_plot(x_label=x_label,
                   y_label=y_label,
                   path=path)
@@ -366,7 +506,7 @@ def animate(frames, interval=50, dpi=100):
 if __name__ == '__main__':
     #tf_event_to_plot('60K_A2C_1', 'main/episode_reward')
     #Moving Average of Safety Violations
-    save_as = 'noSafety2'
+    #save_as = 'noSafety2'
     # Avg. masked out actions
     # Avg. shield use
     # % of max force used or more?
@@ -375,7 +515,28 @@ if __name__ == '__main__':
     # speed / reward
     # max theta/theta dot used / avg
 
-    tf_event_to_plot('80K_A2C_1', ['main/no_violation'],#, 'main/shield_activations'],
-                     y_label='', save_as=save_as,
-                     window_size=51)
+    #max_thdot = 5.890486225480862
+    #vertices = np.array([
+    #    [-pi, max_thdot],  # LeftUp
+    #    [-0.785398163397448, max_thdot],  # RightUp
+    #    [pi, -max_thdot],  # RightLow
+    #    [0.785398163397448, -max_thdot]  # LeftLow
+    #])
+
+    #gain_matrix = [18.224698834878474, 5.874625145435321]
+    #print(torque_given_state(gain_matrix=gain_matrix, state=[0.785398163397448, -max_thdot]))
+
+    tf_events_to_plot(dirss=["shield"],
+                      tags=["main/avg_abs_action_rl"],
+                      x_label='Episode',
+                      y_label='',
+                      width=5,
+                      height=2.5,
+                      episode_length=100,
+                      window_size=0,
+                      save_as=None)
+
+    #tf_event_to_plot('80K_A2C_1', ['main/no_violation'],#, 'main/shield_activations'],
+    #                 y_label='', save_as=save_as,
+    #                 window_size=51)
     # tf_event_to_plot('DEBUG_E_1', 'main/theta')

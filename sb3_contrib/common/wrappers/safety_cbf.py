@@ -19,7 +19,6 @@ class SafetyCBF(gym.Wrapper):
     :param unactuated_dynamics: ...
     :param actuated_dynamics: ...
     (:param dynamics_fn: Unbounded function ...)
-    (:param safe_action_fn: Unbounded function ...)
     :param punishment_fn: Unbounded function ...
     :param alter_action_space: ...
     :param transform_action_space_fn ...
@@ -29,10 +28,9 @@ class SafetyCBF(gym.Wrapper):
     def __init__(self,
                  env: gym.Env,
                  safe_region: SafeRegion,
-                 unactuated_dynamics: Union[Callable[[gym.Env], np.ndarray], str],
-                 actuated_dynamics: Union[Callable[[gym.Env, Union[int, float, np.ndarray]], np.ndarray], str],
-                 # dynamics_fn: Union[Callable[[gym.Env, Union[int, float, np.ndarray]], np.ndarray], str],
-                 # safe_action_fn: Union[Callable[[gym.Env, SafeRegion, Union[int, float, np.ndarray]], Union[int, float, np.ndarray]], str],
+                 actuated_dynamics_fn: Union[Callable[[gym.Env, Union[int, float, np.ndarray]], np.ndarray], str],
+                 unactuated_dynamics_fn: Optional[Union[Callable[[gym.Env], np.ndarray], str]] = None,
+                 dynamics_fn: Optional[Union[Callable[[gym.Env, Union[int, float, np.ndarray]], np.ndarray], str]] = None,
                  punishment_fn: Optional[Union[Callable[[gym.Env, SafeRegion, Union[int, float, np.ndarray],
                                                          Union[int, float, np.ndarray]], float], str]] = None,
                  alter_action_space: Optional[gym.Space] = None,
@@ -40,6 +38,10 @@ class SafetyCBF(gym.Wrapper):
                  gamma: float = .5):
 
         super().__init__(env)
+
+        if unactuated_dynamics_fn is None and dynamics_fn is None:
+            raise ValueError("Either dynamics_fn or unactuated_dynamics have to be specified.")
+
         self._A, self._b = safe_region.halfspaces
         self._P = matrix([[1., 0], [0, 1e25]], tc='d')
         self._q = matrix([0, 0], tc='d')
@@ -52,21 +54,31 @@ class SafetyCBF(gym.Wrapper):
         if alter_action_space is not None:
             self.action_space = alter_action_space
 
-        if isinstance(unactuated_dynamics, str):
-            fn = getattr(self.env, unactuated_dynamics)
+        if isinstance(actuated_dynamics_fn, str):
+            fn = getattr(self.env, actuated_dynamics_fn)
             if not callable(fn):
                 raise ValueError(f"Attribute {fn} is not a method")
-            self._unactuated_dynamics = fn
+            self._actuated_dynamics_fn = fn
         else:
-            self._unactuated_dynamics = unactuated_dynamics
+            self._actuated_dynamics_fn = actuated_dynamics_fn
 
-        if isinstance(actuated_dynamics, str):
-            fn = getattr(self.env, actuated_dynamics)
-            if not callable(fn):
-                raise ValueError(f"Attribute {fn} is not a method")
-            self._actuated_dynamics = fn
+        if unactuated_dynamics_fn is not None:
+            if isinstance(unactuated_dynamics_fn, str):
+                fn = getattr(self.env, unactuated_dynamics_fn)
+                if not callable(fn):
+                    raise ValueError(f"Attribute {fn} is not a method")
+                self._unactuated_dynamics_fn = fn
+            else:
+                self._unactuated_dynamics_fn = unactuated_dynamics_fn
         else:
-            self._actuated_dynamics = actuated_dynamics
+            if isinstance(dynamics_fn, str):
+                fn = getattr(self.env, dynamics_fn)
+                if not callable(fn):
+                    raise ValueError(f"Attribute {fn} is not a method")
+                self._dynamics_fn = fn
+            else:
+                self._dynamics_fn = dynamics_fn
+            self._unactuated_dynamics_fn = None
 
         if punishment_fn is not None:
             if isinstance(punishment_fn, str):
@@ -98,15 +110,25 @@ class SafetyCBF(gym.Wrapper):
         # If discrete, needs safety backup
         # Could also try only constraint
 
-        G = matrix(np.asarray([[np.dot(p, self._actuated_dynamics(self.env, action)), -1] for p in self._A], dtype=np.double), tc='d')
-        h = matrix(np.asarray([-np.dot(self._A[i], self._unactuated_dynamics(self.env))
-                               - np.dot(self._A[i], self._actuated_dynamics(self.env, action))
-                               + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
-                               self._gamma * self._b[i] for i in range(len(self.A))],
-                              dtype=np.double), tc='d')
+        G = matrix(np.asarray([[np.dot(p, self._actuated_dynamics_fn(self.env)), -1] for p in self._A], dtype=np.double), tc='d')
+
+        if self._unactuated_dynamics_fn is not None:
+            h = matrix(np.asarray([-np.dot(self._A[i], self._unactuated_dynamics_fn(self.env))
+                                   - np.dot(self._A[i], self._actuated_dynamics_fn(self.env)) * action
+                                   + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
+                                   self._gamma * self._b[i] for i in range(len(self._A))],
+                                  dtype=np.double), tc='d')
+        else:
+            h = matrix(np.asarray([- np.dot(self._A[i], self._dynamics_fn(self.env, action))
+                                   + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
+                                   self._gamma * self._b[i] for i in range(len(self._A))],
+                                  dtype=np.double), tc='d')
 
         sol = solvers.qp(self._P, self._q, G, h)
-        action_bar = sol['x'][:-1]
+
+        #TODO: actions if not just one action
+        #action_bar = sol['x'][:-1]
+        action_bar = sol['x'][0]
 
         obs, reward, done, info = self.env.step(action + action_bar)
 

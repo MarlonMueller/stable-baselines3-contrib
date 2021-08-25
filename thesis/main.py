@@ -51,13 +51,6 @@ def main(**kwargs):
     else:
         name = f"{kwargs['name']}_{kwargs['algorithm']}"
 
-    from gym.envs.registration import register
-    register(
-        id='MathPendulum-v0',
-        max_episode_steps=100,
-        entry_point='sb3_contrib.common.envs.pendulum.math_pendulum_env:MathPendulumEnv',
-    )
-
     # Initialize environment
     if kwargs['env_id'] not in [env_spec.id for env_spec in gym.envs.registry.all()]:
          KeyError(f"Environment {kwargs['env_id']} is not registered")
@@ -109,24 +102,42 @@ def main(**kwargs):
                 dynamics_fn=dynamics_fn,
                 safe_action_fn="safe_action",  # Method already in env (LQR controller)
                 punishment_fn=punishment_fn,
-                transform_action_space_fn=lambda a: 2 * (a - 7),
-                alter_action_space=gym.spaces.Discrete(15))
+                transform_action_space_fn=lambda a: 2 * (a - 15),
+                alter_action_space=gym.spaces.Discrete(31))
+
 
         elif kwargs['safety'] == "cbf":
             from sb3_contrib.common.wrappers import SafetyCBF
 
-            def punishment_fn(env: gym.Env, safe_region:SafeRegion, action: float, action_bar: float) -> float:
-                return -abs(action - action_bar)
+            def actuated_dynamics_fn(env: gym.Env) -> np.ndarray:
+                return np.array([(env.dt ** 2 / (env.m * env.l ** 2)), (env.dt / (env.m * env.l ** 2))])
+
+            def dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
+                theta, thdot = env.state
+                return env.dynamics(theta, thdot, action)
+
+            def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                              action: Union[int, float, np.ndarray],
+                              action_cbf: Union[int, float, np.ndarray]) -> float:
+                return -abs(action_cbf)
+
+            # Wrap with SafetyCBF
+            env = SafetyCBF(
+                env=env,
+                safe_region=safe_region,
+                dynamics_fn=dynamics_fn,
+                actuated_dynamics_fn=actuated_dynamics_fn,
+                # unactuated_dynamics_fn=unactuated_dynamics_fn
+                punishment_fn=punishment_fn,
+                transform_action_space_fn=lambda a: 2 * (a - 15),
+                alter_action_space=gym.spaces.Discrete(31),
+                gamma=0.5)
 
             #TODO, f und g as other methods in env?
             #TODO Erklärung Problem
             #TODO Liste Thesis
 
-            env = SafetyCBF(
-                env=env,
-                safe_region=safe_region,
-                punishment_fn=None
-            )
+
 
         elif kwargs['safety'] == "mask":
             from sb3_contrib.common.wrappers import SafetyMask
@@ -138,7 +149,7 @@ def main(**kwargs):
             def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                               action: Union[int, float, np.ndarray],
                               action_mask: Union[int, float, np.ndarray]) -> float:
-                return -(action_mask ** 8)
+                return -(action_mask ** 2)
 
             # Wrap with SafetyMask
             env = SafetyMask(
@@ -147,8 +158,8 @@ def main(**kwargs):
                 dynamics_fn=dynamics_fn,
                 safe_action_fn="safe_action",  # Method already in env (LQR controller)
                 punishment_fn=punishment_fn,
-                transform_action_space_fn=lambda a: 2 * (a - 7),
-                alter_action_space=gym.spaces.Discrete(15))
+                transform_action_space_fn=lambda a: 2 * (a - 15),
+                alter_action_space=gym.spaces.Discrete(31))
 
 
 
@@ -159,24 +170,31 @@ def main(**kwargs):
 
         env = DummyVecEnv([lambda: env])
 
-        if 'safety' in kwargs and kwargs['safety'] == "mask":
-            from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
-            model = base_algorithm(MaskableActorCriticPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
-        else:
-            model = base_algorithm(MlpPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
+        for iteration in range(kwargs['iterations']):
 
-        #TODO: Remove
-        #from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
-        #model = base_algorithm(MaskableActorCriticPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
+            tensorboard_log = os.getcwd() + '/tensorboard/'
+            if "group" in kwargs:
+                tensorboard_log += args["group"]
 
-        callback = CallbackList([PendulumTrainCallback(safe_region=safe_region)])
+            if 'safety' in kwargs and kwargs['safety'] == "mask":
+                from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
+                model = base_algorithm(MaskableActorCriticPolicy, env, verbose=0, tensorboard_log=tensorboard_log)
+            else:
+                model = base_algorithm(MlpPolicy, env, verbose=0, tensorboard_log=tensorboard_log)
 
-        model.learn(total_timesteps=kwargs['total_timesteps'],
-                    tb_log_name=name,
-                    callback=callback)
-                    # log_interval=log_interval)
+            #TODO: Remove
+            #from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
+            #model = base_algorithm(MaskableActorCriticPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
 
-        save_model(name, model)
+            callback = CallbackList([PendulumTrainCallback(safe_region=safe_region)])
+
+            model.learn(total_timesteps=kwargs['total_timesteps'],
+                        tb_log_name=name,
+                        callback=callback)
+            # log_interval=log_interval)
+
+            # TODO: Overrides / maybe combine?
+            save_model(name, model)
 
     elif 'rollout' in kwargs and kwargs['rollout']:
 
@@ -209,11 +227,13 @@ def main(**kwargs):
             env_safe_action = True
 
         #rollout(env, model, safe_region=safe_region, num_episodes=1, callback=callback, env_safe_action=env_safe_action, render=render, sleep=.05)
-        rollout(env, model, safe_region=safe_region, num_episodes=1, callback=callback, env_safe_action=env_safe_action,
+        rollout(env, model, safe_region=safe_region, num_episodes=kwargs['iterations'], callback=callback, env_safe_action=env_safe_action,
                 render=render, sleep=.1)
 
     if 'env' in locals(): env.close()
-    rename_tf_events()
+
+    if "group" in kwargs:
+        rename_tf_events(kwargs["group"])
 
 
 def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, env_safe_action=False, render=False, rgb_array=False, sleep=0.1):
@@ -316,6 +336,7 @@ def parse_arguments():
                         help='Base name for generated data')
     parser.add_argument('-s', '--safety', type=str, default=None, required=False,
                         help='Safety method')
+    parser.add_argument('-i', '--iterations', type=int, default=1, required=False)
     args, unknown = parser.parse_known_args()
     return vars(args)
 
@@ -327,13 +348,90 @@ if __name__ == '__main__':
     #args['render'] = True
     #args['safety'] = "shield"
 
+    #TODO: PPO Weird bug - total timesteps?
+
+    ########################
+
+    from gym.envs.registration import register
+
+    register(
+        id='MathPendulum-v0',
+        max_episode_steps=100,
+        entry_point='sb3_contrib.common.envs.pendulum.math_pendulum_env:MathPendulumEnv',
+    )
+
+    tags = [
+        "main/avg_abs_action_rl",
+        "main/avg_abs_safety_correction",
+        "main/avg_abs_thdot",
+        "main/avg_abs_theta",
+        "main/avg_safety_measure",
+        "main/episode_reward",
+        "main/episode_time",
+        "main/max_abs_action_rl",
+        "main/max_abs_safety_correction",
+        "main/max_abs_thdot",
+        "main/max_abs_theta",
+        "main/max_safety_measure",
+        "main/no_violation",
+        "main/rel_abs_safety_correction"
+    ]
+
     args["train"] = True
+    args["name"] = "run"
+    args['iterations'] = 2
+    args['total_timesteps'] = 20e4
+    #args['total_timesteps'] = 20e4
+
+    args["group"] = "standard"
+    #main(**args)
+
+    #Algorithm
+    #Rollout after training
+
+    # Punish + diff. Punishment
+    args["safety"] = "shield"
+    args["group"] = "shield"
+    #main(**args)
+
+    # Punish + Change method of punishment #todo: wrapper actionrl
+    args["safety"] = "mask"
+    args["group"] = "mask"
+    #main(**args)
+
+    # Dif.. Gamma, Punish + diff. Punishment
+    args["safety"] = "cbf"
+    args["group"] = "cbf"
+    #main(**args)
+
+    from thesis.util import tf_events_to_plot
+    for tag in tags:
+        tf_events_to_plot(dirss=["mask", "shield","cbf"], #"standard"
+                          tags=[tag],
+                          x_label='Episode',
+                          y_label='',
+                          width=5,
+                          height=2.5,
+                          episode_length=100,
+                          window_size=11,
+                          save_as=f"pdfs/{tag.split('/')[1]}")
+
+
+
+    ########################
+
+    #args["train"] = True
+    #args['iterations'] = 2
+    #args['total_timesteps'] = 1e4
     #args["name"]="NoSafety"
     #args["safety"] = "shield"
-    #args["name"] = "Shield"
+
+    #name = "test"
+    #args["group"] = name
+    #args["name"] = name
     #args["name"] = "Shield_Punish"
-    args["safety"] = "mask"
-    args["name"] = "Mask"
+    #args["safety"] = "mask"
+    #args["name"] = "Mask"
     #args["name"] = "Mask_Punish"
     # args["safety"] = "cbf"
 
@@ -347,4 +445,4 @@ if __name__ == '__main__':
 
     #args['name'] = 'maskTest'
 
-    main(**args)
+    #main(**args)

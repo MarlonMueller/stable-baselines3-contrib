@@ -133,4 +133,6 @@ class SafetyMask(gym.Wrapper):
             obs, reward, done, info = self.env.step(action)
             info["mask"] = {"action": action, "action_mask": None, "mask": self._last_mask}
 
+        # Pot. Mask Punishment
+
         return obs, reward, done, info

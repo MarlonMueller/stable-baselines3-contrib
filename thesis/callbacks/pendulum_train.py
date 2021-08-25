@@ -30,6 +30,12 @@ class PendulumTrainCallback(BaseCallback):
         self.total_abs_safety_correction = 0
         self.max_abs_safety_correction = 0
 
+        self.total_safey_measure = 0
+        self.max_safety_measure = 0
+
+        #self.max_ac; max correction possible? -> wäre wie abs safety correction but relative
+        self.max_thdot = 5.890486225480862
+
         self._safe_region = safe_region
 
     def _on_step(self) -> bool:
@@ -69,6 +75,19 @@ class PendulumTrainCallback(BaseCallback):
         if state not in self._safe_region:  # [0][0] not necessary
             self.safe_episode = False
 
+        #theta, thdot = state
+        #cutoff = 1 + 1e-15
+
+
+        theta, thdot = state
+        det_12 = 6.939565594515956
+        safety_measure = max(abs((-thdot * 1.1780972450961726) / det_12),
+            abs((theta * self.max_thdot + thdot * 1.9634954084936205) / det_12))
+        self.total_safey_measure += safety_measure
+        if safety_measure > self.max_safety_measure:
+            self.max_safety_measure = safety_measure
+
+
         # TODO: Discuss shield evaluation: Difference or total safe action?
         if 'shield' in infos.keys():
             action_rl = infos['shield']["action"]
@@ -102,10 +121,11 @@ class PendulumTrainCallback(BaseCallback):
             self.total_abs_safety_correction += correction
             if correction > self.max_abs_safety_correction:
                 self.max_abs_safety_correction = correction
-            self.total_abs_action_rl += len(mask)  # TODO
+
 
             if abs(action_rl) > self.max_abs_action_rl:
                 self.max_abs_action_rl = abs(action_rl)
+            self.total_abs_action_rl += abs(action_rl)
 
         if "episode" in infos.keys():
 
@@ -120,6 +140,9 @@ class PendulumTrainCallback(BaseCallback):
             self.logger.record('main/avg_abs_thdot', self.total_abs_thdot / infos['episode']['l'])
             self.logger.record('main/max_abs_theta', self.max_abs_theta)
             self.logger.record('main/max_abs_thdot', self.max_abs_thdot)  # TODO: Maybe not abs and draw upper and lower boundary
+
+            self.logger.record('main/avg_safety_measure', self.total_safey_measure / infos['episode']['l'])
+            self.logger.record('main/max_safety_measure', self.max_safety_measure)
 
             if 'mask' in infos.keys() or 'shield' in infos.keys() or 'cbf' in infos.keys():
 
@@ -175,6 +198,9 @@ class PendulumTrainCallback(BaseCallback):
             self.max_abs_action_rl = 0
             self.total_abs_safety_correction = 0
             self.max_abs_safety_correction = 0
+
+            self.total_safey_measure = 0
+            self.max_safety_measure = 0
 
             self.logger.dump(step=self.num_steps)
 
