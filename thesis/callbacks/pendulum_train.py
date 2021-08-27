@@ -33,6 +33,9 @@ class PendulumTrainCallback(BaseCallback):
         self.total_safey_measure = 0
         self.max_safety_measure = 0
 
+        self.total_punishment = 0
+        self.total_reward_rl = 0
+
         #self.max_ac; max correction possible? -> wäre wie abs safety correction but relative
         self.max_thdot = 5.890486225480862
 
@@ -88,44 +91,54 @@ class PendulumTrainCallback(BaseCallback):
             self.max_safety_measure = safety_measure
 
 
+
+
         # TODO: Discuss shield evaluation: Difference or total safe action?
-        if 'shield' in infos.keys():
+
+        if "shield" in infos.keys():
             action_rl = infos['shield']["action"]
+            self.total_reward_rl += infos['shield']["reward"]
             if infos['shield']["action_shield"] is not None:
                 correction = abs(action_rl - infos['shield']["action_shield"])
                 self.total_abs_safety_correction += correction
                 if correction > self.max_abs_safety_correction:
                     self.max_abs_safety_correction = correction
+                if infos['shield']["punishment"] is not None:
+                    self.total_punishment += infos['shield']["punishment"]
 
-            if abs(action_rl) > self.max_abs_action_rl:
-                self.max_abs_action_rl = abs(action_rl)
-            self.total_abs_action_rl += abs(action_rl)
 
-        if 'cbf' in infos.keys():
+
+
+        elif "cbf" in infos.keys():
             action_rl = infos['cbf']["action"]
+            self.total_reward_rl += infos['cbf']["reward"]
             correction = abs(infos['cbf']["action_bar"])
             self.total_abs_safety_correction += correction
             if correction > self.max_abs_safety_correction:
                 self.max_abs_safety_correction = correction
+            if infos['cbf']["punishment"] is not None:
+                self.total_punishment += infos['cbf']["punishment"]
 
-            if abs(action_rl) > self.max_abs_action_rl:
-                self.max_abs_action_rl = abs(action_rl)
-            self.total_abs_action_rl += abs(action_rl)
 
-        if 'mask' in infos.keys():
+        elif "mask" in infos.keys():
             # TODO: compare action rl
             action_rl = infos['mask']["action"]
-
+            self.total_reward_rl += infos['mask']["reward"]
             mask = infos['mask']["mask"][:-1]
             correction = np.count_nonzero(mask == 0)
             self.total_abs_safety_correction += correction
             if correction > self.max_abs_safety_correction:
                 self.max_abs_safety_correction = correction
+            if infos['mask']["punishment"] is not None:
+                self.total_punishment += infos['mask']["punishment"]
 
+        else:
+            action_rl = infos['standard']["action"]
 
-            if abs(action_rl) > self.max_abs_action_rl:
-                self.max_abs_action_rl = abs(action_rl)
-            self.total_abs_action_rl += abs(action_rl)
+        if abs(action_rl) > self.max_abs_action_rl:
+            self.max_abs_action_rl = abs(action_rl)
+        self.total_abs_action_rl += abs(action_rl)
+
 
         if "episode" in infos.keys():
 
@@ -150,6 +163,8 @@ class PendulumTrainCallback(BaseCallback):
                 self.logger.record('main/avg_abs_safety_correction', self.total_abs_safety_correction / infos['episode']['l'])
                 self.logger.record('main/max_abs_action_rl', self.max_abs_action_rl)
                 self.logger.record('main/max_abs_safety_correction', self.max_abs_safety_correction)
+                self.logger.record('main/avg_step_punishment', self.total_punishment / infos['episode']['l'])
+                self.logger.record('main/avg_step_reward_rl', self.total_reward_rl / infos['episode']['l'])
 
                 # TODO: Uncorrected action?
                 # self.logger.record('main/total_abs_action_rl', self.total_abs_action_rl)
@@ -161,6 +176,10 @@ class PendulumTrainCallback(BaseCallback):
                 else:
                     self.logger.record('main/rel_abs_safety_correction',
                                        self.total_abs_safety_correction / self.total_abs_action_rl)
+
+            else:
+
+                self.logger.record('main/avg_step_reward_rl', self.total_reward_rl / infos['episode']['l'])
 
             # Max rl action not needed (guaranteed to be safe)
             # Same basically for max thdot / theta - but good for visualisation with boundary? -> better than avg?!
@@ -201,6 +220,9 @@ class PendulumTrainCallback(BaseCallback):
 
             self.total_safey_measure = 0
             self.max_safety_measure = 0
+
+            self.total_reward_rl = 0
+            self.total_punishment = 0
 
             self.logger.dump(step=self.num_steps)
 

@@ -2,6 +2,7 @@ import os, argparse, logging, importlib, time, random
 from typing import Union
 
 from gym.wrappers import TimeLimit
+from stable_baselines3.common.type_aliases import GymStepReturn
 from stable_baselines3.common.utils import configure_logger
 from thesis.callbacks.pendulum_train import PendulumTrainCallback
 from thesis.callbacks.pendulum_rollout import PendulumRolloutCallback
@@ -54,7 +55,17 @@ def main(**kwargs):
     # Initialize environment
     if kwargs['env_id'] not in [env_spec.id for env_spec in gym.envs.registry.all()]:
          KeyError(f"Environment {kwargs['env_id']} is not registered")
-    env = gym.make(kwargs['env_id'])
+
+    if "init" in kwargs and kwargs["init"] == "random":
+        if "reward" in kwargs and kwargs["reward"] == "opposing":
+            env = gym.make(kwargs['env_id'], init="random", reward="opposing")
+        else:
+            env = gym.make(kwargs['env_id'], init="random")
+    else:
+        if "reward" in kwargs and kwargs["reward"] == "opposing":
+            env = gym.make(kwargs['env_id'], reward="opposing")
+        else:
+            env = gym.make(kwargs['env_id'])
 
     #TODO
     #if 'safety' not in kwargs:
@@ -83,6 +94,14 @@ def main(**kwargs):
 
     if 'safety' in kwargs and kwargs['safety'] is not None:
 
+        if "action_space" in kwargs and kwargs["action_space"] == "unsafetorqueas":
+            transform_action_space_fn = lambda a: 2 * (a - 20)
+            alter_action_space = gym.spaces.Discrete(41)
+        else:
+            transform_action_space_fn = lambda a: 2 * (a - 15)
+            alter_action_space = gym.spaces.Discrete(31)
+
+
         if kwargs['safety'] == "shield":
             from sb3_contrib.common.wrappers import SafetyShield
 
@@ -90,10 +109,22 @@ def main(**kwargs):
                 theta, thdot = env.state
                 return env.dynamics(theta, thdot, action)
 
-            def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                              action: Union[int, float, np.ndarray],
-                              action_shield: Union[int, float, np.ndarray]) -> float:
-                return -abs(action - action_shield)
+            # return -abs(action - action_shield) 1:1
+            if "punishment" in kwargs:
+                if kwargs["punishment"] == "lightpunish":
+                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                                      action: Union[int, float, np.ndarray],
+                                      action_shield: Union[int, float, np.ndarray]) -> float:
+                        return -abs(action - action_shield) * 0.5
+                elif kwargs["punishment"] == "heavypunish":
+                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                                      action: Union[int, float, np.ndarray],
+                                      action_shield: Union[int, float, np.ndarray]) -> float:
+                        return -abs(action - action_shield) * 4
+                else:
+                    punishment_fn = None
+            else:
+                punishment_fn = None
 
             # Wrap with SafetyShield
             env = SafetyShield(
@@ -102,24 +133,40 @@ def main(**kwargs):
                 dynamics_fn=dynamics_fn,
                 safe_action_fn="safe_action",  # Method already in env (LQR controller)
                 punishment_fn=punishment_fn,
-                transform_action_space_fn=lambda a: 2 * (a - 15),
-                alter_action_space=gym.spaces.Discrete(31))
+                transform_action_space_fn=transform_action_space_fn,
+                alter_action_space=alter_action_space)
 
 
         elif kwargs['safety'] == "cbf":
             from sb3_contrib.common.wrappers import SafetyCBF
 
             def actuated_dynamics_fn(env: gym.Env) -> np.ndarray:
-                return np.array([(env.dt ** 2 / (env.m * env.l ** 2)), (env.dt / (env.m * env.l ** 2))])
+                return np.array([0, (env.dt / (env.m * env.l ** 2))])
+                #return np.array([(env.dt ** 2 / (env.m * env.l ** 2)), (env.dt / (env.m * env.l ** 2))])
 
             def dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
                 theta, thdot = env.state
                 return env.dynamics(theta, thdot, action)
 
-            def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                              action: Union[int, float, np.ndarray],
-                              action_cbf: Union[int, float, np.ndarray]) -> float:
-                return -abs(action_cbf)
+            if "punishment" in kwargs:
+                if kwargs["punishment"] == "lightpunish":
+                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                                      action: Union[int, float, np.ndarray],
+                                      action_cbf: Union[int, float, np.ndarray]) -> float:
+                        return -abs(action_cbf) * 0.5
+                elif kwargs["punishment"] == "heavypunish":
+                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                                      action: Union[int, float, np.ndarray],
+                                      action_cbf: Union[int, float, np.ndarray]) -> float:
+                        return -abs(action_cbf) * 4
+                else:
+                    punishment_fn = None
+            else:
+                punishment_fn = None
+
+
+            if "gamma" not in kwargs:
+                kwargs["gamma"] = .5
 
             # Wrap with SafetyCBF
             env = SafetyCBF(
@@ -129,9 +176,9 @@ def main(**kwargs):
                 actuated_dynamics_fn=actuated_dynamics_fn,
                 # unactuated_dynamics_fn=unactuated_dynamics_fn
                 punishment_fn=punishment_fn,
-                transform_action_space_fn=lambda a: 2 * (a - 15),
-                alter_action_space=gym.spaces.Discrete(31),
-                gamma=0.5)
+                transform_action_space_fn=transform_action_space_fn,
+                alter_action_space=alter_action_space,
+                gamma=kwargs["gamma"])
 
             #TODO, f und g as other methods in env?
             #TODO Erklärung Problem
@@ -146,10 +193,23 @@ def main(**kwargs):
                 theta, thdot = env.state
                 return env.dynamics(theta, thdot, action)
 
-            def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                              action: Union[int, float, np.ndarray],
-                              action_mask: Union[int, float, np.ndarray]) -> float:
-                return -(action_mask ** 2)
+            # We only care about the mask, fail-safe controller is not in use
+            if "punishment" in kwargs:
+                if kwargs["punishment"] == "lightpunish":
+                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                                      action: Union[int, float, np.ndarray],
+                                      mask: Union[int, float, np.ndarray]) -> float:
+                        return -(1 - (np.sum(mask)-1) / (len(mask)-1)) * 5
+                elif kwargs["punishment"] == "heavypunish":
+                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                                      action: Union[int, float, np.ndarray],
+                                      mask: Union[int, float, np.ndarray]) -> float:
+                        return -(1 - (np.sum(mask)-1) / (len(mask)-1)) * 40
+                else:
+                    punishment_fn = None
+            else:
+                punishment_fn = None
+
 
             # Wrap with SafetyMask
             env = SafetyMask(
@@ -158,8 +218,40 @@ def main(**kwargs):
                 dynamics_fn=dynamics_fn,
                 safe_action_fn="safe_action",  # Method already in env (LQR controller)
                 punishment_fn=punishment_fn,
-                transform_action_space_fn=lambda a: 2 * (a - 15),
-                alter_action_space=gym.spaces.Discrete(31))
+                transform_action_space_fn=transform_action_space_fn,
+                alter_action_space=alter_action_space)
+
+        else:
+
+            class ActionInfoWrapper(gym.Wrapper):
+                def __init__(self,alter_action_space = None,
+                 transform_action_space_fn = None):
+                    super().__init__(env)
+
+                    if alter_action_space is not None:
+                        self.action_space = alter_action_space
+
+                    if transform_action_space_fn is not None:
+                        if isinstance(transform_action_space_fn, str):
+                            fn = getattr(self.env, transform_action_space_fn)
+                            if not callable(fn):
+                                raise ValueError(f"Attribute {fn} is not a method")
+                            self._transform_action_space_fn = fn
+                        else:
+                            self._transform_action_space_fn = transform_action_space_fn
+                    else:
+                        self._transform_action_space_fn = None
+
+                def step(self, action) -> GymStepReturn:
+
+                    if self._transform_action_space_fn is not None:
+                        action = self._transform_action_space_fn(action)
+
+                    obs, reward, done, info = self.env.step(action)
+                    info["standard"] = {"action": action}
+                    return obs, reward, done, info
+
+            env = ActionInfoWrapper(env, transform_action_space_fn, alter_action_space)
 
 
 
@@ -291,7 +383,7 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
 
             elif env_safe_action:
                 #TODO: Fix/Easier? / Could check for callable etc.
-                action = env.get_attr('safe_action')[0](env, safe_region)
+                action = env.get_attr('safe_action')[0](env, safe_region, None)
 
             else:
                 #TODO: Sample is [] for box and otherwise not?
@@ -374,49 +466,92 @@ if __name__ == '__main__':
         "main/max_abs_theta",
         "main/max_safety_measure",
         "main/no_violation",
-        "main/rel_abs_safety_correction"
+        "main/rel_abs_safety_correction",
+        "main/avg_step_punishment",
+        "main/avg_step_reward_rl"
     ]
+
+
 
     args["train"] = True
     args["name"] = "run"
-    args['iterations'] = 2
-    args['total_timesteps'] = 20e4
-    #args['total_timesteps'] = 20e4
+    args['iterations'] = 3
+    args['total_timesteps'] = 2e4
+    #
+    # args["safety"] = "shield"
+    # #args["safety"] = "mask"
+    # #args["safety"] = "mask"
+    # args["punishment"] = "heavypunish"
+    #
+    # args["init"] = "random"
+    # #args["reward"] = "opposing"
+    # args["group"] = "test"
+    # main(**args)
 
-    args["group"] = "standard"
+
+    for alg in ["PPO", "A2C"]: #TODO: A2C run
+        args["algorithm"] = alg
+        for safety in ["no_safety", "shield", "mask", "cbf"]:
+            args["safety"] = safety
+            for action_space in ["safetorqueas", "unsafetorqueas"]:
+                args["action_space"] = action_space
+                for init in ["zero", "random"]:
+                    args["init"] = init
+                    for reward in ["opposing", "safety"]:
+                        args["reward"] = reward
+                        for punishment in ["nopunish", "lightpunish", "heavypunish"]:
+                            args["punishment"] = punishment
+                            if safety=="cbf":
+                                for gamma in [0.25, 0.75]:
+                                    args["gamma"] = gamma
+                                    args["group"] = f"{alg}_{safety}_{action_space}_{init}_{reward}_{punishment}_{str(gamma)}"
+                                    main(**args)
+                                    print(f"Finished training {args['group']} ...")
+                            else:
+                                args["group"] = f"{alg}_{safety}_{action_space}_{init}_{reward}_{punishment}"
+                                main(**args)
+                                print(f"Finished training {args['group']} ...")
+
+
+
+    #args["group"] = "standard"
     #main(**args)
 
     #Algorithm
+    # Different reward function
     #Rollout after training
+    # Do not start at 0,0, train at 0,0 - start random
+    # Choose bigger action space than allowed
+    # Same or different safety vs. reward function
 
-    # Punish + diff. Punishment
-    args["safety"] = "shield"
-    args["group"] = "shield"
+    # Punish + diff. Punishment not just add reward but replace
+    #args["safety"] = "shield"
+    #args["group"] = "shield"
     #main(**args)
 
-    # Punish + Change method of punishment #todo: wrapper actionrl
-    args["safety"] = "mask"
-    args["group"] = "mask"
+    # Punish + Change method of punishment
+    #args["safety"] = "mask"
+    #args["group"] = "mask"
     #main(**args)
 
-    # Dif.. Gamma, Punish + diff. Punishment
-    args["safety"] = "cbf"
-    args["group"] = "cbf"
+    # Dif.. Gamma + Rollout, Punish + diff. Punishment
+    #args["safety"] = "cbf"
+    #args["group"] = "cbf"
     #main(**args)
+    #tags = ["test"]
+    #from thesis.util import tf_events_to_plot
+    #for tag in tags:
+    #    tf_events_to_plot(dirss=["test"], #"standard"
+    #                      tags=[tag],
+    #                      x_label='Episode',
+    #                      y_label='',
+    #                      width=5,
+    #                      height=2.5,
+    #                      episode_length=100,
+    #                      window_size=11,
+    #                      save_as=f"pdfs/{tag.split('/')[1]}")
 
-    from thesis.util import tf_events_to_plot
-    for tag in tags:
-        tf_events_to_plot(dirss=["mask", "shield","cbf"], #"standard"
-                          tags=[tag],
-                          x_label='Episode',
-                          y_label='',
-                          width=5,
-                          height=2.5,
-                          episode_length=100,
-                          window_size=11,
-                          save_as=f"pdfs/{tag.split('/')[1]}")
-
-
+    os.system("say The program finished.")
 
     ########################
 

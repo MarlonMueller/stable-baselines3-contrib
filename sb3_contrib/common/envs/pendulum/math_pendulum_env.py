@@ -35,7 +35,7 @@ class MathPendulumEnv(Env):
         else:
             return -np.dot(gain_matrix, env.state)
 
-    def __init__(self):
+    def __init__(self, init=None, reward=None):
 
         # Length
         self.l = 1.
@@ -46,18 +46,22 @@ class MathPendulumEnv(Env):
         # Timestep
         self.dt = .05
 
+        self.init = init #TODO
+        self.reward = reward
+
         self.rng = np.random.default_rng()
 
         #TODO: Remove
         from gym.spaces import Discrete
-        self.action_space = Discrete(15)
-        #max_torque = 30.898877999566082
-        #self.action_space = Box(
-       #     low=-max_torque,
-       #     high=max_torque,
-       #     shape=(1,),
-       #     dtype=np.float32
-       # )
+        #self.action_space = Discrete(15)
+
+        max_torque = 30.898877999566082
+        self.action_space = Box(
+            low=-max_torque,
+            high=max_torque,
+            shape=(1,),
+            dtype=np.float32
+        )
 
         obs_high = np.array([1., 1., np.inf], dtype=np.float32)
         self.observation_space = Box(
@@ -69,16 +73,28 @@ class MathPendulumEnv(Env):
         self.last_action = None
         self.viewer = None
 
+        #TODO: Remove
+        from thesis.pendulum_roa import PendulumRegionOfAttraction
+        max_thdot = 5.890486225480862
+        vertices = np.array([
+            [-pi, max_thdot],  # LeftUp
+            [-0.785398163397448, max_thdot],  # RightUp
+            [pi, -max_thdot],  # RightLow
+            [0.785398163397448, -max_thdot]  # LeftLow
+        ])
+        self._safe_region = PendulumRegionOfAttraction(vertices=vertices)
+
         self.reset()
 
 
     def reset(self) -> GymObs:
 
         # Start at theta=0; thdot=0
-        #self.state = np.array([0,0])
-        self.state = np.array([0, 0])
-        # Start within safe space
-        # self.state = self.safe_region.sample()
+
+        if self.init is not None and self.init == "random":
+            self.state = np.asarray(self._safe_region.sample())
+        else:
+            self.state = np.array([0, 0])
 
         self.last_action = None
 
@@ -95,15 +111,22 @@ class MathPendulumEnv(Env):
         return self._get_obs(theta, thdot), self._get_reward(theta, thdot, action), False, {}
 
     def dynamics(self, theta: float, thdot: float, torque: float) -> Tuple[float, float]:
-        thdot += self.dt * ((self.g / self.l) * sin(theta) + 1. / (self.m * self.l ** 2) * torque)
-        theta += self.dt * thdot
-        return [theta, thdot]
+        new_theta = theta + self.dt * thdot
+        new_thdot = thdot + self.dt * ((self.g / self.l) * sin(theta) + 1. / (self.m * self.l ** 2) * torque)
+        return [new_theta, new_thdot]
 
     def _get_obs(self, theta, thdot) -> GymObs:
         return np.array([cos(theta), sin(theta), thdot])
 
     def _get_reward(self, theta: float, thdot: float, action: Union[int, np.ndarray]) -> float:
-        return -(self._norm_theta(theta) ** 2 + .1 * thdot ** 2 + .001 * (action ** 2))
+        if self.reward is not None: #TODO: Clean
+            # #Opposing -
+            return -(.5 * abs(action) + abs(self._norm_theta(theta)) + abs(.1 * thdot))
+        else: #Safety
+            det_12 = 6.939565594515956
+            max_thdot = 5.890486225480862
+            return -(4.5 * max(abs((-thdot * 1.1780972450961726) / det_12),
+                                 abs((theta * max_thdot + thdot * 1.9634954084936205) / det_12))) ** 2
 
     def _norm_theta(self, theta: float) -> float:
         return ((theta + pi) % (2 * pi)) - pi
@@ -121,18 +144,7 @@ class MathPendulumEnv(Env):
 
         if self.viewer is None:
 
-            #TODO: Only used for rendering
             self.safety_violation = False
-            from sb3_contrib.common.safety.safe_region import SafeRegion
-            max_thdot = 5.890486225480862
-            vertices = np.array([
-                [-pi, max_thdot],  # LeftUp
-                [-0.785398163397448, max_thdot],  # RightUp
-                [pi, -max_thdot],  # RightLow
-                [0.785398163397448, -max_thdot]  # LeftLow
-            ])
-            self._safe_region = SafeRegion(vertices=vertices)
-            #self._safe_region = None #TODO: Remove
 
             from gym.envs.classic_control import rendering
             self.viewer = rendering.Viewer(500, 500)

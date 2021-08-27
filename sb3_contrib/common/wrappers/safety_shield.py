@@ -88,14 +88,25 @@ class SafetyShield(gym.Wrapper):
 
             action_shield = self._safe_action_fn(self.env, self._safe_region, action)
             obs, reward, done, info = self.env.step(action_shield)
-            info["shield"] = {"action": action, "action_shield": action_shield}
 
             if self._punishment_fn is not None:
-                reward += self._punishment_fn(self.env, self._safe_region, action, action_shield)
+                punishment = self._punishment_fn(self.env, self._safe_region, action, action_shield)
+                info["shield"] = {"action": action,
+                                  "action_shield": action_shield,
+                                  "reward": reward,
+                                  "punishment": punishment}
+                reward += punishment
+            else:
+                info["shield"] = {"action": action,
+                                  "action_shield": action_shield,
+                                  "reward": reward,
+                                  "punishment": None}
 
         else:
-
             obs, reward, done, info = self.env.step(action)
-            info["shield"] = {"action": action, "action_shield": None}
+            info["shield"] = {"action": action,
+                              "action_shield": None,
+                              "reward": reward,
+                              "punishment": None}
 
         return obs, reward, done, info

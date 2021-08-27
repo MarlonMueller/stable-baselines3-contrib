@@ -296,7 +296,6 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
     fig = plt.figure()
     setup_plot(fig=fig, width=width, height=height)
 
-    num_plots = 0
 
     if not tags:
         logger.error(f'No tags specified: {tags}')
@@ -371,6 +370,8 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
 
                     #TODO: Check PPO Episodes/Steps
 
+                    linewidth = 1
+
                     if label == "standard":
                         color = COLORS_PLOTS[0]
                     elif label == "shield":
@@ -379,12 +380,18 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                         color = COLORS_PLOTS[1]
                     elif label == "cbf":
                         color = COLORS_PLOTS[3]
+                    else:
+                        color = COLORS_PLOTS[0]
 
+                   # if color in locals():
 
-                    linewidth = 1
-                    plt.plot(range(1, len(mean)+1), mean, color=color, label=label, linewidth=linewidth)
-                    plt.fill_between(range(1, len(mean)+1), mean - std_dev, mean + std_dev, color=color, alpha=0.25)
-                    num_plots += 1
+                     #   plt.plot(range(1, len(mean)+1), mean, color=color, label=label, linewidth=linewidth)
+                     #   plt.fill_between(range(1, len(mean)+1), mean - std_dev, mean + std_dev, color=color, alpha=0.25)
+
+                    #else:
+                    plt.plot(range(1, len(mean) + 1), mean, label=label, linewidth=linewidth)
+                    plt.fill_between(range(1, len(mean) + 1), mean - std_dev, mean + std_dev, alpha=0.25)
+
 
 
 
@@ -505,6 +512,7 @@ def animate(frames, interval=50, dpi=100):
 
 if __name__ == '__main__':
     #tf_event_to_plot('60K_A2C_1', 'main/episode_reward')
+    pass
     #Moving Average of Safety Violations
     #save_as = 'noSafety2'
     # Avg. masked out actions
@@ -526,15 +534,6 @@ if __name__ == '__main__':
     #gain_matrix = [18.224698834878474, 5.874625145435321]
     #print(torque_given_state(gain_matrix=gain_matrix, state=[0.785398163397448, -max_thdot]))
 
-    tf_events_to_plot(dirss=["shield"],
-                      tags=["main/avg_abs_action_rl"],
-                      x_label='Episode',
-                      y_label='',
-                      width=5,
-                      height=2.5,
-                      episode_length=100,
-                      window_size=0,
-                      save_as=None)
 
     #tf_event_to_plot('80K_A2C_1', ['main/no_violation'],#, 'main/shield_activations'],
     #                 y_label='', save_as=save_as,

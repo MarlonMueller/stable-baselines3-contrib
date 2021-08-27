@@ -121,18 +121,40 @@ class SafetyMask(gym.Wrapper):
             action = self._transform_action_space_fn(action)
 
         if zero_mask:
-            action_mask = self._safe_action_fn(self.env, self._safe_region, action)
+            #TODO: Explain None
+            action_mask = self._safe_action_fn(self.env, self._safe_region, None)
             obs, reward, done, info = self.env.step(action_mask)
-            info["mask"] = {"action": action, "action_mask": action_mask, "mask": self._last_mask}
 
+            #TODO: Update Notebook info returns
+            #TODO: Explain args punishment in notebook
             if self._punishment_fn is not None:
-                reward += self._punishment_fn(self.env, self._safe_region, action, action_mask)
-
+                punishment = self._punishment_fn(self.env, self._safe_region, action_mask, self._last_mask)
+                info["mask"] = {"action": action_mask,
+                                "mask": self._last_mask,
+                                "reward": reward,
+                                "punishment": punishment}
+                reward += punishment
+            else:
+                info["mask"] = {"action": action_mask,
+                                "mask": self._last_mask,
+                                "reward": reward,
+                                "punishment": None
+                                }
         else:
-
             obs, reward, done, info = self.env.step(action)
-            info["mask"] = {"action": action, "action_mask": None, "mask": self._last_mask}
+            if self._punishment_fn is not None:
+                punishment = self._punishment_fn(self.env, self._safe_region, action, self._last_mask)
+                info["mask"] = {"action": action,
+                                "mask": self._last_mask,
+                                "reward": reward,
+                                "punishment": punishment}
+                reward += punishment
+            else:
+                info["mask"] = {"action": action,
+                                "mask": self._last_mask,
+                                "reward": reward,
+                                "punishment": None
+                                }
 
         # Pot. Mask Punishment
-
         return obs, reward, done, info

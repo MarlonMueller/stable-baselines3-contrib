@@ -50,8 +50,18 @@ class PendulumRegionOfAttraction(SafeRegion):
         # det(1,2) = 1.1780972450961726 * max_thdot = 6.939565594515956
         # -> det(S, 1)/det(1,2) && det(S,2)/det(1,2)
 
+        max_thdot = 5.890486225480862
+        vertices = np.array([
+            [-pi, max_thdot],  # LeftUp
+            [-0.785398163397448, max_thdot],  # RightUp
+            [pi, -max_thdot],  # RightLow
+            [0.785398163397448, -max_thdot]  # LeftLow
+        ])
+
+
+
         theta, thdot = state
-        cutoff = 1 + 1e-15
+        cutoff = 1 + 1e-10
         det_12 = 6.939565594515956
         max_thdot = 5.890486225480862
         if (abs((-thdot * 1.1780972450961726)/det_12) <= cutoff and

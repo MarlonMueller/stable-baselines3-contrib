@@ -132,9 +132,17 @@ class SafetyCBF(gym.Wrapper):
 
         obs, reward, done, info = self.env.step(action + action_bar)
 
-        info["cbf"] = {"action": action, "action_bar": action_bar}
-
         if self._punishment_fn is not None:
-            reward += self._punishment_fn(self.env, self._safe_region, action, action_bar)
+            punishment = self._punishment_fn(self.env, self._safe_region, action, action_bar)
+            info["cbf"] = {"action": action,
+                           "action_bar": action_bar,
+                           "reward": reward,
+                           "punishment": punishment}
+            reward += punishment
+        else:
+            info["cbf"] = {"action": action,
+                           "action_bar": action_bar,
+                           "reward": reward,
+                           "punishment": None}
 
         return obs, reward, done, info

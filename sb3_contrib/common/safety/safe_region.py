@@ -3,6 +3,8 @@ from typing import Optional, Tuple
 from pypoman import compute_polytope_halfspaces
 from pypoman import compute_polytope_vertices
 
+import random
+
 import numpy as np
 
 #TODO: Old typing 3.7+
@@ -26,6 +28,8 @@ class SafeRegion():
             self._A = A
             self._b = b
             self._v = None
+
+        self.rng = np.random.default_rng()
 
     def __contains__(self, item): #TODO
         return np.all(np.matmul(self._A, item) <= self._b + 1e-10)
