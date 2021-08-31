@@ -40,32 +40,35 @@ class PendulumRegionOfAttraction(SafeRegion):
 
         #Note: Check could probably done directly via max_torque
 
+        # theta_roa = 3.092505268377452
+        # vertices = np.array([
+        #     [-theta_roa, 12.762720155208534],  # LeftUp
+        #     [theta_roa, -5.890486225480862],  # RightUp
+        #     [theta_roa, -12.762720155208534],  # RightLow
+        #     [-theta_roa, 5.890486225480862]  # LeftLow
+        # ])
+
         # Derivation
-        # y = mx +t; x = (y-t)/m
-        # m = #RightLow - #RightUp = (- 2*max_thdot)/(pi + 0.785398163397448) = -3
-        # t = y - mx =  -max_thdot + 3*pi = 3.5342917352885177
-        # x = (3.5342917352885177)/(3) = 1.1780972450961726
-        # (1) = [1.1780972450961726, 0]
-        # (2) = [-pi + 1.1780972450961726, max_thdot + 0] = [-1.9634954084936205, max_thdot]
-        # det(1,2) = 1.1780972450961726 * max_thdot = 6.939565594515956
+        # y = mx +t; x = (y-t)/m; m = x/(y-t)
+        # m = (-5.890486225480862 - 12.762720155208534) / (2*theta_roa) = -3.0158730158730167
+        # t = y - mx = 12.762720155208534 - 3.0158730158730167 * theta_roa = 3.436116964863835
+        # (1) = [0, 3.436116964863835]
+        # (2) = [-theta_roa, 12.762720155208534-3.436116964863835] =  [-theta_roa, 9.326603190344699]
+        # det(1,2) = 3.436116964863835 * theta_roa = 10.62620981660255
         # -> det(S, 1)/det(1,2) && det(S,2)/det(1,2)
 
-        max_thdot = 5.890486225480862
-        vertices = np.array([
-            [-pi, max_thdot],  # LeftUp
-            [-0.785398163397448, max_thdot],  # RightUp
-            [pi, -max_thdot],  # RightLow
-            [0.785398163397448, -max_thdot]  # LeftLow
-        ])
-
+        #dt^2 / 2 = (1/800)
+        #9.81*u
+        #(1/800)*(9.81**2/2 + 9.81*u)
 
 
         theta, thdot = state
         cutoff = 1 + 1e-10
-        det_12 = 6.939565594515956
-        max_thdot = 5.890486225480862
-        if (abs((-thdot * 1.1780972450961726)/det_12) <= cutoff and
-                abs((theta * max_thdot + thdot * 1.9634954084936205)/det_12) <= cutoff):
+        det_12 = 10.62620981660255
+        max_theta = 3.092505268377452
+
+        if (abs((theta * 3.436116964863835)/det_12) <= cutoff and
+                abs((theta * 9.326603190344699 + thdot * max_theta)/det_12) <= cutoff):
              return True
         return False
 
@@ -78,28 +81,28 @@ class PendulumRegionOfAttraction(SafeRegion):
                 num_thdot & (num_thdot -1) == 0 and num_thdot != 0):
             raise ValueError(f'Choose (num_theta-1) and (num_thdot-1) as powers of two')
 
-        fac_theta = -1.
-        fac_thdot = 1.
+        fac_1 = -1.
+        fac_2 = 1.
         dfac_theta = 2/num_theta
         dfac_thdot = 2/num_thdot
 
         states = []
-        max_thdot = 5.890486225480862
-        while fac_thdot >= -1:
-            while fac_theta <= 1:
-                theta = fac_theta * 1.1780972450961726 - fac_thdot * 1.9634954084936205
-                thdot = fac_thdot * max_thdot
+        max_theta = 3.092505268377452
+        while fac_2 >= -1:
+            while fac_1 <= 1:
+                theta = fac_2 * (-max_theta)
+                thdot = fac_1 * 3.436116964863835 + fac_2 * 9.326603190344699
                 states.append([theta, thdot])
-                fac_theta += dfac_thdot
-            fac_theta = -1.
-            fac_thdot -= dfac_theta
+                fac_1 += dfac_thdot
+            fac_1 = -1.
+            fac_2 -= dfac_theta
 
         return states
 
 
     def sample(self):
-        fac_theta, fac_thdot = self.rng.uniform(-1., 1., 2)
-        max_thdot = 5.890486225480862
-        theta = fac_theta * 1.1780972450961726 - fac_thdot * 1.9634954084936205
-        thdot = fac_thdot * max_thdot
+        fac_1, fac_2 = self.rng.uniform(-1., 1., 2)
+        max_theta = 3.092505268377452
+        theta = fac_2 * (-max_theta)
+        thdot = fac_1 * 3.436116964863835 + fac_2 * 9.326603190344699
         return [theta, thdot]

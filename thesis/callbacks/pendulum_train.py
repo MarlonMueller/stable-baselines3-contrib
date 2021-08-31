@@ -83,9 +83,11 @@ class PendulumTrainCallback(BaseCallback):
 
 
         theta, thdot = state
-        det_12 = 6.939565594515956
-        safety_measure = max(abs((-thdot * 1.1780972450961726) / det_12),
-            abs((theta * self.max_thdot + thdot * 1.9634954084936205) / det_12))
+        
+        det_12 = 10.62620981660255
+        max_theta = 3.092505268377452
+        safety_measure = max(abs((theta * 3.436116964863835) / det_12),
+            abs((theta * 9.326603190344699 + thdot * max_theta) / det_12))
         self.total_safey_measure += safety_measure
         if safety_measure > self.max_safety_measure:
             self.max_safety_measure = safety_measure

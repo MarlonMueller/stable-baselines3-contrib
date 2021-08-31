@@ -83,18 +83,25 @@ def main(**kwargs):
     # Define safe regions
     from sb3_contrib.common.safety.safe_region import SafeRegion
     #TODO: PendulumSafeRegion
-    max_thdot = 5.890486225480862
+
+    theta_roa = 3.092505268377452
     vertices = np.array([
-        [-pi, max_thdot],  # LeftUp
-        [-0.785398163397448, max_thdot],  # RightUp
-        [pi, -max_thdot],  # RightLow
-        [0.785398163397448, -max_thdot]  # LeftLow
+         [-theta_roa, 12.762720155208534],  # LeftUp
+         [theta_roa, -5.890486225480862],  # RightUp
+         [theta_roa, -12.762720155208534],  # RightLow
+         [-theta_roa, 5.890486225480862]  # LeftLow
     ])
     safe_region = SafeRegion(vertices=vertices)
 
-    if "action_space" in kwargs and kwargs["action_space"] == "unsafetorqueas":
-        transform_action_space_fn = lambda a: 2 * (a - 20)
-        alter_action_space = gym.spaces.Discrete(41)
+    if "action_space" in kwargs and kwargs["action_space"] == "large":
+        transform_action_space_fn = lambda a: 2 * (a - 30)
+        alter_action_space = gym.spaces.Discrete(61)
+    elif "action_space" in kwargs and kwargs["action_space"] == "small":
+        transform_action_space_fn = lambda a: 2 * (a - 8)
+        alter_action_space = gym.spaces.Discrete(17)
+    elif "action_space" in kwargs and kwargs["action_space"] == "verysmall":
+        transform_action_space_fn = lambda a: (a - 8)
+        alter_action_space = gym.spaces.Discrete(17)
     else:
         transform_action_space_fn = lambda a: 2 * (a - 15)
         alter_action_space = gym.spaces.Discrete(31)
@@ -622,77 +629,77 @@ if __name__ == '__main__':
     #                       save_as=f"pdfs/HEAVYPUN{tag.split('/')[1]}")
 
     # MASKING
-    dirss = [
+    # dirss = [
+    #
+    #     "PPO_cbf_safetorqueas_zero_safety_nopunish_0.75",
+    #     "PPO_cbf_safetorqueas_zero_opposing_nopunish_0.75",
+    #     "PPO_cbf_safetorqueas_random_safety_nopunish_0.75",
+    #     "PPO_cbf_safetorqueas_random_opposing_nopunish_0.75",
+    #     "PPO_cbf_unsafetorqueas_zero_safety_nopunish_0.75",
+    #     "PPO_cbf_unsafetorqueas_zero_opposing_nopunish_0.75",
+    #     "PPO_cbf_unsafetorqueas_random_safety_nopunish_0.75",
+    #     "PPO_cbf_unsafetorqueas_random_opposing_nopunish_0.75",
+    #
+    # ]
 
-        "PPO_cbf_safetorqueas_zero_safety_nopunish_0.75",
-        "PPO_cbf_safetorqueas_zero_opposing_nopunish_0.75",
-        "PPO_cbf_safetorqueas_random_safety_nopunish_0.75",
-        "PPO_cbf_safetorqueas_random_opposing_nopunish_0.75",
-        "PPO_cbf_unsafetorqueas_zero_safety_nopunish_0.75",
-        "PPO_cbf_unsafetorqueas_zero_opposing_nopunish_0.75",
-        "PPO_cbf_unsafetorqueas_random_safety_nopunish_0.75",
-        "PPO_cbf_unsafetorqueas_random_opposing_nopunish_0.75",
-
-    ]
-
-    for tag in tags:
-        tf_events_to_plot(dirss=dirss,  # "standard"
-                          tags=[tag],
-                          x_label='Episode',
-                          y_label='',
-                          width=7,  # 5
-                          height=3.5,  # 2.5
-                          episode_length=100,
-                          window_size=45,
-                          save_as=f"pdfs/75NOPUN{tag.split('/')[1]}")
-
-    dirss = [
-
-        "PPO_cbf_safetorqueas_zero_safety_lightpunish_0.75",
-        "PPO_cbf_safetorqueas_zero_opposing_lightpunish_0.75",
-        "PPO_cbf_safetorqueas_random_safety_lightpunish_0.75",
-        "PPO_cbf_safetorqueas_random_opposing_lightpunish_0.75",
-        "PPO_cbf_unsafetorqueas_zero_safety_lightpunish_0.75",
-        "PPO_cbf_unsafetorqueas_zero_opposing_lightpunish_0.75",
-        "PPO_cbf_unsafetorqueas_random_safety_lightpunish_0.75",
-        "PPO_cbf_unsafetorqueas_random_opposing_lightpunish_0.75",
-
-    ]
-
-    for tag in tags:
-        tf_events_to_plot(dirss=dirss,  # "standard"
-                          tags=[tag],
-                          x_label='Episode',
-                          y_label='',
-                          width=7,  # 5
-                          height=3.5,  # 2.5
-                          episode_length=100,
-                          window_size=45,
-                          save_as=f"pdfs/75LIGHTPUN{tag.split('/')[1]}")
-
-    dirss = [
-
-        "PPO_cbf_safetorqueas_zero_safety_heavypunish_0.75",
-        "PPO_cbf_safetorqueas_zero_opposing_heavypunish_0.75",
-        "PPO_cbf_safetorqueas_random_safety_heavypunish_0.75",
-        "PPO_cbf_safetorqueas_random_opposing_heavypunish_0.75",
-        "PPO_cbf_unsafetorqueas_zero_safety_heavypunish_0.75",
-        "PPO_cbf_unsafetorqueas_zero_opposing_heavypunish_0.75",
-        "PPO_cbf_unsafetorqueas_random_safety_heavypunish_0.75",
-        "PPO_cbf_unsafetorqueas_random_opposing_heavypunish_0.75",
-
-    ]
-
-    for tag in tags:
-        tf_events_to_plot(dirss=dirss,  # "standard"
-                          tags=[tag],
-                          x_label='Episode',
-                          y_label='',
-                          width=7,  # 5
-                          height=3.5,  # 2.5
-                          episode_length=100,
-                          window_size=45,
-                          save_as=f"pdfs/75HEAVYPUN{tag.split('/')[1]}")
+    # for tag in tags:
+    #     tf_events_to_plot(dirss=dirss,  # "standard"
+    #                       tags=[tag],
+    #                       x_label='Episode',
+    #                       y_label='',
+    #                       width=7,  # 5
+    #                       height=3.5,  # 2.5
+    #                       episode_length=100,
+    #                       window_size=45,
+    #                       save_as=f"pdfs/75NOPUN{tag.split('/')[1]}")
+    #
+    # dirss = [
+    #
+    #     "PPO_cbf_safetorqueas_zero_safety_lightpunish_0.75",
+    #     "PPO_cbf_safetorqueas_zero_opposing_lightpunish_0.75",
+    #     "PPO_cbf_safetorqueas_random_safety_lightpunish_0.75",
+    #     "PPO_cbf_safetorqueas_random_opposing_lightpunish_0.75",
+    #     "PPO_cbf_unsafetorqueas_zero_safety_lightpunish_0.75",
+    #     "PPO_cbf_unsafetorqueas_zero_opposing_lightpunish_0.75",
+    #     "PPO_cbf_unsafetorqueas_random_safety_lightpunish_0.75",
+    #     "PPO_cbf_unsafetorqueas_random_opposing_lightpunish_0.75",
+    #
+    # ]
+    #
+    # for tag in tags:
+    #     tf_events_to_plot(dirss=dirss,  # "standard"
+    #                       tags=[tag],
+    #                       x_label='Episode',
+    #                       y_label='',
+    #                       width=7,  # 5
+    #                       height=3.5,  # 2.5
+    #                       episode_length=100,
+    #                       window_size=45,
+    #                       save_as=f"pdfs/75LIGHTPUN{tag.split('/')[1]}")
+    #
+    # dirss = [
+    #
+    #     "PPO_cbf_safetorqueas_zero_safety_heavypunish_0.75",
+    #     "PPO_cbf_safetorqueas_zero_opposing_heavypunish_0.75",
+    #     "PPO_cbf_safetorqueas_random_safety_heavypunish_0.75",
+    #     "PPO_cbf_safetorqueas_random_opposing_heavypunish_0.75",
+    #     "PPO_cbf_unsafetorqueas_zero_safety_heavypunish_0.75",
+    #     "PPO_cbf_unsafetorqueas_zero_opposing_heavypunish_0.75",
+    #     "PPO_cbf_unsafetorqueas_random_safety_heavypunish_0.75",
+    #     "PPO_cbf_unsafetorqueas_random_opposing_heavypunish_0.75",
+    #
+    # ]
+    #
+    # for tag in tags:
+    #     tf_events_to_plot(dirss=dirss,  # "standard"
+    #                       tags=[tag],
+    #                       x_label='Episode',
+    #                       y_label='',
+    #                       width=7,  # 5
+    #                       height=3.5,  # 2.5
+    #                       episode_length=100,
+    #                       window_size=45,
+    #                       save_as=f"pdfs/75HEAVYPUN{tag.split('/')[1]}")
 
 
 
@@ -713,13 +720,15 @@ if __name__ == '__main__':
 
     #Safety Measure later/Rel SafetyMeasureLater
 
-
+    remove_tf_logs()
 
     args["train"] = True
     args["name"] = "run"
+    # args['iterations'] = 10
+    # args['total_timesteps'] = 25e4
     args['iterations'] = 1
-    args['total_timesteps'] = 1e4
-    args["safety"] = "no_safety"
+    args['total_timesteps'] = 2e4
+    #args["safety"] = "no_safety"
 
     #
     # args["safety"] = "shield"
@@ -731,6 +740,22 @@ if __name__ == '__main__':
     # #args["reward"] = "opposing"
     # args["group"] = "test"
     # main(**args)
+
+    #PRELIMINARY
+    for alg in ["PPO", "A2C"]:
+        args["algorithm"] = alg
+        for safety in ["no_safety"]:
+            args["safety"] = safety
+            for action_space in ["small", "verysmall", "normal", "large"]: #TODO
+                args["action_space"] = action_space
+                for init in ["zero", "random"]:
+                    args["init"] = init
+                    for reward in ["safety"]:
+                        args["reward"] = reward
+                        args["group"] = f"{alg}_{action_space}_{init}"
+                        if not os.path.isdir(os.getcwd() + f"/tensorboard/{args['group']}"):
+                            main(**args)
+                        print(f"Finished training {args['group']} ...")
 
 
     # for alg in ["PPO", "A2C"]: #TODO: A2C run

@@ -84,16 +84,18 @@ def finalize_plot(fig=None, width=.0, height=.0, x_label='', y_label='', path=No
         plt.savefig(path, dpi=1000, bbox_inches='tight')
     plt.show()
 
-def phase_plot(width=2.5, height=2.5, l=1, m=1, g=9.81, K=None, max_torque=None, max_thdot=None, vertices=None, boxes=None,
+def phase_plot(width=2.5, height=2.5, l=1, m=1, g=9.81, K=None, max_torque=None, max_theta=None, vertices=None, boxes=None,
                save_as=None):
     """ Generates (and saves) a phase plot of a (controlled) mathematical / simple gravity pendulum."""
 
 
-    theta, thetadot = np.meshgrid(np.linspace(-1.5 * np.pi, 1.5 * np.pi, 375), np.linspace(-4 * np.pi, 4 * np.pi, 350))
+    theta, thetadot = np.meshgrid(np.linspace(-1.5 * np.pi, 1.5 * np.pi, 375), np.linspace(-5 * np.pi, 5 * np.pi, 350))
 
     if K is None:
 
         start_points = [
+            [0, 4 * pi],
+            [0, -4 * pi],
             [0, 3 * pi],
             [0, -3 * pi],
             [0, 2 * pi],
@@ -127,22 +129,23 @@ def phase_plot(width=2.5, height=2.5, l=1, m=1, g=9.81, K=None, max_torque=None,
             [-1.5*pi, 2*pi],
             [1.5 * pi, -2 * pi],
             [-0.8*pi, 4*pi],
-            [0.8 * pi, -4 * pi]
+            [0.8 * pi, -4 * pi],
+
 
         ]
 
         # Controlled system
-        if max_torque and max_thdot:
+        if max_torque and max_theta:
 
             u = np.dot(np.moveaxis([theta, thetadot], 0, -1), K)
             thetadotdot = g / l * sin(theta) - (1 / (m * l ** 2)) * u
 
             orange = (abs(np.dot(np.moveaxis([theta, thetadot], 0, -1), K)) <= max_torque)
-            orange2 = (abs(thetadot) > max_thdot)#.astype(int)
+            orange2 = (abs(theta) > max_theta)#.astype(int)
             orange = -10000*np.logical_and(orange, orange2).astype(int)
             green1 = (abs(np.dot(np.moveaxis([theta, thetadot], 0, -1), K)) <= max_torque)
             green2 = (abs(theta) <= pi) #Artefacts in plot
-            green3 = (abs(thetadot) <= max_thdot)
+            green3 = (abs(theta) <= max_theta)
             green = np.logical_and(green1, green2)
             green = 10000*np.logical_and(green, green3).astype(int)
             color = orange + green
@@ -176,38 +179,41 @@ def phase_plot(width=2.5, height=2.5, l=1, m=1, g=9.81, K=None, max_torque=None,
 
     if boxes is not None:
 
-        max_thdot = 5.890486225480862 #TODO: E.g. pass as parameter
-        b_manual = np.array([[[1.57079633, -max_thdot], [1.96349541, -3.92699082]],
-                             [[1.96349541, -max_thdot], [2.35619449, -3.92699082]],
-                             [[-1.57079633, 3.92699082], [-1.96349541, max_thdot]],
-                             [[-1.96349541, 3.92699082], [-2.35619449, max_thdot]]])
-        boxes = np.concatenate((boxes, b_manual), axis=0)
-
         for b in boxes:
             w, h = b[1] - b[0]
 
-            if abs(b[0,0]) == max_thdot or abs(b[0,1]) == max_thdot:
-                print(b[0], b[1])
+            #if abs(b[1,1]) <= max_thdot and abs(b[0,1]) <= max_thdot:
+            box = patches.Rectangle(b[0], w, h,
+                                    facecolor='none',
+                                    edgecolor='darkturquoise',
+                                    linewidth=.85,
+                                    linestyle='-',  # {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
+                                    alpha=1.0,
+                                    zorder=2)
+            plt.gca().add_patch(box)
 
-            if abs(b[1,1]) <= max_thdot and abs(b[0,1]) <= max_thdot:
-                box = patches.Rectangle(b[0], w, h,
-                                        facecolor='none',
-                                        edgecolor='darkturquoise',
-                                        linewidth=.85,
-                                        linestyle='-',  # {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
-                                        alpha=1.0,
-                                        zorder=2)
-                plt.gca().add_patch(box)
-
-    plt.streamplot(theta, thetadot, thetadot, thetadotdot,
-                   density=30,
-                   linewidth=linewidth,
-                   cmap=cmap,
-                   arrowstyle="-|>",
-                   arrowsize=0.65,
-                   start_points=start_points,
-                   color=color,
-                   )
+    if vertices is None and boxes is None:
+        plt.streamplot(theta, thetadot, thetadot, thetadotdot,
+                       density=30,
+                       linewidth=linewidth,
+                       cmap=cmap,
+                       arrowstyle="-|>",
+                       arrowsize=0.65,
+                       start_points=start_points,
+                       color=color,
+                       )
+    else:
+        plt.streamplot(theta, thetadot, thetadot, thetadotdot,
+                       density=30,
+                       linewidth=linewidth,
+                       cmap=cmap,
+                       start_points=start_points,
+                       color=color,
+                       )
+        for c in plt.gca().get_children():
+            if not isinstance(c, patches.FancyArrowPatch):
+                continue
+            c.remove()
 
     if K is None:
         equilibrium = np.array([[-np.pi, 0, np.pi], [0, 0, 0]])
@@ -216,12 +222,12 @@ def phase_plot(width=2.5, height=2.5, l=1, m=1, g=9.81, K=None, max_torque=None,
 
     plt.gca().scatter(equilibrium[0], equilibrium[1], s=8, c=COLORS_HEX['BLUE'], zorder=4)
 
-    plt.yticks([-3* np.pi, -2 * np.pi, -1 * np.pi, 0, 1 * np.pi,2 * np.pi, 3* np.pi])
-    plt.gca().set_yticklabels(["$-3\pi$", "$-2\pi$", "$-\pi$", "0", "$\pi$", "$2\pi$", "$3\pi$"])
+    plt.yticks([-4* np.pi, -2 * np.pi, 0, 2 * np.pi, 4*np.pi])
+    plt.gca().set_yticklabels(["$-4\pi$", "$-2\pi$", "0", "$2\pi$", "$4\pi$"])
     plt.xticks([-np.pi, 0, np.pi])
     plt.xticks([-np.pi, -np.pi / 2, 0, np.pi / 2, np.pi])
     plt.xlim([-1.5*pi, 1.5*pi])
-    plt.ylim([-3.5*pi, 3.5*pi])
+    plt.ylim([-5*pi, 5*pi])
     plt.gca().set_xticklabels(
         ["$-\pi$", "$-\\frac{\pi}{2}$", "0", "$\\frac{\pi}{2}$", "$\pi$"])
 
@@ -232,7 +238,8 @@ def phase_plot(width=2.5, height=2.5, l=1, m=1, g=9.81, K=None, max_torque=None,
     if save_as:
         finalize_plot(x_label='$\\theta[\mathrm{rad}]$',
                       y_label='$\dot{\\theta}[\\frac{\mathrm{rad}}{\mathrm{s}}]$',
-                      path=f'{os.getcwd()}/../../report/thesis/figures/{save_as}.pdf')
+                      path = f'{os.getcwd()}/{save_as}.pdf')
+                      #path=f'{os.getcwd()}/../../report/thesis/figures/{save_as}.pdf')
     else:
         finalize_plot(x_label='$\\theta[\mathrm{rad}]$',
                       y_label='$\dot{\\theta}[\\frac{\mathrm{rad}}{\mathrm{s}}]$')
@@ -245,16 +252,16 @@ def external_legend(save_as=None, width=1., height=.25):
     plt.gca().axis('off')
 
     b_line = Line2D([0], [0], color="white", markerfacecolor=COLORS_HEX['BLUE'], marker='o', label='Equilibrium')
-    g_line = Line2D([0], [0], color='green', label='$\\tau\\leq\\tau_{\mathrm{max}}\;\mathrm{and}\;\dot{\\theta}\\leq\dot{\\theta}_{\mathrm{max}}$')
-    o_line = Line2D([0], [0], color='orange', label='$\\tau\\leq\\tau_{\mathrm{max}}\;\mathrm{and}\;\dot{\\theta}>\dot{\\theta}_{\mathrm{max}}$')
+    g_line = Line2D([0], [0], color='green', label='$\\tau\\leq\\tau_{\mathrm{max}}\;\mathrm{and}\;\\theta\\leq\\theta_{\mathrm{max}}$')
+    o_line = Line2D([0], [0], color='orange', label='$\\tau\\leq\\tau_{\mathrm{max}}\;\mathrm{and}\;\\theta>\\theta_{\mathrm{max}}$')
     r_line = Line2D([0], [0], color='red', label='$\\tau >\\tau_{\mathrm{max}}$')
     t_line = Line2D([0], [0], color='darkturquoise', label='ROA (Subpaving)')
     m_line = Line2D([0], [0], color='magenta', label='ROA (Polygon)')
 
     plt.gca().legend(handles=[g_line, o_line, r_line, b_line, t_line, m_line], frameon=True, loc='center', ncol=2)
 
-    if save_as:
-        plt.savefig(path = f'{os.getcwd()}/{save_as}.pdf', dpi=1000, bbox_inches='tight')
+    if save_as is not None:
+        plt.savefig(f'{os.getcwd()}/{save_as}.pdf', dpi=1000, bbox_inches='tight')
     plt.show()
 
 def remove_tf_logs(*dirs):
@@ -516,28 +523,100 @@ if __name__ == '__main__':
     pass
     #Moving Average of Safety Violations
     #save_as = 'noSafety2'
-    # Avg. masked out actions
-    # Avg. shield use
-    # % of max force used or more?
-    # max distance middle
-    # max distance border
-    # speed / reward
-    # max theta/theta dot used / avg
 
-    #max_thdot = 5.890486225480862
-    #vertices = np.array([
-    #    [-pi, max_thdot],  # LeftUp
-    #    [-0.785398163397448, max_thdot],  # RightUp
-    #    [pi, -max_thdot],  # RightLow
-    #    [0.785398163397448, -max_thdot]  # LeftLow
-    #])
+    # External legend
+    # external_legend(save_as="legendROAParted")
 
+    # gain_matrix = None
+    # Gain matrix for current configuration
+    # from pendulum.mathematical_pendulum.envs.mathematical_pendulum import MathematicalPendulumEnv
+    # print(MathematicalPendulumEnv.gain_matrix())
     gain_matrix = [19.670836678497427,6.351509533724627]
-    print(torque_given_state(gain_matrix=gain_matrix, state=[pi/2, 0]))
+
+    max_theta = np.pi
+
+    # max_torque = None
+    # Torque at [pi/2, 0]
+    # from pendulum.mathematical_pendulum.envs.mathematical_pendulum import MathematicalPendulumEnv
+    # print(MathematicalPendulumEnv.torque_given_state(gain_matrix, [np.pi/2, 0]))
+    max_torque = 30.898877999566082
+
+    max_theta = pi
+
+    vertices = None
+    boxes = None
+
+    theta_roa = 3.092505268377452
+    vertices = np.array([
+        [-theta_roa, 12.762720155208534],  # LeftUp
+        [theta_roa, -5.890486225480862],  # RightUp
+        [theta_roa, -12.762720155208534],  # RightLow
+        [-theta_roa, 5.890486225480862]  # LeftLow
+    ])
 
 
-    #tf_event_to_plot('80K_A2C_1', ['main/no_violation'],#, 'main/shield_activations'],
-    #                 y_label='', save_as=save_as,
-    #                 window_size=51)
-    # tf_event_to_plot('DEBUG_E_1', 'main/theta')
+    #from thesis.pendulum_roa import PendulumRegionOfAttraction
+    #b, v = PendulumRegionOfAttraction.compute_roa()
+    # vertices = v
+    #boxes = b
+
+
+    # save_as = "phaseROAParted"
+    # phase_plot(K=gain_matrix,
+    #            max_torque=max_torque,
+    #            max_theta=max_theta,
+    #            vertices=vertices,
+    #            boxes=boxes,
+    #            save_as=save_as)
+    # save_as = "phaseSubpavingParted"
+    # phase_plot(K=gain_matrix,
+    #            max_torque=max_torque,
+    #            max_theta=max_theta,
+    #            vertices=None,
+    #            boxes=boxes,
+    #            save_as=save_as)
+    # save_as = "phasePolynomParted"
+    # phase_plot(K=gain_matrix,
+    #            max_torque=max_torque,
+    #            max_theta=max_theta,
+    #            vertices=vertices,
+    #            boxes=None,
+    #            save_as=save_as)
+    # save_as = "phaseUncontrolled"
+    # phase_plot(K=None,
+    #            max_torque=None,
+    #            max_theta=None,
+    #            vertices=None,
+    #            boxes=None,
+    #            save_as=save_as)
+    # save_as = "phaseLQR"
+    # phase_plot(K=gain_matrix,
+    #            max_torque=None,
+    #            max_theta=None,
+    #            vertices=None,
+    #            boxes=None,
+    #            save_as=save_as)
+    # save_as = "phaseRestrictedParted"
+    # phase_plot(K=gain_matrix,
+    #            max_torque=max_torque,
+    #            max_theta=max_theta,
+    #            vertices=None,
+    #            boxes=None,
+    #            save_as=save_as)
+    #
+    # vertices = np.array([
+    #     [-theta_roa + 0.5, 12.762720155208534 - 0.5],  # LeftUp
+    #     [theta_roa - 0.5, -5.890486225480862 + 0.5],  # RightUp
+    #     [theta_roa - 0.5, -12.762720155208534 + 0.5],  # RightLow
+    #     [-theta_roa + 0.5, 5.890486225480862 - 0.5]  # LeftLow
+    # ])
+    #
+    # save_as = "phasePolynomReduced"
+    # phase_plot(K=gain_matrix,
+    #            max_torque=max_torque,
+    #            max_theta=max_theta,
+    #            vertices=vertices,
+    #            boxes=boxes,
+    #            save_as=save_as)
+
 

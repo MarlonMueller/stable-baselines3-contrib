@@ -19,8 +19,7 @@ function [b, v] = regionOfAttraction()
     Param.W = interval(zeros(2,1));
     % .V set of measurement errors
     % .X set of state constraints
-    % Does not seem to work
-    % Param.X = mptPolytope([-pi -pi pi pi; -max_thdot max_thdot max_thdot -max_thdot]');
+    Param.X = mptPolytope([-pi -pi pi pi; -max_thdot max_thdot max_thdot -max_thdot]');
 
     % Opts struct containing algorithm settings
     Opts.Q = eye(2); %Default identity matrix

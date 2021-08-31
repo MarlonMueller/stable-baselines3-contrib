@@ -20,14 +20,24 @@ class MathPendulumEnv(Env):
     def is_safe_action(env: Env, safe_region: SafeRegion, action: float):
         theta, thdot = env.state
         state = env.dynamics(theta, thdot, action)
-        return state in safe_region
+
+        error_theta = (1/800) * (9.81 + action)
+        error_thdot = (9.81 ** 2 / 1600) + (9.81 * action / 800) #TODO: Replace with general
+
+        if state + [error_theta, error_thdot] in safe_region and\
+            state + [error_theta, -error_thdot] in safe_region and\
+            state + [-error_theta, -error_thdot] in safe_region and\
+            state + [-error_theta, error_thdot] in safe_region:
+            return True
+        return False
 
     @staticmethod
     def safe_action(env: Env, safe_region: SafeRegion, action: float):
         # LQR controller
         # TODO: Maybe restrict torque here? Visuals.
-        #gain_matrix = [19.670836678497427, 6.351509533724627]
-        gain_matrix = [18.224698834878474, 5.874625145435321]
+
+        gain_matrix = [19.670836678497427,6.351509533724627] #TODO
+
 
         #TODO: GETATTR NOT IMPLEMENTED IN VECENVS
         if isinstance(env, DummyVecEnv):
@@ -75,13 +85,14 @@ class MathPendulumEnv(Env):
 
         #TODO: Remove
         from thesis.pendulum_roa import PendulumRegionOfAttraction
-        max_thdot = 5.890486225480862
+        theta_roa = 3.092505268377452
         vertices = np.array([
-            [-pi, max_thdot],  # LeftUp
-            [-0.785398163397448, max_thdot],  # RightUp
-            [pi, -max_thdot],  # RightLow
-            [0.785398163397448, -max_thdot]  # LeftLow
+            [-theta_roa, 12.762720155208534],  # LeftUp
+            [theta_roa, -5.890486225480862],  # RightUp
+            [theta_roa, -12.762720155208534],  # RightLow
+            [-theta_roa, 5.890486225480862]  # LeftLow
         ])
+
         self._safe_region = PendulumRegionOfAttraction(vertices=vertices)
 
         self.reset()
@@ -123,10 +134,13 @@ class MathPendulumEnv(Env):
             # #Opposing -
             return -(.5 * abs(action) + abs(self._norm_theta(theta)) + abs(.1 * thdot))
         else: #Safety
-            det_12 = 6.939565594515956
-            max_thdot = 5.890486225480862
-            return -(4.5 * max(abs((-thdot * 1.1780972450961726) / det_12),
-                                 abs((theta * max_thdot + thdot * 1.9634954084936205) / det_12))) ** 2
+            det_12 = 10.62620981660255
+            max_theta = 3.092505268377452
+            return -max(
+                abs((theta * 3.436116964863835) / det_12),
+                abs((theta * 9.326603190344699 + thdot * max_theta) / det_12) #Try: **2/Action
+            )
+
 
     def _norm_theta(self, theta: float) -> float:
         return ((theta + pi) % (2 * pi)) - pi
