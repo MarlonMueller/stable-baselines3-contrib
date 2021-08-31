@@ -724,10 +724,10 @@ if __name__ == '__main__':
 
     args["train"] = True
     args["name"] = "run"
-    # args['iterations'] = 10
-    # args['total_timesteps'] = 25e4
-    args['iterations'] = 1
-    args['total_timesteps'] = 2e4
+    args['iterations'] = 10
+    args['total_timesteps'] = 25e4
+    #args['iterations'] = 1
+    #args['total_timesteps'] = 2e4
     #args["safety"] = "no_safety"
 
     #
