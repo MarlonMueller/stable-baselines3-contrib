@@ -14,7 +14,7 @@ from stable_baselines3.ppo.policies import MlpPolicy
 from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv
 from sb3_contrib.common.wrappers import SafetyMask
 from sb3_contrib.common.maskable.utils import is_masking_supported
-from thesis.util import remove_tf_logs, rename_tf_events, load_model, save_model
+from thesis.util import remove_tf_logs, rename_tf_events, load_model, save_model, tf_events_to_plot
 from sb3_contrib.common.maskable.utils import get_action_masks
 from stable_baselines3.a2c import A2C
 from stable_baselines3 import HER, A2C, PPO, DQN
@@ -92,14 +92,14 @@ def main(**kwargs):
     ])
     safe_region = SafeRegion(vertices=vertices)
 
-    if 'safety' in kwargs and kwargs['safety'] is not None:
+    if "action_space" in kwargs and kwargs["action_space"] == "unsafetorqueas":
+        transform_action_space_fn = lambda a: 2 * (a - 20)
+        alter_action_space = gym.spaces.Discrete(41)
+    else:
+        transform_action_space_fn = lambda a: 2 * (a - 15)
+        alter_action_space = gym.spaces.Discrete(31)
 
-        if "action_space" in kwargs and kwargs["action_space"] == "unsafetorqueas":
-            transform_action_space_fn = lambda a: 2 * (a - 20)
-            alter_action_space = gym.spaces.Discrete(41)
-        else:
-            transform_action_space_fn = lambda a: 2 * (a - 15)
-            alter_action_space = gym.spaces.Discrete(31)
+    if 'safety' in kwargs and kwargs['safety'] is not None:
 
 
         if kwargs['safety'] == "shield":
@@ -224,7 +224,7 @@ def main(**kwargs):
         else:
 
             class ActionInfoWrapper(gym.Wrapper):
-                def __init__(self,alter_action_space = None,
+                def __init__(self,env, alter_action_space = None,
                  transform_action_space_fn = None):
                     super().__init__(env)
 
@@ -248,10 +248,12 @@ def main(**kwargs):
                         action = self._transform_action_space_fn(action)
 
                     obs, reward, done, info = self.env.step(action)
-                    info["standard"] = {"action": action}
+                    info["standard"] = {"action": action, "reward": reward}
                     return obs, reward, done, info
 
-            env = ActionInfoWrapper(env, transform_action_space_fn, alter_action_space)
+            env = ActionInfoWrapper(env,
+                                    transform_action_space_fn=transform_action_space_fn,
+                                    alter_action_space=alter_action_space)
 
 
 
@@ -453,30 +455,272 @@ if __name__ == '__main__':
     )
 
     tags = [
-        "main/avg_abs_action_rl",
-        "main/avg_abs_safety_correction",
-        "main/avg_abs_thdot",
-        "main/avg_abs_theta",
-        "main/avg_safety_measure",
-        "main/episode_reward",
-        "main/episode_time",
-        "main/max_abs_action_rl",
-        "main/max_abs_safety_correction",
-        "main/max_abs_thdot",
-        "main/max_abs_theta",
-        "main/max_safety_measure",
-        "main/no_violation",
+        "main/avg_abs_action_rl",#
+        "main/avg_abs_safety_correction",#
+        "main/avg_abs_thdot",#
+        "main/avg_abs_theta",#
+        "main/avg_safety_measure",#
+        "main/episode_reward",#
+        "main/episode_time",#
+        "main/max_abs_action_rl",#
+        "main/max_abs_safety_correction",#
+        "main/max_abs_thdot",#
+        "main/max_abs_theta", #
+        "main/max_safety_measure",#
+        "main/no_violation", #
         "main/rel_abs_safety_correction",
-        "main/avg_step_punishment",
-        "main/avg_step_reward_rl"
+        "main/avg_step_punishment", #
+        "main/avg_step_reward_rl" #
     ]
+
+    #NoSafety:
+    #Violation Graph
+    #Opposite: Normal / Bigger Actio Space using 0 / Random Init. (Avg. (and Max?)): Avg. Step Reward, Th, Thdot? NOT: Action; Safety
+    #Safety: Normal / Bigger Actio Space using 0 / Random Init. (Avg. (and Max?)): Avg. Step Reward, Th, Thdot?
+
+    #Shield:
+
+    #"{alg}_{safety}_{action_space}_{init}_{reward}_{punishment}_{str(gamma)}"
+
+
+    # dirss = [
+    #    "PPO_no_safety_safetorqueas_zero_opposing",
+    #    "PPO_no_safety_safetorqueas_random_opposing",
+    #    "PPO_no_safety_unsafetorqueas_zero_opposing",
+    #    "PPO_no_safety_unsafetorqueas_random_opposing",
+    #     "PPO_no_safety_safetorqueas_zero_safety",
+    #     "PPO_no_safety_safetorqueas_random_safety",
+    #     "PPO_no_safety_unsafetorqueas_zero_safety",
+    #     "PPO_no_safety_unsafetorqueas_random_safety",
+    # ]
+
+    # dirss = [
+    #         "PPO_no_safety_safetorqueas_zero_safety",
+    #         "PPO_no_safety_unsafetorqueas_zero_safety",
+    #         "PPO_no_safety_safetorqueas_zero_opposing",
+    #         "PPO_no_safety_unsafetorqueas_zero_opposing",
+    #     ]
+    # dirss = [
+    #     "PPO_no_safety_safetorqueas_random_safety",
+    #     "PPO_no_safety_unsafetorqueas_random_safety",
+    #     "PPO_no_safety_safetorqueas_random_opposing",
+    #     "PPO_no_safety_unsafetorqueas_random_opposing",
+    # ]
+
+
+    #SHIELDING
+    # dirss = [
+    #
+    #     "PPO_shield_safetorqueas_zero_safety_nopunish",
+    #     "PPO_shield_safetorqueas_zero_opposing_nopunish",
+    #     "PPO_shield_safetorqueas_random_safety_nopunish",
+    #     "PPO_shield_safetorqueas_random_opposing_nopunish",
+    #     "PPO_shield_unsafetorqueas_zero_safety_nopunish",
+    #     "PPO_shield_unsafetorqueas_zero_opposing_nopunish",
+    #     "PPO_shield_unsafetorqueas_random_safety_nopunish",
+    #     "PPO_shield_unsafetorqueas_random_opposing_nopunish",
+    #
+    # ]
+    #
+    # dirss = [
+    #
+    #     "PPO_shield_safetorqueas_zero_safety_lightpunish",
+    #     "PPO_shield_safetorqueas_zero_opposing_lightpunish",
+    #     "PPO_shield_safetorqueas_random_safety_lightpunish",
+    #     "PPO_shield_safetorqueas_random_opposing_lightpunish",
+    #     "PPO_shield_unsafetorqueas_zero_safety_lightpunish",
+    #     "PPO_shield_unsafetorqueas_zero_opposing_lightpunish",
+    #     "PPO_shield_unsafetorqueas_random_safety_lightpunish",
+    #     "PPO_shield_unsafetorqueas_random_opposing_lightpunish",
+    #
+    # ]
+
+    # dirss = [
+    #
+    #     "PPO_shield_safetorqueas_zero_safety_heavypunish",
+    #     "PPO_shield_safetorqueas_zero_opposing_heavypunish",
+    #     "PPO_shield_safetorqueas_random_safety_heavypunish",
+    #     "PPO_shield_safetorqueas_random_opposing_heavypunish",
+    #     "PPO_shield_unsafetorqueas_zero_safety_heavypunish",
+    #     "PPO_shield_unsafetorqueas_zero_opposing_heavypunish",
+    #     "PPO_shield_unsafetorqueas_random_safety_heavypunish",
+    #     "PPO_shield_unsafetorqueas_random_opposing_heavypunish",
+    #
+    # ]
+
+    # # MASKING
+    # dirss = [
+    #
+    #     "PPO_mask_safetorqueas_zero_safety_nopunish",
+    #     "PPO_mask_safetorqueas_zero_opposing_nopunish",
+    #     "PPO_mask_safetorqueas_random_safety_nopunish",
+    #     "PPO_mask_safetorqueas_random_opposing_nopunish",
+    #     "PPO_mask_unsafetorqueas_zero_safety_nopunish",
+    #     "PPO_mask_unsafetorqueas_zero_opposing_nopunish",
+    #     "PPO_mask_unsafetorqueas_random_safety_nopunish",
+    #     "PPO_mask_unsafetorqueas_random_opposing_nopunish",
+    #
+    # ]
+    #
+    # for tag in tags:
+    #     tf_events_to_plot(dirss=dirss, #"standard"
+    #                       tags=[tag],
+    #                       x_label='Episode',
+    #                       y_label='',
+    #                       width=7, #5
+    #                       height=3.5, #2.5
+    #                       episode_length=100,
+    #                       window_size=45,
+    #                       save_as=f"pdfs/NOPUN{tag.split('/')[1]}")
+    #
+    # dirss = [
+    #
+    #     "PPO_mask_safetorqueas_zero_safety_lightpunish",
+    #     "PPO_mask_safetorqueas_zero_opposing_lightpunish",
+    #     "PPO_mask_safetorqueas_random_safety_lightpunish",
+    #     "PPO_mask_safetorqueas_random_opposing_lightpunish",
+    #     "PPO_mask_unsafetorqueas_zero_safety_lightpunish",
+    #     "PPO_mask_unsafetorqueas_zero_opposing_lightpunish",
+    #     "PPO_mask_unsafetorqueas_random_safety_lightpunish",
+    #     "PPO_mask_unsafetorqueas_random_opposing_lightpunish",
+    #
+    # ]
+    #
+    # for tag in tags:
+    #     tf_events_to_plot(dirss=dirss, #"standard"
+    #                       tags=[tag],
+    #                       x_label='Episode',
+    #                       y_label='',
+    #                       width=7, #5
+    #                       height=3.5, #2.5
+    #                       episode_length=100,
+    #                       window_size=45,
+    #                       save_as=f"pdfs/LIGHTPUN{tag.split('/')[1]}")
+    #
+    # dirss = [
+    #
+    #     "PPO_mask_safetorqueas_zero_safety_heavypunish",
+    #     "PPO_mask_safetorqueas_zero_opposing_heavypunish",
+    #     "PPO_mask_safetorqueas_random_safety_heavypunish",
+    #     "PPO_mask_safetorqueas_random_opposing_heavypunish",
+    #     "PPO_mask_unsafetorqueas_zero_safety_heavypunish",
+    #     "PPO_mask_unsafetorqueas_zero_opposing_heavypunish",
+    #     "PPO_mask_unsafetorqueas_random_safety_heavypunish",
+    #     "PPO_mask_unsafetorqueas_random_opposing_heavypunish",
+    #
+    # ]
+    #
+    # for tag in tags:
+    #     tf_events_to_plot(dirss=dirss, #"standard"
+    #                       tags=[tag],
+    #                       x_label='Episode',
+    #                       y_label='',
+    #                       width=7, #5
+    #                       height=3.5, #2.5
+    #                       episode_length=100,
+    #                       window_size=45,
+    #                       save_as=f"pdfs/HEAVYPUN{tag.split('/')[1]}")
+
+    # MASKING
+    dirss = [
+
+        "PPO_cbf_safetorqueas_zero_safety_nopunish_0.75",
+        "PPO_cbf_safetorqueas_zero_opposing_nopunish_0.75",
+        "PPO_cbf_safetorqueas_random_safety_nopunish_0.75",
+        "PPO_cbf_safetorqueas_random_opposing_nopunish_0.75",
+        "PPO_cbf_unsafetorqueas_zero_safety_nopunish_0.75",
+        "PPO_cbf_unsafetorqueas_zero_opposing_nopunish_0.75",
+        "PPO_cbf_unsafetorqueas_random_safety_nopunish_0.75",
+        "PPO_cbf_unsafetorqueas_random_opposing_nopunish_0.75",
+
+    ]
+
+    for tag in tags:
+        tf_events_to_plot(dirss=dirss,  # "standard"
+                          tags=[tag],
+                          x_label='Episode',
+                          y_label='',
+                          width=7,  # 5
+                          height=3.5,  # 2.5
+                          episode_length=100,
+                          window_size=45,
+                          save_as=f"pdfs/75NOPUN{tag.split('/')[1]}")
+
+    dirss = [
+
+        "PPO_cbf_safetorqueas_zero_safety_lightpunish_0.75",
+        "PPO_cbf_safetorqueas_zero_opposing_lightpunish_0.75",
+        "PPO_cbf_safetorqueas_random_safety_lightpunish_0.75",
+        "PPO_cbf_safetorqueas_random_opposing_lightpunish_0.75",
+        "PPO_cbf_unsafetorqueas_zero_safety_lightpunish_0.75",
+        "PPO_cbf_unsafetorqueas_zero_opposing_lightpunish_0.75",
+        "PPO_cbf_unsafetorqueas_random_safety_lightpunish_0.75",
+        "PPO_cbf_unsafetorqueas_random_opposing_lightpunish_0.75",
+
+    ]
+
+    for tag in tags:
+        tf_events_to_plot(dirss=dirss,  # "standard"
+                          tags=[tag],
+                          x_label='Episode',
+                          y_label='',
+                          width=7,  # 5
+                          height=3.5,  # 2.5
+                          episode_length=100,
+                          window_size=45,
+                          save_as=f"pdfs/75LIGHTPUN{tag.split('/')[1]}")
+
+    dirss = [
+
+        "PPO_cbf_safetorqueas_zero_safety_heavypunish_0.75",
+        "PPO_cbf_safetorqueas_zero_opposing_heavypunish_0.75",
+        "PPO_cbf_safetorqueas_random_safety_heavypunish_0.75",
+        "PPO_cbf_safetorqueas_random_opposing_heavypunish_0.75",
+        "PPO_cbf_unsafetorqueas_zero_safety_heavypunish_0.75",
+        "PPO_cbf_unsafetorqueas_zero_opposing_heavypunish_0.75",
+        "PPO_cbf_unsafetorqueas_random_safety_heavypunish_0.75",
+        "PPO_cbf_unsafetorqueas_random_opposing_heavypunish_0.75",
+
+    ]
+
+    for tag in tags:
+        tf_events_to_plot(dirss=dirss,  # "standard"
+                          tags=[tag],
+                          x_label='Episode',
+                          y_label='',
+                          width=7,  # 5
+                          height=3.5,  # 2.5
+                          episode_length=100,
+                          window_size=45,
+                          save_as=f"pdfs/75HEAVYPUN{tag.split('/')[1]}")
+
+
+
+    #tags = ["main/avg_abs_theta"]
+    #tags = ["main/avg_abs_thdot"]
+    #TODO: Avg. Reward
+
+
+
+
+
+    #------------------------
+
+    #All: Safety Measure / Rel? ActionRL?
+
+    #Violation Graph?
+    #Normal vs. Big Action Space using 0 and Random Init. (Avg. AND Max? Theta/Thdot) Max not needed Avg.StepReward
+
+    #Safety Measure later/Rel SafetyMeasureLater
 
 
 
     args["train"] = True
     args["name"] = "run"
-    args['iterations'] = 3
-    args['total_timesteps'] = 2e4
+    args['iterations'] = 1
+    args['total_timesteps'] = 1e4
+    args["safety"] = "no_safety"
+
     #
     # args["safety"] = "shield"
     # #args["safety"] = "mask"
@@ -489,28 +733,38 @@ if __name__ == '__main__':
     # main(**args)
 
 
-    for alg in ["PPO", "A2C"]: #TODO: A2C run
-        args["algorithm"] = alg
-        for safety in ["no_safety", "shield", "mask", "cbf"]:
-            args["safety"] = safety
-            for action_space in ["safetorqueas", "unsafetorqueas"]:
-                args["action_space"] = action_space
-                for init in ["zero", "random"]:
-                    args["init"] = init
-                    for reward in ["opposing", "safety"]:
-                        args["reward"] = reward
-                        for punishment in ["nopunish", "lightpunish", "heavypunish"]:
-                            args["punishment"] = punishment
-                            if safety=="cbf":
-                                for gamma in [0.25, 0.75]:
-                                    args["gamma"] = gamma
-                                    args["group"] = f"{alg}_{safety}_{action_space}_{init}_{reward}_{punishment}_{str(gamma)}"
-                                    main(**args)
-                                    print(f"Finished training {args['group']} ...")
-                            else:
-                                args["group"] = f"{alg}_{safety}_{action_space}_{init}_{reward}_{punishment}"
-                                main(**args)
-                                print(f"Finished training {args['group']} ...")
+    # for alg in ["PPO", "A2C"]: #TODO: A2C run
+    #     args["algorithm"] = alg
+    #     for safety in ["no_safety", "shield", "mask", "cbf"]:
+    #         args["safety"] = safety
+    #         for action_space in ["safetorqueas", "unsafetorqueas"]:
+    #             args["action_space"] = action_space
+    #             for init in ["zero", "random"]:
+    #                 args["init"] = init
+    #                 for reward in ["opposing", "safety"]:
+    #                     args["reward"] = reward
+    #                     if not args["safety"] == "no_safety":
+    #                         for punishment in ["nopunish", "lightpunish", "heavypunish"]:
+    #                             args["punishment"] = punishment
+    #                             if safety=="cbf":
+    #                                 for gamma in [0.25, 0.75]:
+    #                                     args["gamma"] = gamma
+    #                                     args["group"] = f"{alg}_{safety}_{action_space}_{init}_{reward}_{punishment}_{str(gamma)}"
+    #                                     if not os.path.isdir(os.getcwd() + f"/tensorboard/{args['group']}"):
+    #                                         main(**args)
+    #                                     print(f"Finished training {args['group']} ...")
+    #                             else:
+    #                                 args["group"] = f"{alg}_{safety}_{action_space}_{init}_{reward}_{punishment}"
+    #                                 if not os.path.isdir(os.getcwd() + f"/tensorboard/{args['group']}"):
+    #                                     main(**args)
+    #                                 print(f"Finished training {args['group']} ...")
+    #                             #time.sleep(3)
+    #                     else:
+    #                         args["group"] = f"{alg}_{safety}_{action_space}_{init}_{reward}"
+    #                         if not os.path.isdir(os.getcwd() + f"/tensorboard/{args['group']}"):
+    #                             main(**args)
+    #                         print(f"Finished training {args['group']} ...")
+
 
 
 
@@ -551,7 +805,7 @@ if __name__ == '__main__':
     #                      window_size=11,
     #                      save_as=f"pdfs/{tag.split('/')[1]}")
 
-    os.system("say The program finished.")
+    #os.system("say The program finished.")
 
     ########################
 

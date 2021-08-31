@@ -51,6 +51,7 @@ def load_model(name, base: BaseAlgorithm):
 
 def gain_matrix():
     """ Gain matrix (K) of the pendulum's LQR controller."""
+    import matlab.engine
     path_matlab = f'{os.path.dirname(os.path.abspath(__file__))}/matlab'
     eng = matlab.engine.start_matlab()
     path_matlab = eng.genpath(path_matlab)
@@ -319,8 +320,6 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     cwd = os.getcwd() + f"/tensorboard/{dirs}/"
                     dirs = [dir for dir in os.listdir(cwd) if os.path.isdir(cwd + dir)]
 
-                summary_df = pd.DataFrame()
-                num_runs = len(dirs)
 
                 values = []
 
@@ -389,7 +388,7 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                      #   plt.fill_between(range(1, len(mean)+1), mean - std_dev, mean + std_dev, color=color, alpha=0.25)
 
                     #else:
-                    plt.plot(range(1, len(mean) + 1), mean, label=label, linewidth=linewidth)
+                    plt.plot(range(1, len(mean) + 1), mean, label=label.replace('_','/'), linewidth=linewidth)
                     plt.fill_between(range(1, len(mean) + 1), mean - std_dev, mean + std_dev, alpha=0.25)
 
 
@@ -415,7 +414,9 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
         plt.gca().xaxis.grid(True, color='black', linestyle='dotted', linewidth=0.5)
         plt.gca().yaxis.grid(True, color='black', linestyle='dotted', linewidth=0.5)
 
-        plt.legend(loc="upper right")
+        plt.legend(loc="upper left", fontsize=7, bbox_to_anchor=(1.05, 1))
+
+        plt.suptitle(tags[0].replace("_",'-'))
 
         path = None
         if save_as:
@@ -531,11 +532,12 @@ if __name__ == '__main__':
     #    [0.785398163397448, -max_thdot]  # LeftLow
     #])
 
-    #gain_matrix = [18.224698834878474, 5.874625145435321]
-    #print(torque_given_state(gain_matrix=gain_matrix, state=[0.785398163397448, -max_thdot]))
+    gain_matrix = [19.670836678497427,6.351509533724627]
+    print(torque_given_state(gain_matrix=gain_matrix, state=[pi/2, 0]))
 
 
     #tf_event_to_plot('80K_A2C_1', ['main/no_violation'],#, 'main/shield_activations'],
     #                 y_label='', save_as=save_as,
     #                 window_size=51)
     # tf_event_to_plot('DEBUG_E_1', 'main/theta')
+

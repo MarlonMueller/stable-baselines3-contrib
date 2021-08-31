@@ -17,8 +17,7 @@ function K = gainMatrix()
     Q = eye(2);
     % Control weights
     R = 1;
-    % Discrete LQR
-    %[K, ~, ~] = lqr(A,B,Q,R);
-    [K, ~, ~] = lqrd(A,B,Q,R,ts);
+    % LQR
+    [K, ~, ~] = lqr(A,B,Q,R);
     
 end

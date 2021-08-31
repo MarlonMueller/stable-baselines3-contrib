@@ -4,8 +4,7 @@ function [b, v] = regionOfAttraction()
     max_torque = 30.898877999566082;
     
     % Maximal angular acceleration searched
-    max_thdot = 2.5*pi;
-    %5.890486225480862
+    max_thdot = 5*pi;
 
     % Define benchmark
     f = 'mathematicalPendulum';
@@ -29,7 +28,7 @@ function [b, v] = regionOfAttraction()
 
     % Search domain
     % Chosen bigger than constrains allow on purpose
-    vecTdomain = [pi; 5*pi];
+    vecTdomain = [1.5*pi; 5*pi];
     Opts.Tdomain = interval(-vecTdomain,vecTdomain);
 
     % Initial guess

@@ -134,6 +134,7 @@ class PendulumTrainCallback(BaseCallback):
 
         else:
             action_rl = infos['standard']["action"]
+            self.total_reward_rl += infos['standard']["reward"]
 
         if abs(action_rl) > self.max_abs_action_rl:
             self.max_abs_action_rl = abs(action_rl)
@@ -157,14 +158,15 @@ class PendulumTrainCallback(BaseCallback):
             self.logger.record('main/avg_safety_measure', self.total_safey_measure / infos['episode']['l'])
             self.logger.record('main/max_safety_measure', self.max_safety_measure)
 
+            self.logger.record('main/avg_abs_action_rl', self.total_abs_action_rl / infos['episode']['l'])
+            self.logger.record('main/max_abs_action_rl', self.max_abs_action_rl)
+            self.logger.record('main/avg_step_reward_rl', self.total_reward_rl / infos['episode']['l'])
+
             if 'mask' in infos.keys() or 'shield' in infos.keys() or 'cbf' in infos.keys():
 
-                self.logger.record('main/avg_abs_action_rl', self.total_abs_action_rl / infos['episode']['l'])
                 self.logger.record('main/avg_abs_safety_correction', self.total_abs_safety_correction / infos['episode']['l'])
-                self.logger.record('main/max_abs_action_rl', self.max_abs_action_rl)
                 self.logger.record('main/max_abs_safety_correction', self.max_abs_safety_correction)
                 self.logger.record('main/avg_step_punishment', self.total_punishment / infos['episode']['l'])
-                self.logger.record('main/avg_step_reward_rl', self.total_reward_rl / infos['episode']['l'])
 
                 # TODO: Uncorrected action?
                 # self.logger.record('main/total_abs_action_rl', self.total_abs_action_rl)
@@ -177,9 +179,6 @@ class PendulumTrainCallback(BaseCallback):
                     self.logger.record('main/rel_abs_safety_correction',
                                        self.total_abs_safety_correction / self.total_abs_action_rl)
 
-            else:
-
-                self.logger.record('main/avg_step_reward_rl', self.total_reward_rl / infos['episode']['l'])
 
             # Max rl action not needed (guaranteed to be safe)
             # Same basically for max thdot / theta - but good for visualisation with boundary? -> better than avg?!
