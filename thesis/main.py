@@ -4,14 +4,17 @@ from typing import Union
 from gym.wrappers import TimeLimit
 from stable_baselines3.common.type_aliases import GymStepReturn
 from stable_baselines3.common.utils import configure_logger
-from thesis.callbacks.pendulum_train import PendulumTrainCallback
-from thesis.callbacks.pendulum_rollout import PendulumRolloutCallback
+
+from .callbacks.pendulum_train import PendulumTrainCallback
+from .callbacks.pendulum_rollout import PendulumRolloutCallback
+
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_util import is_wrapped
 from stable_baselines3.ppo.policies import MlpPolicy
 from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv
+
 from sb3_contrib.common.wrappers import SafetyMask
 from sb3_contrib.common.maskable.utils import is_masking_supported
 from thesis.util import remove_tf_logs, rename_tf_events, load_model, save_model, tf_events_to_plot
