@@ -825,14 +825,18 @@ if __name__ == '__main__':
 
     if not args['flag']:
         args['total_timesteps'] = 10e4
+        args['group'] ="A2C_TUNED"
         args["algorithm"] = "A2C"
         main(**args)
+        args['group'] = "PPO_TUNED"
         args["algorithm"] = "PPO"
         main(**args)
     else:
         args['total_timesteps'] = 20e4
+        args['group'] = "A2C_UNTUNED"
         args["algorithm"] = "A2C"
         main(**args)
+        args['group'] = "PPO_UNTUNED"
         args["algorithm"] = "PPO"
         main(**args)
 
