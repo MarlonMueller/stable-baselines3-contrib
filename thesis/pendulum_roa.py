@@ -2,7 +2,7 @@ from typing import Optional
 
 import os
 import numpy as np
-import matlab.engine
+#import matlab.engine
 from numpy import pi
 
 from sb3_contrib.common.safety.safe_region import SafeRegion
@@ -23,6 +23,7 @@ class PendulumRegionOfAttraction(SafeRegion):
     def compute_roa():
         """
         """
+        import matlab
         eng = matlab.engine.start_matlab()
         dir = os.path.dirname(os.path.abspath(__file__))
         path_matlab = eng.genpath(f'{dir}/matlab')

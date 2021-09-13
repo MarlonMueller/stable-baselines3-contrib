@@ -50,6 +50,8 @@ class SafetyMask(gym.Wrapper):
         if not isinstance(self.action_space, gym.spaces.Discrete):
             raise ValueError("Action space is not ``gym.spaces.Discrete`` instance")
 
+        #TODO: Check that Discrete
+
         self._num_actions = self.action_space.n + 1
         self.action_space = gym.spaces.Discrete(self._num_actions)
 

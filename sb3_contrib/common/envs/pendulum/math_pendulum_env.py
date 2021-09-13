@@ -17,21 +17,6 @@ class MathPendulumEnv(Env):
     metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 30}
 
     @staticmethod
-    def is_safe_action(env: Env, safe_region: SafeRegion, action: float):
-        theta, thdot = env.state
-        state = env.dynamics(theta, thdot, action)
-
-        error_theta = (1/800) * (9.81 + action)
-        error_thdot = (9.81 ** 2 / 1600) + (9.81 * action / 800) #TODO: Replace with general
-
-        if state + [error_theta, error_thdot] in safe_region and\
-            state + [error_theta, -error_thdot] in safe_region and\
-            state + [-error_theta, -error_thdot] in safe_region and\
-            state + [-error_theta, error_thdot] in safe_region:
-            return True
-        return False
-
-    @staticmethod
     def safe_action(env: Env, safe_region: SafeRegion, action: float):
         # LQR controller
         # TODO: Maybe restrict torque here? Visuals.
@@ -102,10 +87,10 @@ class MathPendulumEnv(Env):
 
         # Start at theta=0; thdot=0
 
-        if self.init is not None and self.init == "random":
-            self.state = np.asarray(self._safe_region.sample())
-        else:
+        if self.init is not None and self.init == "zero":
             self.state = np.array([0, 0])
+        else:
+            self.state = np.asarray(self._safe_region.sample())
 
         self.last_action = None
 

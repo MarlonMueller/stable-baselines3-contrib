@@ -1,12 +1,12 @@
 import os, argparse, logging, importlib, time, random
-from typing import Union
+from typing import Union, Callable
 
 from gym.wrappers import TimeLimit
 from stable_baselines3.common.type_aliases import GymStepReturn
 from stable_baselines3.common.utils import configure_logger
 
-from .callbacks.pendulum_train import PendulumTrainCallback
-from .callbacks.pendulum_rollout import PendulumRolloutCallback
+from thesis.callbacks.pendulum_train import PendulumTrainCallback
+from thesis.callbacks.pendulum_rollout import PendulumRolloutCallback
 
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.callbacks import CallbackList
@@ -14,6 +14,7 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_util import is_wrapped
 from stable_baselines3.ppo.policies import MlpPolicy
 from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv
+from stable_baselines3.common.policies import ActorCriticPolicy
 
 from sb3_contrib.common.wrappers import SafetyMask
 from sb3_contrib.common.maskable.utils import is_masking_supported
@@ -24,6 +25,7 @@ from stable_baselines3 import HER, A2C, PPO, DQN
 
 from sb3_contrib.ppo_mask import MaskablePPO
 from sb3_contrib.a2c_mask import MaskableA2C
+from torch import nn as nn
 
 import gym
 import numpy as np
@@ -284,7 +286,89 @@ def main(**kwargs):
                 from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
                 model = base_algorithm(MaskableActorCriticPolicy, env, verbose=0, tensorboard_log=tensorboard_log)
             else:
-                model = base_algorithm(MlpPolicy, env, verbose=0, tensorboard_log=tensorboard_log)
+
+                def linear_schedule(initial_value: Union[float, str]) -> Callable[[float], float]:
+                    """
+                    Linear learning rate schedule.
+
+                    :param initial_value: (float or str)
+                    :return: (function)
+                    """
+                    if isinstance(initial_value, str):
+                        initial_value = float(initial_value)
+
+                    def func(progress_remaining: float) -> float:
+                        """
+                        Progress will decrease from 1 (beginning) to 0
+                        :param progress_remaining: (float)
+                        :return: (float)
+                        """
+                        return progress_remaining * initial_value
+
+                    return func
+
+                if kwargs['algorithm'] == "PPO":
+                    # model = base_algorithm(MlpPolicy,
+                    #                        env,
+                    #                        verbose=0,
+                    #                        tensorboard_log=tensorboard_log)
+                    model = base_algorithm(MlpPolicy,
+                                           env,
+                                           verbose=0,
+                                           tensorboard_log=tensorboard_log,
+                                           batch_size=4,
+                                           n_steps=8,
+                                           gamma=0.95,
+                                           learning_rate=4.935774549732434e-05,
+                                           ent_coef=0.06740124751907833,
+                                           clip_range=0.4,
+                                           n_epochs=20,
+                                           gae_lambda=1.0,
+                                           max_grad_norm=.5,
+                                           vf_coef=0.4149614449281107,
+                                           policy_kwargs=dict(
+                                               net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                                               activation_fn=nn.ReLU,
+                                               ortho_init=True)
+                                           )
+                                           #activation_fn=tanh) #lr_schedule, act_fn, net_arch, otho_init
+
+
+                elif kwargs['algorithm'] == "A2C":
+                    model = base_algorithm(MlpPolicy,
+                                           env,
+                                           verbose=0,
+                                           use_rms_prop=False,
+                                           normalize_advantage=True,
+                                           tensorboard_log=tensorboard_log,
+                                           ent_coef=0.03489354223693093,
+                                           max_grad_norm=2,
+                                           n_steps=2,
+                                           gae_lambda=1.0,
+                                           vf_coef=0.6841529890300497,
+                                           gamma=0.9,
+                                           learning_rate=linear_schedule(0.0015845365679309144),
+                                           use_sde=False,
+                                           policy_kwargs=dict(
+                                               net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                                               activation_fn=nn.ReLU,
+                                               ortho_init=True)
+                                           )
+                                           #policy_kwargs="dict(log_std_init=-2, ortho_init=False)")
+                    # model = base_algorithm(MlpPolicy,
+                    #                        env, verbose=0,
+                    #                        tensorboard_log=tensorboard_log,
+                    #                        normalize_advantage=False,
+                    #                        max_grad_norm=1,
+                    #                        use_rms_prop=True,
+                    #                        gae_lambda=0.95,
+                    #                        n_steps=8,
+                    #                        learning_rate=0.00730,
+                    #                        ent_coef=2.5111150,
+                    #                        vf_coef=0.79)
+                else:
+                    from stable_baselines3 import DQN
+                    model = DQN('MlpPolicy',env, verbose=0, tensorboard_log=tensorboard_log)
 
             #TODO: Remove
             #from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
@@ -723,15 +807,25 @@ if __name__ == '__main__':
 
     #Safety Measure later/Rel SafetyMeasureLater
 
-    remove_tf_logs()
+    #remove_tf_logs()
 
     args["train"] = True
     args["name"] = "run"
     args['iterations'] = 10
-    args['total_timesteps'] = 25e4
-    #args['iterations'] = 1
-    #args['total_timesteps'] = 2e4
-    #args["safety"] = "no_safety"
+    args["safety"] = "standard"
+
+    args['total_timesteps'] = 10e4
+    args["algorithm"] = "A2C"
+    main(**args)
+    args["algorithm"] = "PPO"
+    main(**args)
+
+    #args['total_timesteps'] = 20e4
+    #args["algorithm"] = "A2C"
+    #main(**args)
+    #args["algorithm"] = "PPO"
+    #main(**args)
+
 
     #
     # args["safety"] = "shield"
@@ -744,21 +838,69 @@ if __name__ == '__main__':
     # args["group"] = "test"
     # main(**args)
 
+    tags = [
+        #"main/avg_abs_action_rl",  #
+        #"main/avg_abs_safety_correction",  #
+        #"main/avg_abs_thdot",  #
+        #"main/avg_abs_theta",  #
+        #"main/avg_safety_measure",  #
+        #"main/episode_reward",  #
+        #"main/episode_time",  #
+        #"main/max_abs_action_rl",  #
+        #"main/max_abs_safety_correction",  #
+        #"main/max_abs_thdot",  #
+        #"main/max_abs_theta",  #
+        #"main/max_safety_measure",  #
+        #"main/no_violation",  #
+        #"main/rel_abs_safety_correction",
+        #"main/avg_step_punishment",  #
+        "main/avg_step_reward_rl"  #
+    ]
+
     #PRELIMINARY
-    for alg in ["PPO", "A2C"]:
-        args["algorithm"] = alg
-        for safety in ["no_safety"]:
-            args["safety"] = safety
-            for action_space in ["small", "verysmall", "normal", "large"]: #TODO
-                args["action_space"] = action_space
-                for init in ["zero", "random"]:
-                    args["init"] = init
-                    for reward in ["safety"]:
-                        args["reward"] = reward
-                        args["group"] = f"{alg}_{action_space}_{init}"
-                        if not os.path.isdir(os.getcwd() + f"/tensorboard/{args['group']}"):
-                            main(**args)
-                        print(f"Finished training {args['group']} ...")
+    # dirss = []
+    # for alg in ["PPO"]:#"A2C"]: # ["PPO", "A2C"]
+    #     args["algorithm"] = alg
+    #     for safety in ["no_safety"]:
+    #         args["safety"] = safety
+    #         for action_space in ["small"]: #",verysmall", "normal", "large"]: #TODO
+    #             args["action_space"] = action_space
+    #             for init in ["zero", "random"]:
+    #                 args["init"] = init
+    #                 for reward in ["safety"]:
+    #                     args["reward"] = reward
+    #                     args["group"] = f"{alg}_{action_space}_{init}"
+    #                     dirss.append(args["group"])
+    #                     #if not os.path.isdir(os.getcwd() + f"/tensorboard/{args['group']}"):
+    #                     #    main(**args)
+    #                     print(f"Finished training {args['group']} ...")
+
+
+    # from thesis.util import tf_events_to_plot, external_legend_res
+    # for tag in tags:
+    #     if tag == "main/avg_abs_action_rl":
+    #        y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
+    #     elif tag == "main/avg_step_reward_rl":
+    #         y_label = "$\mathrm{Mean\ reward\ } \overline{r}$"
+    #     else:
+    #        y_label = ''
+    #
+    #     dirss = ["A2C_normal_random"]
+    #     tf_events_to_plot(dirss=dirss, #"standard"
+    #                       tags=[tag],
+    #                       x_label='Episode',
+    #                       y_label=y_label,
+    #                       width=2.5, #5
+    #                       height=2.5, #2.5
+    #                       episode_length=100,
+    #                       window_size=41, #41
+    #                       save_as=f"pdfs/{tag.split('/')[1]}")
+
+    #labels = []
+    #for label in dirss:
+    #    labels.append(label.replace('_','/'))
+
+    #external_legend_res(labels=labels, save_as=f"pdfs/leg_{tag.split('/')[1]}")
 
 
     # for alg in ["PPO", "A2C"]: #TODO: A2C run
