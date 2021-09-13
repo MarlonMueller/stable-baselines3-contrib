@@ -308,11 +308,13 @@ def main(**kwargs):
                     return func
 
                 if kwargs['algorithm'] == "PPO":
-                    # model = base_algorithm(MlpPolicy,
-                    #                        env,
-                    #                        verbose=0,
-                    #                        tensorboard_log=tensorboard_log)
-                    model = base_algorithm(MlpPolicy,
+                    if 'flag' in kwargs and kwargs['flag']:
+                        model = base_algorithm(MlpPolicy,
+                                               env,
+                                               verbose=0,
+                                               tensorboard_log=tensorboard_log)
+                    else:
+                        model = base_algorithm(MlpPolicy,
                                            env,
                                            verbose=0,
                                            tensorboard_log=tensorboard_log,
@@ -335,7 +337,13 @@ def main(**kwargs):
 
 
                 elif kwargs['algorithm'] == "A2C":
-                    model = base_algorithm(MlpPolicy,
+                    if 'flag' in kwargs and kwargs['flag']:
+                        model = base_algorithm(MlpPolicy,
+                                               env,
+                                               verbose=0,
+                                               tensorboard_log=tensorboard_log)
+                    else:
+                        model = base_algorithm(MlpPolicy,
                                            env,
                                            verbose=0,
                                            use_rms_prop=False,
