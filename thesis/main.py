@@ -525,6 +525,7 @@ def parse_arguments():
     parser.add_argument('-s', '--safety', type=str, default=None, required=False,
                         help='Safety method')
     parser.add_argument('-i', '--iterations', type=int, default=1, required=False)
+    parser.add_argument('-f', '--flag', type=bool, default=False)
     args, unknown = parser.parse_known_args()
     return vars(args)
 
@@ -814,17 +815,18 @@ if __name__ == '__main__':
     args['iterations'] = 10
     args["safety"] = "standard"
 
-    args['total_timesteps'] = 10e4
-    args["algorithm"] = "A2C"
-    main(**args)
-    args["algorithm"] = "PPO"
-    main(**args)
-
-    #args['total_timesteps'] = 20e4
-    #args["algorithm"] = "A2C"
-    #main(**args)
-    #args["algorithm"] = "PPO"
-    #main(**args)
+    if not args['flag']:
+        args['total_timesteps'] = 10e4
+        args["algorithm"] = "A2C"
+        main(**args)
+        args["algorithm"] = "PPO"
+        main(**args)
+    else:
+        args['total_timesteps'] = 20e4
+        args["algorithm"] = "A2C"
+        main(**args)
+        args["algorithm"] = "PPO"
+        main(**args)
 
 
     #
