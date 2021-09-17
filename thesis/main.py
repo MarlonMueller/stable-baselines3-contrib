@@ -980,10 +980,10 @@ if __name__ == '__main__':
         args['total_timesteps'] = 20e4
         args['group'] = "A2C_UNTUNED"
         args["algorithm"] = "A2C"
-        #main(**args)
+        main(**args)
         args['group'] = "PPO_UNTUNED"
         args["algorithm"] = "PPO"
-        #main(**args)
+        main(**args)
 
 
     #
