@@ -733,11 +733,11 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
 
                     if window_size > 1:
                         mean = smooth_data(mean, window_size)
+                        std_dev = smooth_data(std_dev, window_size)
 
 
                     #TODO: Check PPO Episodes/Steps
 
-                    linewidth = 1
 
                     if label == "standard":
                         color = COLORS_PLOTS[0]
@@ -756,22 +756,23 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                      #   plt.fill_between(range(1, len(mean)+1), mean - std_dev, mean + std_dev, color=color, alpha=0.25)
 
                     #else:
-                    plt.plot(range(1, len(mean) + 1), mean, label=label.replace('_','/'), linewidth=linewidth)
+                    plt.plot(range(1, len(mean) + 1), mean, label=label.replace('_','/'), linewidth=1.25)
                     #plt.plot(range(1, len(mean) + 1), mean, label=label.replace('_','/'), linewidth=linewidth, where=mean>=-1, color="green")
-                    plt.fill_between(range(1, len(mean) + 1), mean - std_dev, mean + std_dev, alpha=0.5)
+                    plt.fill_between(range(1, len(mean) + 1), mean - std_dev, mean + std_dev, alpha=0.4)
                     #plt.fill_between(range(1, len(mean) + 1), mean - std_dev, mean + std_dev, alpha=0.25)
-                    plt.fill_between(range(1, len(mean) + 1), -1, mean, alpha=0.1, color="red", where=mean<-1)
-                    plt.fill_between(range(1, len(mean) + 1), -1, mean, alpha=0.1, color="green", where=mean >= -1)
+                    #plt.fill_between(range(1, len(mean) + 1), -1, mean, alpha=0.1, color="red", where=mean<-1)
+                    #plt.fill_between(range(1, len(mean) + 1), -1, mean, alpha=0.1, color="green", where=mean >= -1)
 
-                    plt.gca().axhline(-1, linestyle='-', color='magenta', linewidth=.75)
+                    #plt.gca().axhline(-1, linestyle='-', color='magenta', linewidth=.75)
 
                     if tag == "main/avg_step_reward_rl":
                         plt.gca().set_ylim(top=.1)
                         #plt.gca().set_ylim(bottom=-35)
                         plt.gca().set_yscale("symlog", linthresh=1)
-                        plt.gca().set_xlim(right=250)
-                        plt.xticks([0,1250,2500])
-
+                        #plt.gca().set_xlim(right=200)
+                        #plt.xticks([0,1250,2500])
+                        plt.xticks([0, 1000, 2000])
+                        plt.gca().set_xlim(right=2000)
 
         #if x_label == "Episode":
             #TODO: 0/1
@@ -782,7 +783,7 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
 
         plt.gca().set_xlim(left=0)
 
-        #plt.gca().set_ylim(bottom=-1)
+        #plt.gca().set_ylim(bottom=-10)
         #plt.gca().set_ylim(top=-1)
 
 
