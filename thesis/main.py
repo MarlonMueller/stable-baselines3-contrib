@@ -314,25 +314,87 @@ def main(**kwargs):
                                                verbose=0,
                                                tensorboard_log=tensorboard_log)
                     else:
-                        model = base_algorithm(MlpPolicy,
-                                           env,
-                                           verbose=0,
-                                           tensorboard_log=tensorboard_log,
-                                           batch_size=4,
-                                           n_steps=8,
-                                           gamma=0.95,
-                                           learning_rate=4.935774549732434e-05,
-                                           ent_coef=0.06740124751907833,
-                                           clip_range=0.4,
-                                           n_epochs=20,
-                                           gae_lambda=1.0,
-                                           max_grad_norm=.5,
-                                           vf_coef=0.4149614449281107,
-                                           policy_kwargs=dict(
-                                               net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                                               activation_fn=nn.ReLU,
-                                               ortho_init=True)
-                                           )
+                        pass
+                        #TUNE1 - gut, aber ausbrecher am Ende
+                        # model = base_algorithm(MlpPolicy,
+                        #                    env,
+                        #                    verbose=0,
+                        #                    tensorboard_log=tensorboard_log,
+                        #                    batch_size=4,
+                        #                    n_steps=8,
+                        #                    gamma=0.95,
+                        #                    learning_rate=4.935774549732434e-05,
+                        #                    ent_coef=0.06740124751907833,
+                        #                    clip_range=0.4,
+                        #                    n_epochs=20,
+                        #                    gae_lambda=1.0,
+                        #                    max_grad_norm=.5,
+                        #                    vf_coef=0.4149614449281107,
+                        #                    policy_kwargs=dict(
+                        #                        net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                        #                        activation_fn=nn.ReLU,
+                        #                        ortho_init=True)
+                        #                    )
+                        # # Tune2 - nicht gut, nicht so schlimm wie A2C in Run 1 aber keine Convergenz
+                        # model = base_algorithm(MlpPolicy,
+                        #                        env,
+                        #                        verbose=0,
+                        #                        tensorboard_log=tensorboard_log,
+                        #                        batch_size=4,
+                        #                        n_steps=8,
+                        #                        gamma=0.9,
+                        #                        learning_rate=0.00023351444497526097,
+                        #                        ent_coef=3.3637015275625054e-05,
+                        #                        clip_range=0.2,
+                        #                        n_epochs=1,
+                        #                        gae_lambda=0.92,
+                        #                        max_grad_norm=5,
+                        #                        vf_coef=0.39557068189434147,
+                        #                        policy_kwargs=dict(
+                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                        #                            activation_fn=nn.ReLU,
+                        #                            ortho_init=True)
+                        #                        )
+                        # Tune3 - best of now
+                        # model = base_algorithm(MlpPolicy,
+                        #                        env,
+                        #                        verbose=0,
+                        #                        tensorboard_log=tensorboard_log,
+                        #                        batch_size=4,
+                        #                        n_steps=8,
+                        #                        gamma=0.9,
+                        #                        learning_rate=0.0001252181,
+                        #                        ent_coef=0.00010173,
+                        #                        clip_range=0.3,
+                        #                        n_epochs=2,
+                        #                        gae_lambda=1.0,
+                        #                        max_grad_norm=2,
+                        #                        vf_coef=0.7261347,
+                        #                        policy_kwargs=dict(
+                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                        #                            activation_fn=nn.ReLU,
+                        #                            ortho_init=True)
+                        #                        )
+                        #Tune 4
+                        # model = base_algorithm(MlpPolicy,
+                        #                        env,
+                        #                        verbose=0,
+                        #                        tensorboard_log=tensorboard_log,
+                        #                        batch_size=512,
+                        #                        n_steps=2048,
+                        #                        gamma=0.95,
+                        #                        learning_rate=0.00323,
+                        #                        ent_coef=0.1,
+                        #                        clip_range=0.4,
+                        #                        n_epochs=10,
+                        #                        gae_lambda=1.0,
+                        #                        max_grad_norm=5,
+                        #                        vf_coef=0.99,
+                        #                        policy_kwargs=dict(
+                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                        #                            activation_fn=nn.ReLU,
+                        #                            ortho_init=True)
+                        #                        )
                                            #activation_fn=tanh) #lr_schedule, act_fn, net_arch, otho_init
 
 
@@ -343,25 +405,108 @@ def main(**kwargs):
                                                verbose=0,
                                                tensorboard_log=tensorboard_log)
                     else:
-                        model = base_algorithm(MlpPolicy,
-                                           env,
-                                           verbose=0,
-                                           use_rms_prop=False,
-                                           normalize_advantage=True,
-                                           tensorboard_log=tensorboard_log,
-                                           ent_coef=0.03489354223693093,
-                                           max_grad_norm=2,
-                                           n_steps=2,
-                                           gae_lambda=1.0,
-                                           vf_coef=0.6841529890300497,
-                                           gamma=0.9,
-                                           learning_rate=linear_schedule(0.0015845365679309144),
-                                           use_sde=False,
-                                           policy_kwargs=dict(
-                                               net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                                               activation_fn=nn.ReLU,
-                                               ortho_init=True)
-                                           )
+                        pass
+                        #Tune1 - convergiert manchmal net
+                        # model = base_algorithm(MlpPolicy,
+                        #                    env,
+                        #                    verbose=0,
+                        #                    use_rms_prop=False,
+                        #                    normalize_advantage=True,
+                        #                    tensorboard_log=tensorboard_log,
+                        #                    ent_coef=0.03489354223693093,
+                        #                    max_grad_norm=2,
+                        #                    n_steps=2,
+                        #                    gae_lambda=1.0,
+                        #                    vf_coef=0.6841529890300497,
+                        #                    gamma=0.9,
+                        #                    learning_rate=linear_schedule(0.0015845365679309144),
+                        #                    use_sde=False,
+                        #                    policy_kwargs=dict(
+                        #                        net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                        #                        activation_fn=nn.ReLU,
+                        #                        ortho_init=True)
+                        #                    )
+                        #Tune2 - A2 durchgehend zacken
+                        # model = base_algorithm(MlpPolicy,
+                        #                        env,
+                        #                        verbose=0,
+                        #                        use_rms_prop=False,
+                        #                        normalize_advantage=True,
+                        #                        tensorboard_log=tensorboard_log,
+                        #                        ent_coef=0.05877945647872223,
+                        #                        max_grad_norm=5,
+                        #                        n_steps=2,
+                        #                        gae_lambda=0.92,
+                        #                        vf_coef=0.2993644201737006,
+                        #                        gamma=0.95,
+                        #                        learning_rate=0.001058460163315873,
+                        #                        use_sde=False,
+                        #                        policy_kwargs=dict(
+                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                        #                            activation_fn=nn.ReLU,
+                        #                            ortho_init=True)
+                        #                        )
+
+                        # Tune3 - Katastrophe
+                        # model = base_algorithm(MlpPolicy,
+                        #                        env,
+                        #                        verbose=0,
+                        #                        use_rms_prop=False,
+                        #                        normalize_advantage=True,
+                        #                        tensorboard_log=tensorboard_log,
+                        #                        ent_coef=0.476890,
+                        #                        max_grad_norm=0.7,
+                        #                        n_steps=4,
+                        #                        gae_lambda=1.0,
+                        #                        vf_coef=0,
+                        #                        gamma=0.95,
+                        #                        learning_rate=0.00088739150,
+                        #                        use_sde=False,
+                        #                        policy_kwargs=dict(
+                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                        #                            activation_fn=nn.Tanh,
+                        #                            ortho_init=True)
+                        #                        )
+                        # Tune4 -Gut, Mehr Varianz
+                        # model = base_algorithm(MlpPolicy,
+                        #                        env,
+                        #                        verbose=0,
+                        #                        use_rms_prop=False,
+                        #                        normalize_advantage=True,
+                        #                        tensorboard_log=tensorboard_log,
+                        #                        ent_coef=0.01,
+                        #                        max_grad_norm=0.9,
+                        #                        n_steps=2,
+                        #                        gae_lambda=0.8,
+                        #                        vf_coef=0.99,
+                        #                        gamma=0.9,
+                        #                        learning_rate=0.004,
+                        #                        use_sde=False,
+                        #                        policy_kwargs=dict(
+                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                        #                            activation_fn=nn.Tanh,
+                        #                            ortho_init=True)
+                        #                        )
+                        #Tune4 - 1000
+                        # model = base_algorithm(MlpPolicy,
+                        #                        env,
+                        #                        verbose=0,
+                        #                        use_rms_prop=False,
+                        #                        normalize_advantage=True,
+                        #                        tensorboard_log=tensorboard_log,
+                        #                        ent_coef=0.01,
+                        #                        max_grad_norm=0.8,
+                        #                        n_steps=8,
+                        #                        gae_lambda=1.0,
+                        #                        vf_coef=0.285,
+                        #                        gamma=0.9,
+                        #                        learning_rate=0.001,
+                        #                        use_sde=False,
+                        #                        policy_kwargs=dict(
+                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                        #                            activation_fn=nn.ReLU,
+                        #                            ortho_init=True)
+                        #                        )
                                            #policy_kwargs="dict(log_std_init=-2, ortho_init=False)")
                     # model = base_algorithm(MlpPolicy,
                     #                        env, verbose=0,
@@ -824,21 +969,21 @@ if __name__ == '__main__':
     args["safety"] = "standard"
 
     if not args['flag']:
-        args['total_timesteps'] = 10e4
-        args['group'] ="A2C_TUNED"
+        args['total_timesteps'] = 20e4
+        #args['group'] ="A2C_TUNED"
         args["algorithm"] = "A2C"
         main(**args)
-        args['group'] = "PPO_TUNED"
-        args["algorithm"] = "PPO"
-        main(**args)
+        #args['group'] = "PPO_TUNED"
+        #args["algorithm"] = "PPO"
+        #main(**args)
     else:
         args['total_timesteps'] = 20e4
         args['group'] = "A2C_UNTUNED"
         args["algorithm"] = "A2C"
-        main(**args)
+        #main(**args)
         args['group'] = "PPO_UNTUNED"
         args["algorithm"] = "PPO"
-        main(**args)
+        #main(**args)
 
 
     #
@@ -899,7 +1044,7 @@ if __name__ == '__main__':
     #     else:
     #        y_label = ''
     #
-    #     dirss = ["A2C_normal_random"]
+    #     dirss = ["A2C_TUNED", "PPO_TUNED"]
     #     tf_events_to_plot(dirss=dirss, #"standard"
     #                       tags=[tag],
     #                       x_label='Episode',

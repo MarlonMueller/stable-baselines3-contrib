@@ -769,7 +769,7 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                         plt.gca().set_ylim(top=.1)
                         #plt.gca().set_ylim(bottom=-35)
                         plt.gca().set_yscale("symlog", linthresh=1)
-                        plt.gca().set_xlim(right=2500)
+                        plt.gca().set_xlim(right=250)
                         plt.xticks([0,1250,2500])
 
 
