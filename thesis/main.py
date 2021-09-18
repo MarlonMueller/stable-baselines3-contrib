@@ -314,8 +314,8 @@ def main(**kwargs):
                                                verbose=0,
                                                tensorboard_log=tensorboard_log)
                     else:
-                        pass
-                        #TUNE1 - gut, aber ausbrecher am Ende
+
+                        8#TUNE1 - gut, aber ausbrecher am Ende
                         # model = base_algorithm(MlpPolicy,
                         #                    env,
                         #                    verbose=0,
@@ -395,6 +395,28 @@ def main(**kwargs):
                         #                            activation_fn=nn.ReLU,
                         #                            ortho_init=True)
                         #                        )
+                        model = base_algorithm(MlpPolicy,
+                                               env,
+                                               verbose=0,
+                                               tensorboard_log=tensorboard_log,
+                                               batch_size=2,
+                                               n_steps=2,
+                                               gamma=0.9,
+                                               learning_rate=1e-4,
+                                               ent_coef=0.00015,
+                                               clip_range=0.2,
+                                               n_epochs=2,
+                                               gae_lambda=1.0,
+                                               max_grad_norm=0.8,
+                                               vf_coef=1.0,
+                                               policy_kwargs=dict(
+                                                   net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                                                   activation_fn=nn.ReLU,
+                                                   ortho_init=True)
+                                               )
+
+
+
                                            #activation_fn=tanh) #lr_schedule, act_fn, net_arch, otho_init
 
 
@@ -405,7 +427,6 @@ def main(**kwargs):
                                                verbose=0,
                                                tensorboard_log=tensorboard_log)
                     else:
-                        pass
                         #Tune1 - convergiert manchmal net
                         # model = base_algorithm(MlpPolicy,
                         #                    env,
@@ -967,15 +988,15 @@ if __name__ == '__main__':
     args["name"] = "run"
     args['iterations'] = 10
     args["safety"] = "standard"
-
+    #
     if not args['flag']:
-        args['total_timesteps'] = 20e4
-        args['group'] ="A2C_TUNED"
-        args["algorithm"] = "A2C"
-        main(**args)
-        #args['group'] = "PPO_TUNED"
-        #args["algorithm"] = "PPO"
+        #args['total_timesteps'] = 20e4
+        #args['group'] ="A2C_TUNED"
+        #args["algorithm"] = "A2C"
         #main(**args)
+        args['group'] = "PPO_TUNED"
+        args["algorithm"] = "PPO"
+        main(**args)
     else:
         args['total_timesteps'] = 20e4
         args['group'] = "A2C_UNTUNED"
@@ -1035,25 +1056,26 @@ if __name__ == '__main__':
     #                     print(f"Finished training {args['group']} ...")
 
 
-    from thesis.util import tf_events_to_plot, external_legend_res
-    for tag in tags:
-        if tag == "main/avg_abs_action_rl":
-           y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
-        elif tag == "main/avg_step_reward_rl":
-            y_label = "$\mathrm{Mean\ reward\ } \overline{r}$"
-        else:
-           y_label = ''
-
-        dirss = ["A2C_UNTUNED", "PPO_UNTUNED"]
-        tf_events_to_plot(dirss=dirss, #"standard"
-                          tags=[tag],
-                          x_label='Episode',
-                          y_label=y_label,
-                          width=2.5, #5
-                          height=2.5, #2.5
-                          episode_length=100,
-                          window_size=41, #41
-                          save_as=f"pdfs/{tag.split('/')[1]}")
+    # from thesis.util import tf_events_to_plot, external_legend_res
+    # for tag in tags:
+    #     if tag == "main/avg_abs_action_rl":
+    #        y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
+    #     elif tag == "main/avg_step_reward_rl":
+    #         y_label = "$\mathrm{Mean\ reward\ } \overline{r}$"
+    #     else:
+    #        y_label = ''
+    #
+    #     #dirss = ["A2C_UNTUNED", "PPO_UNTUNED"]
+    #     dirss = ["A2C_TUNED"]
+    #     tf_events_to_plot(dirss=dirss, #"standard"
+    #                       tags=[tag],
+    #                       x_label='Episode',
+    #                       y_label=y_label,
+    #                       width=2.5, #5
+    #                       height=2.5, #2.5
+    #                       episode_length=100,
+    #                       window_size=41, #41
+    #                       save_as=f"pdfs/{tag.split('/')[1]}")
 
     #labels = []
     #for label in dirss:

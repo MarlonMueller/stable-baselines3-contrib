@@ -768,10 +768,13 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     if tag == "main/avg_step_reward_rl":
                         plt.gca().set_ylim(top=.1)
                         #plt.gca().set_ylim(bottom=-35)
-                        plt.gca().set_yscale("symlog", linthresh=1)
+                        #plt.gca().set_yscale("symlog", linthresh=1)
                         #plt.gca().set_xlim(right=200)
                         #plt.xticks([0,1250,2500])
-                        plt.xticks([0, 1000, 2000])
+                        #plt.xticks([0, 1000, 2000], minor=True)
+                        plt.gca().set_xticks([0, 1000, 2000], minor=False)
+                        minor_ticks = [250, 500, 750, 1250, 1500, 1750]
+                        plt.gca().set_xticks(minor_ticks, minor=True)
                         plt.gca().set_xlim(right=2000)
 
         #if x_label == "Episode":
@@ -783,7 +786,7 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
 
         plt.gca().set_xlim(left=0)
 
-        #plt.gca().set_ylim(bottom=-10)
+        plt.gca().set_ylim(bottom=-10)
         #plt.gca().set_ylim(top=-1)
 
 
@@ -794,8 +797,10 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
         #    except:
         #        print(tags)
 
-        plt.gca().xaxis.grid(True, color='black', linestyle='dotted', linewidth=0.5)
-        plt.gca().yaxis.grid(True, color='black', linestyle='dotted', linewidth=0.5)
+        plt.gca().xaxis.grid(True, color='black', linestyle='dotted', linewidth=0.5, alpha=0.6)
+        plt.gca().yaxis.grid(True, color='black', linestyle='dotted', linewidth=0.5, alpha=0.6)
+
+        plt.gca().xaxis.grid(which='minor', color='black', linestyle='dotted', linewidth=0.5, alpha=0.3)
 
         colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22',
                   '#17becf']
