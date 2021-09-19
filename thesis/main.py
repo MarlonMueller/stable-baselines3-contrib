@@ -99,11 +99,11 @@ def main(**kwargs):
     safe_region = SafeRegion(vertices=vertices)
 
     if "action_space" in kwargs and kwargs["action_space"] == "large":
-        transform_action_space_fn = lambda a: 2.5 * (a - 20)
-        alter_action_space = gym.spaces.Discrete(41)
+        transform_action_space_fn = lambda a: 2.5 * (a - 18)
+        alter_action_space = gym.spaces.Discrete(37)
     elif "action_space" in kwargs and kwargs["action_space"] == "small":
-        transform_action_space_fn = lambda a: (a - 10)
-        alter_action_space = gym.spaces.Discrete(21)
+        transform_action_space_fn = lambda a: 1.5 * (a - 12)
+        alter_action_space = gym.spaces.Discrete(25)
     else:
         transform_action_space_fn = lambda a: 2 * (a - 15)
         alter_action_space = gym.spaces.Discrete(31)
@@ -1003,8 +1003,8 @@ if __name__ == '__main__':
         #args['group'] ="A2C_TUNED_MODEL"
         #args["algorithm"] = "A2C"
         #main(**args)
-        args['group'] = f"PPO_TUNED_INIT"
-        #args["action_space"] = "small" #["small",",verysmall", "normal", "large"]
+        args['group'] = f"PPO_TUNED_S"
+        args["action_space"] = "small" #["small",",verysmall", "normal", "large"]
         args["algorithm"] = "PPO"
         main(**args)
     else:
@@ -1098,7 +1098,7 @@ if __name__ == '__main__':
     #        y_label = ''
     #
     #     #dirss = ["PPO_UNTUNED", "A2C_UNTUNED"]
-    #     dirss = ["PPO_TUNED_OBS_S"]
+    #     dirss = ["PPO_TUNED","PPO_TUNED_S","PPO_TUNED_L"]
     #     #dirss = ["PPO_TUNED"]
     #     #dirss = ["PPO_TUNED_OBS"]
     #     tf_events_to_plot(dirss=dirss, #"standard"

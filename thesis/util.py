@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 COLORS_PLOTS = [
     'tab:blue', #blue
     'tab:orange', #orange
-    '#008f7c', #green
+    'tab:purple', #green
     '#f0266b' #magenta
 ]
 
@@ -753,8 +753,10 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     if label == "PPO_TUNED":
                         color = COLORS_PLOTS[0]
                         #color = "tab:purple"
-                    elif label == "A2C_TUNED":
+                    elif label == "PPO_TUNED_S":
                          color = COLORS_PLOTS[1]
+                    elif label == "PPO_TUNED_L":
+                        color = COLORS_PLOTS[2]
                     else:
                         color = COLORS_PLOTS[0]
 
@@ -867,12 +869,12 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
         colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22',
                   '#17becf']
 
-        #a2c = Line2D([0], [0], color=colors[1], label='A2C')
-        #ppo = Line2D([0], [0], color=colors[0], label='PPO')
-        #roa = Line2D([0], [0], color="magenta", label='ROA')
+        a2c = Line2D([0], [0], color=colors[1], label='Equilib.')
+        ppo = Line2D([0], [0], color=colors[0], label='Random')
+        roa = Line2D([0], [0], color="magenta", label='ROA')
 
         #plt.legend(loc="lower right", handles=[roa])
-        #plt.legend(loc="lower right", handles=[a2c, ppo])
+        #plt.legend(loc="lower right", handles=[ppo, a2c])
         #plt.legend(loc="upper left", fontsize=7, bbox_to_anchor=(1.05, 1))
         #plt.suptitle(tags[0].replace("_",'-'))
 
