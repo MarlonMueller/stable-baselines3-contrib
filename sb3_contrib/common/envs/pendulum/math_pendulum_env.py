@@ -58,8 +58,8 @@ class MathPendulumEnv(Env):
             dtype=np.float32
         )
 
-        #obs_high = np.array([1., 1., np.inf], dtype=np.float32)
-        obs_high = np.array([np.inf, np.inf], dtype=np.float32)
+        obs_high = np.array([1., 1., np.inf], dtype=np.float32)
+        #obs_high = np.array([np.inf, np.inf], dtype=np.float32)
         self.observation_space = Box(
             low=-obs_high,
             high=obs_high,
