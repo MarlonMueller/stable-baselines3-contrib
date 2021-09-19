@@ -998,24 +998,24 @@ if __name__ == '__main__':
 
 
 
-    # if not args['flag']:
-    #     args['total_timesteps'] = 5e4
-    #     #args['group'] ="A2C_TUNED_MODEL"
-    #     #args["algorithm"] = "A2C"
-    #     #main(**args)
-    #     args['group'] = f"PPO_TUNED_OBS_S"
-    #     args["action_space"] = "small" #["small",",verysmall", "normal", "large"]
-    #     args["algorithm"] = "PPO"
-    #     main(**args)
-    # else:
-    #     args['total_timesteps'] = 5e4
-    #     # args['group'] ="A2C_TUNED_MODEL"
-    #     # args["algorithm"] = "A2C"
-    #     # main(**args)
-    #     args['group'] = f"PPO_TUNED_OBS_L"
-    #     args["action_space"] = "large"  # ["small",",verysmall", "normal", "large"]
-    #     args["algorithm"] = "PPO"
-    #     main(**args)
+    if not args['flag']:
+        args['total_timesteps'] = 5e4
+        #args['group'] ="A2C_TUNED_MODEL"
+        #args["algorithm"] = "A2C"
+        #main(**args)
+        args['group'] = f"PPO_TUNED_OBS_S"
+        args["action_space"] = "small" #["small",",verysmall", "normal", "large"]
+        args["algorithm"] = "PPO"
+        main(**args)
+    else:
+        args['total_timesteps'] = 5e4
+        # args['group'] ="A2C_TUNED_MODEL"
+        # args["algorithm"] = "A2C"
+        # main(**args)
+        args['group'] = f"PPO_TUNED_OBS_L"
+        args["action_space"] = "large"  # ["small",",verysmall", "normal", "large"]
+        args["algorithm"] = "PPO"
+        main(**args)
 
 
         # print("Test")
@@ -1078,38 +1078,38 @@ if __name__ == '__main__':
     #                     print(f"Finished training {args['group']} ...")
 
 
-    from thesis.util import tf_events_to_plot, external_legend_res
-    for tag in tags:
-        if tag == "main/avg_abs_action_rl":
-           y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
-        elif tag == "main/avg_abs_thdot":
-           y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
-        elif tag == "main/avg_abs_theta":
-           y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
-        elif tag == "main/avg_step_reward_rl":
-            y_label = "Mean reward per step $\overline{r}$"
-        elif tag == "main/episode_reward":
-            y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
-        elif tag== "main/max_safety_measure":
-            y_label = "Maximal reward $r_{\mathrm{max}}$"
-        elif tag == "main/no_violation":
-            y_label = "States $s$ in ROA"
-        else:
-           y_label = ''
-
-        #dirss = ["PPO_UNTUNED", "A2C_UNTUNED"]
-        dirss = ["PPO_TUNED_OBS_S"]
-        #dirss = ["PPO_TUNED"]
-        #dirss = ["PPO_TUNED_OBS"]
-        tf_events_to_plot(dirss=dirss, #"standard"
-                          tags=[tag],
-                          x_label='Episode',
-                          y_label=y_label,
-                          width=2.5, #5
-                          height=2.5, #2.5
-                          episode_length=100,
-                          window_size=41, #41
-                          save_as=f"pdfs/{tag.split('/')[1]}")
+    # from thesis.util import tf_events_to_plot, external_legend_res
+    # for tag in tags:
+    #     if tag == "main/avg_abs_action_rl":
+    #        y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
+    #     elif tag == "main/avg_abs_thdot":
+    #        y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
+    #     elif tag == "main/avg_abs_theta":
+    #        y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
+    #     elif tag == "main/avg_step_reward_rl":
+    #         y_label = "Mean reward per step $\overline{r}$"
+    #     elif tag == "main/episode_reward":
+    #         y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
+    #     elif tag== "main/max_safety_measure":
+    #         y_label = "Maximal reward $r_{\mathrm{max}}$"
+    #     elif tag == "main/no_violation":
+    #         y_label = "States $s$ in ROA"
+    #     else:
+    #        y_label = ''
+    #
+    #     #dirss = ["PPO_UNTUNED", "A2C_UNTUNED"]
+    #     dirss = ["PPO_TUNED_OBS_S"]
+    #     #dirss = ["PPO_TUNED"]
+    #     #dirss = ["PPO_TUNED_OBS"]
+    #     tf_events_to_plot(dirss=dirss, #"standard"
+    #                       tags=[tag],
+    #                       x_label='Episode',
+    #                       y_label=y_label,
+    #                       width=2.5, #5
+    #                       height=2.5, #2.5
+    #                       episode_length=100,
+    #                       window_size=41, #41
+    #                       save_as=f"pdfs/{tag.split('/')[1]}")
 
     #labels = []
     #for label in dirss:
