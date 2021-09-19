@@ -1004,19 +1004,19 @@ if __name__ == '__main__':
 
     args["algorithm"] = "PPO"
     args['total_timesteps'] = 10e4
-    args["safety"] = "mask"
+    args["safety"] = "shield"
     print(args["flag"])
     if args["flag"] == 1:
-        args['group'] = "E_MASK_NO"
+        args['group'] = "E_SHIELD_NO"
         args["init"] = "zero"
         args["action_space"] = "small"
         main(**args)
     elif args["flag"] == 2:
-        args['group'] = "H_MASK_NO"
+        args['group'] = "H_SHIELD_NO"
         args["action_space"] = "large"
         main(**args)
     else:
-        args['group'] = "N_MASK_NO"
+        args['group'] = "N_SHIELD_NO"
         #args["action_space"] = "small"
         main(**args)
 
