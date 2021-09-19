@@ -61,16 +61,21 @@ def main(**kwargs):
     if kwargs['env_id'] not in [env_spec.id for env_spec in gym.envs.registry.all()]:
          KeyError(f"Environment {kwargs['env_id']} is not registered")
 
-    if "init" in kwargs and kwargs["init"] == "random":
-        if "reward" in kwargs and kwargs["reward"] == "opposing":
-            env = gym.make(kwargs['env_id'], init="random", reward="opposing")
-        else:
-            env = gym.make(kwargs['env_id'], init="random")
+    if "init" in kwargs and kwargs["init"] == "zero":
+        env = gym.make(kwargs['env_id'], init="zero")
     else:
-        if "reward" in kwargs and kwargs["reward"] == "opposing":
-            env = gym.make(kwargs['env_id'], reward="opposing")
-        else:
-            env = gym.make(kwargs['env_id'])
+        env = gym.make(kwargs['env_id'])
+
+    # if "init" in kwargs and kwargs["init"] == "random":
+    #     if "reward" in kwargs and kwargs["reward"] == "opposing":
+    #         env = gym.make(kwargs['env_id'], init="random", reward="opposing")
+    #     else:
+    #         env = gym.make(kwargs['env_id'], init="random")
+    # else:
+    #     if "reward" in kwargs and kwargs["reward"] == "opposing":
+    #         env = gym.make(kwargs['env_id'], reward="opposing")
+    #     else:
+    #         env = gym.make(kwargs['env_id'])
 
     #TODO
     #if 'safety' not in kwargs:
@@ -698,7 +703,7 @@ def parse_arguments():
     parser.add_argument('-s', '--safety', type=str, default=None, required=False,
                         help='Safety method')
     parser.add_argument('-i', '--iterations', type=int, default=1, required=False)
-    parser.add_argument('-f', '--flag', type=bool, default=False)
+    parser.add_argument('-f', '--flag', type=int, default=0)
     args, unknown = parser.parse_known_args()
     return vars(args)
 
@@ -993,20 +998,40 @@ if __name__ == '__main__':
     args["train"] = True
     args["name"] = "run"
     args['iterations'] = 10
+
     #args["safety"] = "standard"
     # # #
 
-
-
-    if not args['flag']:
-        args['total_timesteps'] = 5e4
-        #args['group'] ="A2C_TUNED_MODEL"
-        #args["algorithm"] = "A2C"
-        #main(**args)
-        args['group'] = f"PPO_TUNED_E"
-        args["action_space"] = "small" #["small",",verysmall", "normal", "large"]
-        args["algorithm"] = "PPO"
+    args["algorithm"] = "PPO"
+    args['total_timesteps'] = 10e4
+    args["safety"] = "mask"
+    print(args["flag"])
+    if args["flag"] == 1:
+        args['group'] = "E_MASK_NO"
+        args["init"] = "zero"
+        args["action_space"] = "small"
         main(**args)
+    elif args["flag"] == 2:
+        args['group'] = "H_MASK_NO"
+        args["action_space"] = "large"
+        main(**args)
+    else:
+        args['group'] = "N_MASK_NO"
+        #args["action_space"] = "small"
+        main(**args)
+
+
+
+
+    # if not args['flag']:
+    #     args['total_timesteps'] = 5e4
+    #     #args['group'] ="A2C_TUNED_MODEL"
+    #     #args["algorithm"] = "A2C"
+    #     #main(**args)
+    #     args['group'] = f"PPO_TUNED_E"
+    #     args["action_space"] = "small" #["small",",verysmall", "normal", "large"]
+    #     args["algorithm"] = "PPO"
+    #     main(**args)
     # else:
     #     args['total_timesteps'] = 5e4
     #     # args['group'] ="A2C_TUNED_MODEL"
@@ -1053,10 +1078,10 @@ if __name__ == '__main__':
         #"main/max_abs_thdot",  # ?
         #"main/max_abs_theta",  # ?
         #"main/max_safety_measure",  # ?
-        #"main/no_violation",  #
+        "main/no_violation",  #
         #"main/rel_abs_safety_correction",
         #"main/avg_step_punishment",  #
-        "main/avg_step_reward_rl"  # ???
+        #"main/avg_step_reward_rl"  # ???
     ]
 
     #PRELIMINARY
@@ -1098,7 +1123,7 @@ if __name__ == '__main__':
     #        y_label = ''
     #
     #     #dirss = ["PPO_TUNED", "A2C_TUNED"]
-    #     dirss = ["PPO_TUNED","PPO_E", "PPO_TUNED_L"]
+    #     dirss = ["PPO_TUNED","PPO_TUNED_E_OBS"]
     #     #dirss = ["PPO_TUNED"]
     #     #dirss = ["PPO_TUNED_OBS"]
     #     tf_events_to_plot(dirss=dirss, #"standard"

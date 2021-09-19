@@ -782,13 +782,13 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     #else:
                     #plt.plot(range(1, len(mean) + 1), mean, label=label.replace('_','/'), linewidth=1.25)
 
-                    #plt.gca().axhline(1, linestyle='dotted', color='green', linewidth=.75)
-                    #plt.gca().axhline(0, linestyle='dotted', color='red', linewidth=.75)
-                    #plt.gca().axhline(.5, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5)
+                    plt.gca().axhline(1, linestyle='dotted', color='green', linewidth=.75)
+                    plt.gca().axhline(0, linestyle='dotted', color='red', linewidth=.75)
+                    plt.gca().axhline(.5, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5)
 
-                    plt.gca().axhline(-1, linestyle='dotted', color='magenta', linewidth=.75)
-                    plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75)
-                    plt.gca().axhline(-10, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5)
+                    #plt.gca().axhline(-1, linestyle='dotted', color='magenta', linewidth=.75)
+                    #plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75)
+                    #plt.gca().axhline(-10, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5)
 
                     #plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75)
                     #plt.gca().axhline(-500, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5)
@@ -811,27 +811,27 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
 
 
 
-                    plt.gca().set_ylim(top=.25)
-                    plt.gca().set_yscale("symlog", linthresh=1)
-                    plt.gca().set_yticks([0, -1, -10], minor=False)
-                    plt.gca().set_xlim(right=500)
-                    plt.gca().set_xticks([0, 250, 500], minor=False)
-                    minor_ticks = [62.5, 125, 187.5, 312.5, 375, 437.5]
-                    plt.gca().set_xticks(minor_ticks, minor=True)
+                    # plt.gca().set_ylim(top=.25)
+                    # plt.gca().set_yscale("symlog", linthresh=1)
+                    # plt.gca().set_yticks([0, -1, -10], minor=False)
+                    # plt.gca().set_xlim(right=500)
+                    # plt.gca().set_xticks([0, 250, 500], minor=False)
+                    # minor_ticks = [62.5, 125, 187.5, 312.5, 375, 437.5]
+                    # plt.gca().set_xticks(minor_ticks, minor=True)
 
                     #plt.gca().set_xlim(right=200)
                     #plt.xticks([0,1250,2500])
                     #plt.xticks([0, 1000, 2000], minor=True)
 
-                    # plt.gca().set_xlim(right=500)
-                    # plt.gca().set_ylim(top=1.1)
-                    # plt.gca().set_yticks([0, 0.5, 1], minor=False)
-                    # #plt.gca().set_yticks([0.5], minor=True)
-                    # plt.gca().set_ylim(bottom=-0.1)
-                    # plt.gca().set_yticklabels(['$0\%$', '$50\%$', '$100\%$'])
-                    # plt.gca().set_xticks([0, 250, 500], minor=False)
-                    # minor_ticks = [62.5, 125, 187.5, 312.5, 375, 437.5]
-                    # plt.gca().set_xticks(minor_ticks, minor=True)
+                    plt.gca().set_xlim(right=500)
+                    plt.gca().set_ylim(top=1.1)
+                    plt.gca().set_yticks([0, 0.5, 1], minor=False)
+                    #plt.gca().set_yticks([0.5], minor=True)
+                    plt.gca().set_ylim(bottom=-0.1)
+                    plt.gca().set_yticklabels(['$0\%$', '$50\%$', '$100\%$'])
+                    plt.gca().set_xticks([0, 250, 500], minor=False)
+                    minor_ticks = [62.5, 125, 187.5, 312.5, 375, 437.5]
+                    plt.gca().set_xticks(minor_ticks, minor=True)
 
                     # plt.gca().set_ylim(top=250)
                     # plt.gca().set_ylim(bottom=-2000)
