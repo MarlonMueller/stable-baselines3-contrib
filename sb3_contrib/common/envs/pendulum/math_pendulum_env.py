@@ -88,10 +88,12 @@ class MathPendulumEnv(Env):
 
         # Start at theta=0; thdot=0
 
-        if self.init is not None and self.init == "zero":
-            self.state = np.array([0, 0])
-        else:
-            self.state = np.asarray(self._safe_region.sample())
+        self.state = np.array([0, 0])
+
+        #if self.init is not None and self.init == "zero":
+        #    self.state = np.array([0, 0])
+        #else:
+        #    self.state = np.asarray(self._safe_region.sample())
 
         self.last_action = None
 
