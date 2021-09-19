@@ -757,6 +757,8 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                          color = COLORS_PLOTS[1]
                     elif label == "PPO_TUNED_L":
                         color = COLORS_PLOTS[2]
+                    elif label == "PPO_TUNED_E":
+                        color = "tab:orange"
                     else:
                         color = COLORS_PLOTS[0]
 

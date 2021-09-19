@@ -1003,7 +1003,7 @@ if __name__ == '__main__':
         #args['group'] ="A2C_TUNED_MODEL"
         #args["algorithm"] = "A2C"
         #main(**args)
-        args['group'] = f"PPO_E"
+        args['group'] = f"PPO_TUNED_E"
         args["action_space"] = "small" #["small",",verysmall", "normal", "large"]
         args["algorithm"] = "PPO"
         main(**args)
@@ -1098,7 +1098,7 @@ if __name__ == '__main__':
     #        y_label = ''
     #
     #     #dirss = ["PPO_TUNED", "A2C_TUNED"]
-    #     dirss = ["PPO_TUNED","PPO_TUNED_INIT"]
+    #     dirss = ["PPO_TUNED","PPO_E", "PPO_TUNED_L"]
     #     #dirss = ["PPO_TUNED"]
     #     #dirss = ["PPO_TUNED_OBS"]
     #     tf_events_to_plot(dirss=dirss, #"standard"
