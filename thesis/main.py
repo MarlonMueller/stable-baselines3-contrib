@@ -990,10 +990,10 @@ if __name__ == '__main__':
     # args['name'] = 'TUNED/run'
     # main(**args)
     #
-    # args["train"] = True
-    # args["name"] = "run"
-    # args['iterations'] = 1
-    # #args["safety"] = "standard"
+    args["train"] = True
+    args["name"] = "run"
+    args['iterations'] = 10
+    #args["safety"] = "standard"
     # # #
 
 
