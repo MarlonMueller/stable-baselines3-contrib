@@ -1006,7 +1006,7 @@ if __name__ == '__main__':
         #args['group'] ="A2C_TUNED_MODEL"
         #args["algorithm"] = "A2C"
         #main(**args)
-        args['group'] = f"PPO_TUNED_OBS_"
+        args['group'] = f"PPO_TUNED_OBS_S"
         args["action_space"] = "small" #["small",",verysmall", "normal", "large"]
         args["algorithm"] = "PPO"
         main(**args)
@@ -1015,7 +1015,7 @@ if __name__ == '__main__':
         # args['group'] ="A2C_TUNED_MODEL"
         # args["algorithm"] = "A2C"
         # main(**args)
-        args['group'] = f"PPO_TUNED_OBS_"
+        args['group'] = f"PPO_TUNED_OBS_L"
         args["action_space"] = "large"  # ["small",",verysmall", "normal", "large"]
         args["algorithm"] = "PPO"
         main(**args)
