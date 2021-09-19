@@ -1003,19 +1003,19 @@ if __name__ == '__main__':
         #args['group'] ="A2C_TUNED_MODEL"
         #args["algorithm"] = "A2C"
         #main(**args)
-        args['group'] = f"PPO_TUNED_S"
+        args['group'] = f"PPO_E"
         args["action_space"] = "small" #["small",",verysmall", "normal", "large"]
         args["algorithm"] = "PPO"
         main(**args)
-    else:
-        args['total_timesteps'] = 5e4
-        # args['group'] ="A2C_TUNED_MODEL"
-        # args["algorithm"] = "A2C"
-        # main(**args)
-        args['group'] = f"PPO_TUNED_OBS_L"
-        args["action_space"] = "large"  # ["small",",verysmall", "normal", "large"]
-        args["algorithm"] = "PPO"
-        main(**args)
+    # else:
+    #     args['total_timesteps'] = 5e4
+    #     # args['group'] ="A2C_TUNED_MODEL"
+    #     # args["algorithm"] = "A2C"
+    #     # main(**args)
+    #     args['group'] = f"PPO_TUNED_OBS_L"
+    #     args["action_space"] = "large"  # ["small",",verysmall", "normal", "large"]
+    #     args["algorithm"] = "PPO"
+    #     main(**args)
 
 
         # print("Test")
@@ -1053,10 +1053,10 @@ if __name__ == '__main__':
         #"main/max_abs_thdot",  # ?
         #"main/max_abs_theta",  # ?
         #"main/max_safety_measure",  # ?
-        "main/no_violation",  #
+        #"main/no_violation",  #
         #"main/rel_abs_safety_correction",
         #"main/avg_step_punishment",  #
-        #"main/avg_step_reward_rl"  # ???
+        "main/avg_step_reward_rl"  # ???
     ]
 
     #PRELIMINARY
@@ -1097,8 +1097,8 @@ if __name__ == '__main__':
     #     else:
     #        y_label = ''
     #
-    #     #dirss = ["PPO_UNTUNED", "A2C_UNTUNED"]
-    #     dirss = ["PPO_TUNED","PPO_TUNED_S","PPO_TUNED_L"]
+    #     #dirss = ["PPO_TUNED", "A2C_TUNED"]
+    #     dirss = ["PPO_TUNED","PPO_TUNED_INIT"]
     #     #dirss = ["PPO_TUNED"]
     #     #dirss = ["PPO_TUNED_OBS"]
     #     tf_events_to_plot(dirss=dirss, #"standard"
