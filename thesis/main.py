@@ -1007,19 +1007,29 @@ if __name__ == '__main__':
         #args["algorithm"] = "A2C"
         #main(**args)
         args['group'] = f"PPO_TUNED_OBS_"
-        args["action_space"] = action_space #["small",",verysmall", "normal", "large"]
+        args["action_space"] = "small" #["small",",verysmall", "normal", "large"]
         args["algorithm"] = "PPO"
         main(**args)
-    # else:
-    #     print("Test")
-    #     args['total_timesteps'] = 10e4
-    #     args['group'] = "A2C_UNTUNED_MODEL"
-    #     args["algorithm"] = "A2C"
-    #     main(**args)
-    #     args['total_timesteps'] = 20e4
-    #     args['group'] = "PPO_UNTUNED_MODEL"
-    #     args["algorithm"] = "PPO"
-    #     main(**args)
+    else:
+        args['total_timesteps'] = 5e4
+        # args['group'] ="A2C_TUNED_MODEL"
+        # args["algorithm"] = "A2C"
+        # main(**args)
+        args['group'] = f"PPO_TUNED_OBS_"
+        args["action_space"] = "large"  # ["small",",verysmall", "normal", "large"]
+        args["algorithm"] = "PPO"
+        main(**args)
+
+
+        # print("Test")
+        # args['total_timesteps'] = 10e4
+        # args['group'] = "A2C_UNTUNED_MODEL"
+        # args["algorithm"] = "A2C"
+        # main(**args)
+        # args['total_timesteps'] = 20e4
+        # args['group'] = "PPO_UNTUNED_MODEL"
+        # args["algorithm"] = "PPO"
+        # main(**args)
 
 
     #
