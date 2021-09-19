@@ -58,7 +58,8 @@ class MathPendulumEnv(Env):
             dtype=np.float32
         )
 
-        obs_high = np.array([1., 1., np.inf], dtype=np.float32)
+        #obs_high = np.array([1., 1., np.inf], dtype=np.float32)
+        obs_high = np.array([np.inf, np.inf], dtype=np.float32)
         self.observation_space = Box(
             low=-obs_high,
             high=obs_high,
@@ -104,6 +105,7 @@ class MathPendulumEnv(Env):
         self.state = np.array([theta, thdot])
 
         self.last_action = action
+        #print(self._get_obs(theta, thdot))
         return self._get_obs(theta, thdot), self._get_reward(theta, thdot, action), False, {}
 
     def dynamics(self, theta: float, thdot: float, torque: float) -> Tuple[float, float]:
@@ -112,7 +114,8 @@ class MathPendulumEnv(Env):
         return [new_theta, new_thdot]
 
     def _get_obs(self, theta, thdot) -> GymObs:
-        return np.array([cos(theta), sin(theta), thdot])
+        return np.array([theta, thdot])
+        #return np.array([cos(theta), sin(theta), thdot])
 
     def _get_reward(self, theta: float, thdot: float, action: Union[int, np.ndarray]) -> float:
         if self.reward is not None: #TODO: Clean

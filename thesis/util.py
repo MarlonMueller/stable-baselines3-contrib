@@ -15,9 +15,17 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+# COLORS_PLOTS = [
+#     '#0065bd', #blue
+#     '#e37222', #orange
+#     '#008f7c', #green
+#     '#f0266b' #magenta
+# ]
+
+
 COLORS_PLOTS = [
-    '#0065bd', #blue
-    '#e37222', #orange
+    'tab:blue', #blue
+    'tab:orange', #orange
     '#008f7c', #green
     '#f0266b' #magenta
 ]
@@ -706,7 +714,8 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     df = pd.DataFrame.from_records(summary_iterator.Scalars(tag),
                                                    columns=summary_iterator.Scalars(tag)[0]._fields)
 
-                    values.append(df["value"].to_list())
+                    values.append(df["value"][:500].to_list())
+                    #values.append(df["value"][:500].to_list())
 
                     #if summary_df.empty:
 
@@ -725,9 +734,11 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     #else:
                         #summary_df["value"] += df["value"] / num_runs
 
+
                 if values:
 
                     values = np.array(values)
+                    #values = -np.array(values)
                     mean = np.mean(values, axis=0)
                     std_dev = np.std(values, axis=0)
 
@@ -739,16 +750,23 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     #TODO: Check PPO Episodes/Steps
 
 
-                    if label == "standard":
+                    if label == "PPO_TUNED":
                         color = COLORS_PLOTS[0]
-                    elif label == "shield":
-                        color = COLORS_PLOTS[2]
-                    elif label == "mask":
-                        color = COLORS_PLOTS[1]
-                    elif label == "cbf":
-                        color = COLORS_PLOTS[3]
-                    else:
-                        color = COLORS_PLOTS[0]
+                        #color = "tab:purple"
+                    elif label == "A2C_TUNED":
+                         color = COLORS_PLOTS[1]
+
+                    # if label == "standard":
+                    #     color = COLORS_PLOTS[0]
+                    # elif label == "shield":
+                    #     color = COLORS_PLOTS[2]
+                    # elif label == "mask":
+                    #     color = COLORS_PLOTS[1]
+                    # elif label == "cbf":
+                    #     color = COLORS_PLOTS[3]
+                    # else:
+                    #     color = COLORS_PLOTS[0]
+
 
                    # if color in locals():
 
@@ -756,26 +774,54 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                      #   plt.fill_between(range(1, len(mean)+1), mean - std_dev, mean + std_dev, color=color, alpha=0.25)
 
                     #else:
-                    plt.plot(range(1, len(mean) + 1), mean, label=label.replace('_','/'), linewidth=1.25)
+                    #plt.plot(range(1, len(mean) + 1), mean, label=label.replace('_','/'), linewidth=1.25)
+
+                    plt.gca().axhline(1, linestyle='-', color='green', linewidth=.75)
+                    plt.gca().axhline(0, linestyle='-', color='red', linewidth=.75)
+
+                    #plt.plot(range(1, len(mean) + 1), mean, label=label.replace('_', '/'), linewidth=1.25)
+                    plt.plot(range(1, len(mean) + 1), mean, color=color, label=label.replace('_', '/'), linewidth=1.25)
+
                     #plt.plot(range(1, len(mean) + 1), mean, label=label.replace('_','/'), linewidth=linewidth, where=mean>=-1, color="green")
-                    plt.fill_between(range(1, len(mean) + 1), mean - std_dev, mean + std_dev, alpha=0.4)
+                    plt.fill_between(range(1, len(mean) + 1), mean - std_dev, mean + std_dev, facecolor=color, alpha=0.4)
                     #plt.fill_between(range(1, len(mean) + 1), mean - std_dev, mean + std_dev, alpha=0.25)
-                    #plt.fill_between(range(1, len(mean) + 1), -1, mean, alpha=0.1, color="red", where=mean<-1)
-                    #plt.fill_between(range(1, len(mean) + 1), -1, mean, alpha=0.1, color="green", where=mean >= -1)
+                    #plt.fill_between(range(1, len(mean) + 1), -1, mean, alpha=0.4, color="red", where=mean<-1)
+                    #plt.fill_between(range(1, len(mean) + 1), -1, mean, alpha=0.4, color="green", where=mean >= -1)
 
                     #plt.gca().axhline(-1, linestyle='-', color='magenta', linewidth=.75)
 
-                    if tag == "main/avg_step_reward_rl":
-                        plt.gca().set_ylim(top=.1)
-                        #plt.gca().set_ylim(bottom=-35)
-                        #plt.gca().set_yscale("symlog", linthresh=1)
-                        #plt.gca().set_xlim(right=200)
-                        #plt.xticks([0,1250,2500])
-                        #plt.xticks([0, 1000, 2000], minor=True)
-                        plt.gca().set_xticks([0, 1000, 2000], minor=False)
-                        minor_ticks = [250, 500, 750, 1250, 1500, 1750]
-                        plt.gca().set_xticks(minor_ticks, minor=True)
-                        plt.gca().set_xlim(right=2000)
+
+                    #if tag == "main/avg_step_reward_rl" or tag == "main/episode_reward" or tag=="main/max_safety_measure":
+
+
+
+                    #plt.gca().set_ylim(top=.5)
+                    #plt.gca().set_yscale("symlog", linthresh=1)
+                    #plt.gca().set_yticks([0, -1, -10], minor=False)
+                    #plt.gca().set_xlim(right=200)
+                    #plt.xticks([0,1250,2500])
+                    #plt.xticks([0, 1000, 2000], minor=True)
+
+                    plt.gca().set_ylim(top=1.1)
+                    plt.gca().set_yticks([0, 1], minor=False)
+                    plt.gca().set_xticks([0.5], minor=True)
+                    plt.gca().set_ylim(bottom=-0.1)
+                    plt.gca().set_yticklabels(['$0\%$', '$100\%$'])
+
+                    #plt.gca().set_ylim(top=250)
+                    #plt.gca().set_ylim(bottom=-2000)
+                    #plt.gca().set_xlim(right=500)
+                    plt.gca().set_xlim(right=500)
+                    plt.gca().set_xticks([0, 250, 500], minor=False)
+                    minor_ticks = [62.5, 125, 187.5, 312.5, 375, 437.5]
+                    plt.gca().set_xticks(minor_ticks, minor=True)
+
+                    # plt.gca().set_ylim(top=750)
+                    # plt.gca().set_ylim(bottom=-4000)
+                    # plt.gca().set_xlim(right=1500)
+                    # plt.gca().set_xticks([0, 750, 1500], minor=False)
+                    # minor_ticks = [187.5, 375.0,  562.5,  937.5, 1125, 1312.5]
+                    # plt.gca().set_xticks(minor_ticks, minor=True)
 
         #if x_label == "Episode":
             #TODO: 0/1
@@ -786,7 +832,7 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
 
         plt.gca().set_xlim(left=0)
 
-        plt.gca().set_ylim(bottom=-10)
+        #plt.gca().set_ylim(bottom=-10)
         #plt.gca().set_ylim(top=-1)
 
 
@@ -805,11 +851,13 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
         colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22',
                   '#17becf']
 
-        a2c = Line2D([0], [0], color=colors[0], label='A2C')
-        ppo = Line2D([0], [0], color=colors[1], label='PPO')
+        #a2c = Line2D([0], [0], color=colors[1], label='A2C Untuned', handlelength=1.5)
+        #a2c = Line2D([0], [0], color=colors[1], label='A2C Tuned', handlelength=1.5)
+        #ppo = Line2D([0], [0], color=colors[0], label='PPO Untuned', handlelength=1.5)
+        #roa = Line2D([0], [0], color="magenta", label='ROA Tuned', handlelength=1.5)
 
-
-        plt.legend(loc="lower right", handles=[a2c, ppo])
+        #plt.legend(loc="lower right", handles=[roa])
+        #plt.legend(loc="lower right", handles=[a2c, ppo])
         #plt.legend(loc="upper left", fontsize=7, bbox_to_anchor=(1.05, 1))
         #plt.suptitle(tags[0].replace("_",'-'))
 

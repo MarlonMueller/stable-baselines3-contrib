@@ -233,39 +233,39 @@ def main(**kwargs):
                 transform_action_space_fn=transform_action_space_fn,
                 alter_action_space=alter_action_space)
 
-        else:
+    else:
 
-            class ActionInfoWrapper(gym.Wrapper):
-                def __init__(self,env, alter_action_space = None,
-                 transform_action_space_fn = None):
-                    super().__init__(env)
+        class ActionInfoWrapper(gym.Wrapper):
+            def __init__(self,env, alter_action_space = None,
+             transform_action_space_fn = None):
+                super().__init__(env)
 
-                    if alter_action_space is not None:
-                        self.action_space = alter_action_space
+                if alter_action_space is not None:
+                    self.action_space = alter_action_space
 
-                    if transform_action_space_fn is not None:
-                        if isinstance(transform_action_space_fn, str):
-                            fn = getattr(self.env, transform_action_space_fn)
-                            if not callable(fn):
-                                raise ValueError(f"Attribute {fn} is not a method")
-                            self._transform_action_space_fn = fn
-                        else:
-                            self._transform_action_space_fn = transform_action_space_fn
+                if transform_action_space_fn is not None:
+                    if isinstance(transform_action_space_fn, str):
+                        fn = getattr(self.env, transform_action_space_fn)
+                        if not callable(fn):
+                            raise ValueError(f"Attribute {fn} is not a method")
+                        self._transform_action_space_fn = fn
                     else:
-                        self._transform_action_space_fn = None
+                        self._transform_action_space_fn = transform_action_space_fn
+                else:
+                    self._transform_action_space_fn = None
 
-                def step(self, action) -> GymStepReturn:
+            def step(self, action) -> GymStepReturn:
 
-                    if self._transform_action_space_fn is not None:
-                        action = self._transform_action_space_fn(action)
+                if self._transform_action_space_fn is not None:
+                    action = self._transform_action_space_fn(action)
 
-                    obs, reward, done, info = self.env.step(action)
-                    info["standard"] = {"action": action, "reward": reward}
-                    return obs, reward, done, info
+                obs, reward, done, info = self.env.step(action)
+                info["standard"] = {"action": action, "reward": reward}
+                return obs, reward, done, info
 
-            env = ActionInfoWrapper(env,
-                                    transform_action_space_fn=transform_action_space_fn,
-                                    alter_action_space=alter_action_space)
+        env = ActionInfoWrapper(env,
+                                transform_action_space_fn=transform_action_space_fn,
+                                alter_action_space=alter_action_space)
 
 
 
@@ -644,6 +644,7 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
 
                 action, state = model.predict(obs, state=state) #deterministic=deterministic
                 action = action[0] #Action is dict
+                #print(action)
 
                 #TODO: Check if masking used - also rollout masking without model!
                 #if use_masking:
@@ -666,6 +667,7 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
                     action = random.choice(np.argwhere(mask==True))[0]
 
             obs, reward, done, info = env.step([action])
+            #print(reward)
 
             if render:
                 # Prevent render after reset
@@ -984,27 +986,36 @@ if __name__ == '__main__':
 
     #remove_tf_logs()
 
+    # args['rollout'] = True
+    # args['render'] = True
+    # #args['safety'] = 'mask'
+    # args["algorithm"] = "A2C"
+    # args['name'] = 'TUNED/run'
+    # main(**args)
+
     args["train"] = True
     args["name"] = "run"
     args['iterations'] = 10
-    args["safety"] = "standard"
-    #
+    #args["safety"] = "standard"
+    # # #
     if not args['flag']:
-        #args['total_timesteps'] = 20e4
-        #args['group'] ="A2C_TUNED"
+        args['total_timesteps'] = 5e4
+        #args['group'] ="A2C_TUNED_MODEL"
         #args["algorithm"] = "A2C"
         #main(**args)
-        args['group'] = "PPO_TUNED"
+        args['group'] = "PPO_TUNED_OBS"
         args["algorithm"] = "PPO"
         main(**args)
-    else:
-        args['total_timesteps'] = 20e4
-        args['group'] = "A2C_UNTUNED"
-        args["algorithm"] = "A2C"
-        main(**args)
-        args['group'] = "PPO_UNTUNED"
-        args["algorithm"] = "PPO"
-        main(**args)
+    # else:
+    #     print("Test")
+    #     args['total_timesteps'] = 10e4
+    #     args['group'] = "A2C_UNTUNED_MODEL"
+    #     args["algorithm"] = "A2C"
+    #     main(**args)
+    #     args['total_timesteps'] = 20e4
+    #     args['group'] = "PPO_UNTUNED_MODEL"
+    #     args["algorithm"] = "PPO"
+    #     main(**args)
 
 
     #
@@ -1019,22 +1030,22 @@ if __name__ == '__main__':
     # main(**args)
 
     tags = [
-        #"main/avg_abs_action_rl",  #
+        #"main/avg_abs_action_rl",  # ?
         #"main/avg_abs_safety_correction",  #
-        #"main/avg_abs_thdot",  #
-        #"main/avg_abs_theta",  #
+        #"main/avg_abs_thdot",  # ?
+        #"main/avg_abs_theta",  # ?
         #"main/avg_safety_measure",  #
         #"main/episode_reward",  #
         #"main/episode_time",  #
-        #"main/max_abs_action_rl",  #
+        #"main/max_abs_action_rl",  # ??
         #"main/max_abs_safety_correction",  #
-        #"main/max_abs_thdot",  #
-        #"main/max_abs_theta",  #
-        #"main/max_safety_measure",  #
+        #"main/max_abs_thdot",  # ?
+        #"main/max_abs_theta",  # ?
+        #"main/max_safety_measure",  # ?
         #"main/no_violation",  #
         #"main/rel_abs_safety_correction",
         #"main/avg_step_punishment",  #
-        "main/avg_step_reward_rl"  #
+        #"main/avg_step_reward_rl"  # ???
     ]
 
     #PRELIMINARY
@@ -1056,26 +1067,38 @@ if __name__ == '__main__':
     #                     print(f"Finished training {args['group']} ...")
 
 
-    # from thesis.util import tf_events_to_plot, external_legend_res
-    # for tag in tags:
-    #     if tag == "main/avg_abs_action_rl":
-    #        y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
-    #     elif tag == "main/avg_step_reward_rl":
-    #         y_label = "$\mathrm{Mean\ reward\ } \overline{r}$"
-    #     else:
-    #        y_label = ''
-    #
-    #     #dirss = ["A2C_UNTUNED", "PPO_UNTUNED"]
-    #     dirss = ["A2C_TUNED"]
-    #     tf_events_to_plot(dirss=dirss, #"standard"
-    #                       tags=[tag],
-    #                       x_label='Episode',
-    #                       y_label=y_label,
-    #                       width=2.5, #5
-    #                       height=2.5, #2.5
-    #                       episode_length=100,
-    #                       window_size=41, #41
-    #                       save_as=f"pdfs/{tag.split('/')[1]}")
+    from thesis.util import tf_events_to_plot, external_legend_res
+    for tag in tags:
+        if tag == "main/avg_abs_action_rl":
+           y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
+        elif tag == "main/avg_abs_thdot":
+           y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
+        elif tag == "main/avg_abs_theta":
+           y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
+        elif tag == "main/avg_step_reward_rl":
+            y_label = "Mean reward per step $\overline{r}$"
+        elif tag == "main/episode_reward":
+            y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
+        elif tag== "main/max_safety_measure":
+            y_label = "Maximal reward $r_{\mathrm{max}}$"
+        elif tag == "main/no_violation":
+            y_label = "States $s$ in ROA"
+        else:
+           y_label = ''
+
+        #dirss = ["PPO_UNTUNED", "A2C_UNTUNED"]
+        #dirss = ["PPO_TUNED", "A2C_TUNED"]
+        dirss = ["PPO_TUNED_MODEL_OBS"]
+        #dirss = ["PPO_TUNED"]
+        tf_events_to_plot(dirss=dirss, #"standard"
+                          tags=[tag],
+                          x_label='Episode',
+                          y_label=y_label,
+                          width=2.5, #5
+                          height=2.5, #2.5
+                          episode_length=100,
+                          window_size=41, #41
+                          save_as=f"pdfs/{tag.split('/')[1]}")
 
     #labels = []
     #for label in dirss:
@@ -1156,7 +1179,7 @@ if __name__ == '__main__':
     #                      window_size=11,
     #                      save_as=f"pdfs/{tag.split('/')[1]}")
 
-    #os.system("say The program finished.")
+    os.system("say The program finished.")
 
     ########################
 
