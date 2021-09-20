@@ -43,8 +43,10 @@ class SafetyCBF(gym.Wrapper):
             raise ValueError("Either dynamics_fn or unactuated_dynamics have to be specified.")
 
         self._A, self._b = safe_region.halfspaces
-        self._P = matrix([[1., 0], [0, 1e25]], tc='d')
-        self._q = matrix([0, 0], tc='d')
+        self._P = matrix([0.],tc='d')
+        self._P = matrix([0.], tc='d')
+        #self._P = matrix([[1., 0], [0, 1e25]], tc='d')
+        #self._q = matrix([0, 0], tc='d')
 
         self._gamma = gamma
         self._safe_region = safe_region

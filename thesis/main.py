@@ -61,11 +61,15 @@ def main(**kwargs):
     if kwargs['env_id'] not in [env_spec.id for env_spec in gym.envs.registry.all()]:
          KeyError(f"Environment {kwargs['env_id']} is not registered")
 
+    obs = None
+    if "obs" in kwargs and kwargs["obs"]:
+        obs = True
+
     if "init" in kwargs and kwargs["init"] == "zero":
         print("Zero Init.")
-        env = gym.make(kwargs['env_id'], init="zero")
+        env = gym.make(kwargs['env_id'], init="zero", obs=obs)
     else:
-        env = gym.make(kwargs['env_id'])
+        env = gym.make(kwargs['env_id'], obs=obs)
 
     # if "init" in kwargs and kwargs["init"] == "random":
     #     if "reward" in kwargs and kwargs["reward"] == "opposing":
@@ -312,14 +316,15 @@ def main(**kwargs):
                     return func
 
                 if kwargs['algorithm'] == "PPO":
-                    if 'flag' in kwargs and kwargs['flag']:
+                    if 'flag' in kwargs and kwargs['flag'] == 25:
                         model = base_algorithm(MlpPolicy,
                                                env,
                                                verbose=0,
                                                tensorboard_log=tensorboard_log)
+                        print("UNTUNED!")
                     else:
 
-                        8#TUNE1 - gut, aber ausbrecher am Ende
+                        #TUNE1 - gut, aber ausbrecher am Ende
                         # model = base_algorithm(MlpPolicy,
                         #                    env,
                         #                    verbose=0,
@@ -425,11 +430,12 @@ def main(**kwargs):
 
 
                 elif kwargs['algorithm'] == "A2C":
-                    if 'flag' in kwargs and kwargs['flag']:
+                    if 'flag' in kwargs and kwargs['flag'] == 26:
                         model = base_algorithm(MlpPolicy,
                                                env,
                                                verbose=0,
                                                tensorboard_log=tensorboard_log)
+                        print("UNTUNED!")
                     else:
                         #Tune1 - convergiert manchmal net
                         # model = base_algorithm(MlpPolicy,
@@ -560,7 +566,7 @@ def main(**kwargs):
             # log_interval=log_interval)
 
             # TODO: Overrides / maybe combine?
-            save_model(name, model)
+            #save_model(name, model)
 
     elif 'rollout' in kwargs and kwargs['rollout']:
 
@@ -648,7 +654,7 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
 
                 action, state = model.predict(obs, state=state) #deterministic=deterministic
                 action = action[0] #Action is dict
-                #print(action)
+                print(action)
 
                 #TODO: Check if masking used - also rollout masking without model!
                 #if use_masking:
@@ -992,38 +998,220 @@ if __name__ == '__main__':
 
     # args['rollout'] = True
     # args['render'] = True
-    # #args['safety'] = 'mask'
-    # args["algorithm"] = "A2C"
-    # args['name'] = 'TUNED/run'
+    # args['safety'] = 'shield'
+    # args["algorithm"] = "PPO"
+    # args['name'] = 'run'
     # main(**args)
     #
+    # args["train"] = True
+    # args["name"] = "run"
+    # args['iterations'] = 1
+    #
+    # #args["safety"] = "standard"
+    # # # #
+    #
+
     args["train"] = True
     args["name"] = "run"
-    args['iterations'] = 1
+    args['iterations'] = 10
 
-    #args["safety"] = "standard"
-    # # #
-
-    args["algorithm"] = "PPO"
-    args['total_timesteps'] = 10e4
-    args["safety"] = "shield"
-    print(args["flag"])
-    if args["flag"] == 1:
-        args['group'] = "E_SHIELD_NO"
+    if args["flag"] == 0:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 10e4
+        args['group'] = "NORMAL_SHIELD"
+        main(**args)
+    elif args["flag"] == 1:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 10e4
+        args['group'] = "EASY_SHIELD"
         args["init"] = "zero"
         args["action_space"] = "small"
         main(**args)
     elif args["flag"] == 2:
-        args['group'] = "H_SHIELD_NO"
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 10e4
+        args['group'] = "HARD_SHIELD"
         args["action_space"] = "large"
         main(**args)
-    else:
-        args['group'] = "N_SHIELD_NO"
+    elif args["flag"] == 3:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 10e4
+        args['group'] = "NORMAL_MASK"
         main(**args)
-
-
-
-
+    elif args["flag"] == 4:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 10e4
+        args['group'] = "EASY_MASK"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        main(**args)
+    elif args["flag"] == 5:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 10e4
+        args['group'] = "HARD_MASK"
+        args["action_space"] = "large"
+        main(**args)
+    elif args["flag"] == 6:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 10e4
+        args['group'] = "PPO_LAS"
+        args["action_space"] = "large"
+        main(**args)
+    elif args["flag"] == 7:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 10e4
+        args['group'] = "PPO_SAS"
+        args["action_space"] = "small"
+        main(**args)
+    elif args["flag"] == 8:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 10e4
+        args['group'] = "PPO"
+        main(**args)
+    elif args["flag"] == 9:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 10e4
+        args['group'] = "PPO_ZERO"
+        args["init"] = "zero"
+        main(**args)
+    elif args["flag"] == 10:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 10e4
+        args['group'] = "PPO_EASY"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        main(**args)
+    elif args["flag"] == 11:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 10e4
+        args['group'] = "PPO_OBS"
+        args["obs"] = True
+        main(**args)
+    elif args["flag"] == 12:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 10e4
+        args['group'] = "PPO_EASY_OBS"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        args["obs"] = True
+        main(**args)
+    elif args["flag"] == 13:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 10e4
+        args['group'] = "NORMAL_SHIELD_HPUNISH"
+        args["punishment"] == "heavypunish"
+        main(**args)
+    elif args["flag"] == 14:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 10e4
+        args['group'] = "EASY_SHIELD_HPUNISH"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        args["punishment"] == "heavypunish"
+        main(**args)
+    elif args["flag"] == 15:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 10e4
+        args['group'] = "HARD_SHIELD_HPUNISH"
+        args["action_space"] = "large"
+        args["punishment"] == "heavypunish"
+        main(**args)
+    elif args["flag"] == 16:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 10e4
+        args['group'] = "NORMAL_MASK_HPUNISH"
+        args["punishment"] == "heavypunish"
+        main(**args)
+    elif args["flag"] == 17:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 10e4
+        args['group'] = "EASY_MASK_HPUNISH"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        args["punishment"] == "heavypunish"
+        main(**args)
+    elif args["flag"] == 18:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 10e4
+        args['group'] = "HARD_MASK_HPUNISH"
+        args["punishment"] == "heavypunish"
+        args["action_space"] = "large"
+        main(**args)
+    elif args["flag"] == 19:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 10e4
+        args['group'] = "NORMAL_SHIELD_LPUNISH"
+        args["punishment"] == "lightpunish"
+        main(**args)
+    elif args["flag"] == 20:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 10e4
+        args['group'] = "EASY_SHIELD_LPUNISH"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        args["punishment"] == "lightpunish"
+        main(**args)
+    elif args["flag"] == 21:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 10e4
+        args['group'] = "HARD_SHIELD_LPUNISH"
+        args["action_space"] = "large"
+        args["punishment"] == "lightpunish"
+        main(**args)
+    elif args["flag"] == 22:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 10e4
+        args['group'] = "NORMAL_MASK_LPUNISH"
+        args["punishment"] == "lightpunish"
+        main(**args)
+    elif args["flag"] == 23:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 10e4
+        args['group'] = "EASY_MASK_LPUNISH"
+        args["punishment"] == "lightpunish"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        main(**args)
+    elif args["flag"] == 24:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 10e4
+        args['group'] = "HARD_MASK_LPUNISH"
+        args["punishment"] == "lightpunish"
+        args["action_space"] = "large"
+        main(**args)
+    elif args["flag"] == 25:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 15e4
+        args['group'] = "PPO_UNTUNED"
+        main(**args)
+    elif args["flag"] == 26:
+        args["algorithm"] = "A2C"
+        args['total_timesteps'] = 15e4
+        args['group'] = "A2C_UNTUNED"
+        main(**args)
+    elif args["flag"] == 27:
+        args["algorithm"] = "A2C"
+        args['total_timesteps'] = 10e4
+        args['group'] = "A2C"
+        main(**args)
     # if not args['flag']:
     #     args['total_timesteps'] = 5e4
     #     #args['group'] ="A2C_TUNED_MODEL"

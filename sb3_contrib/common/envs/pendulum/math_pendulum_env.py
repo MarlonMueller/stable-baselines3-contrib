@@ -30,7 +30,7 @@ class MathPendulumEnv(Env):
         else:
             return -np.dot(gain_matrix, env.state)
 
-    def __init__(self, init=None, reward=None):
+    def __init__(self, init=None, obs=None):
 
         # Length
         self.l = 1.
@@ -42,7 +42,7 @@ class MathPendulumEnv(Env):
         self.dt = .05
 
         self.init = init #TODO
-        self.reward = reward
+        self.obs = obs
 
         self.rng = np.random.default_rng()
 
@@ -58,8 +58,10 @@ class MathPendulumEnv(Env):
             dtype=np.float32
         )
 
-        obs_high = np.array([1., 1., np.inf], dtype=np.float32)
-        #obs_high = np.array([np.inf, np.inf], dtype=np.float32)
+        if self.obs is not  None and self.obs:
+            obs_high = np.array([np.inf, np.inf], dtype=np.float32)
+        else:
+            obs_high = np.array([1., 1., np.inf], dtype=np.float32)
         self.observation_space = Box(
             low=-obs_high,
             high=obs_high,
@@ -87,13 +89,10 @@ class MathPendulumEnv(Env):
     def reset(self) -> GymObs:
 
         # Start at theta=0; thdot=0
-
-        self.state = np.array([0, 0])
-
-        #if self.init is not None and self.init == "zero":
-        #    self.state = np.array([0, 0])
-        #else:
-        #    self.state = np.asarray(self._safe_region.sample())
+        if self.init is not None and self.init == "zero":
+           self.state = np.array([0, 0])
+        else:
+            self.state = np.asarray(self._safe_region.sample())
 
         self.last_action = None
 
@@ -117,7 +116,10 @@ class MathPendulumEnv(Env):
 
     def _get_obs(self, theta, thdot) -> GymObs:
         #return np.array([theta, thdot])
-        return np.array([cos(theta), sin(theta), thdot])
+        if self.obs is not None and self.obs:
+            return np.array([theta, thdot])
+        else:
+            return np.array([cos(theta), sin(theta), thdot])
 
     def _get_reward(self, theta: float, thdot: float, action: Union[int, np.ndarray]) -> float:
         if self.reward is not None: #TODO: Clean
