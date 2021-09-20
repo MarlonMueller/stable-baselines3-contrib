@@ -62,6 +62,7 @@ def main(**kwargs):
          KeyError(f"Environment {kwargs['env_id']} is not registered")
 
     if "init" in kwargs and kwargs["init"] == "zero":
+        print("Zero Init.")
         env = gym.make(kwargs['env_id'], init="zero")
     else:
         env = gym.make(kwargs['env_id'])
@@ -107,6 +108,7 @@ def main(**kwargs):
         transform_action_space_fn = lambda a: 2.5 * (a - 18)
         alter_action_space = gym.spaces.Discrete(37)
     elif "action_space" in kwargs and kwargs["action_space"] == "small":
+        print("SmallAS")
         transform_action_space_fn = lambda a: 1.5 * (a - 12)
         alter_action_space = gym.spaces.Discrete(25)
     else:
@@ -997,7 +999,7 @@ if __name__ == '__main__':
     #
     args["train"] = True
     args["name"] = "run"
-    args['iterations'] = 10
+    args['iterations'] = 1
 
     #args["safety"] = "standard"
     # # #
@@ -1017,7 +1019,6 @@ if __name__ == '__main__':
         main(**args)
     else:
         args['group'] = "N_SHIELD_NO"
-        #args["action_space"] = "small"
         main(**args)
 
 
@@ -1078,10 +1079,10 @@ if __name__ == '__main__':
         #"main/max_abs_thdot",  # ?
         #"main/max_abs_theta",  # ?
         #"main/max_safety_measure",  # ?
-        "main/no_violation",  #
+        #"main/no_violation",  #
         #"main/rel_abs_safety_correction",
         #"main/avg_step_punishment",  #
-        #"main/avg_step_reward_rl"  # ???
+        "main/avg_step_reward_rl"  # ???
     ]
 
     #PRELIMINARY
@@ -1103,38 +1104,44 @@ if __name__ == '__main__':
     #                     print(f"Finished training {args['group']} ...")
 
 
-    # from thesis.util import tf_events_to_plot, external_legend_res
-    # for tag in tags:
-    #     if tag == "main/avg_abs_action_rl":
-    #        y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
-    #     elif tag == "main/avg_abs_thdot":
-    #        y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
-    #     elif tag == "main/avg_abs_theta":
-    #        y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
-    #     elif tag == "main/avg_step_reward_rl":
-    #         y_label = "Mean reward per step $\overline{r}$"
-    #     elif tag == "main/episode_reward":
-    #         y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
-    #     elif tag== "main/max_safety_measure":
-    #         y_label = "Maximal reward $r_{\mathrm{max}}$"
-    #     elif tag == "main/no_violation":
-    #         y_label = "States $s$ in ROA"
-    #     else:
-    #        y_label = ''
-    #
-    #     #dirss = ["PPO_TUNED", "A2C_TUNED"]
-    #     dirss = ["PPO_TUNED","PPO_TUNED_E_OBS"]
-    #     #dirss = ["PPO_TUNED"]
-    #     #dirss = ["PPO_TUNED_OBS"]
-    #     tf_events_to_plot(dirss=dirss, #"standard"
-    #                       tags=[tag],
-    #                       x_label='Episode',
-    #                       y_label=y_label,
-    #                       width=2.5, #5
-    #                       height=2.5, #2.5
-    #                       episode_length=100,
-    #                       window_size=41, #41
-    #                       save_as=f"pdfs/{tag.split('/')[1]}")
+    from thesis.util import tf_events_to_plot, external_legend_res
+    for tag in tags:
+        if tag == "main/avg_abs_action_rl":
+           y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
+        elif tag == "main/avg_abs_thdot":
+           y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
+        elif tag == "main/avg_abs_theta":
+           y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
+        elif tag == "main/avg_step_reward_rl":
+            y_label = "Mean reward per step $\overline{r}$"
+        elif tag == "main/episode_reward":
+            y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
+        elif tag== "main/max_safety_measure":
+            y_label = "Maximal reward $r_{\mathrm{max}}$"
+        elif tag == "main/no_violation":
+            y_label = "Mean safety violations"
+        else:
+           y_label = ''
+
+        #dirss = ["PPO_TUNED"]
+        #dirss = ["PPO_TUNED","PPO_TUNED_E", "PPO_TUNED_L"]
+        #dirss = ["PPO_TUNED", "PPO_TUNED_S", "PPO_TUNED_L"]
+        #dirss = ["PPO_TUNED", "PPO_TUNED_INIT"]
+        #dirss = ["PPO_TUNED_OBS"]
+        #dirsss = [["PPO_TUNED"], ["PPO_TUNED", "PPO_TUNED_INIT"],
+         #         ["PPO_TUNED","PPO_TUNED_E", "PPO_TUNED_L"],
+         #         ["PPO_TUNED", "PPO_TUNED_S", "PPO_TUNED_L"]]
+        # dirsss = [["N_SHIELD_NO", "E_SHIELD_NO", "H_SHIELD_NO"]]
+        # for i, dirss in enumerate(dirsss):
+        #     tf_events_to_plot(dirss=dirss, #"standard"
+        #                       tags=[tag],
+        #                       x_label='Episode',
+        #                       y_label=y_label,
+        #                       width=2.5, #5
+        #                       height=2.5, #2.5
+        #                       episode_length=100,
+        #                       window_size=41, #41
+        #                       save_as=f"pdfs/{i}{tag.split('/')[1]}")
 
     #labels = []
     #for label in dirss:
