@@ -122,16 +122,16 @@ class MathPendulumEnv(Env):
             return np.array([cos(theta), sin(theta), thdot])
 
     def _get_reward(self, theta: float, thdot: float, action: Union[int, np.ndarray]) -> float:
-        if self.reward is not None: #TODO: Clean
-            # #Opposing -
-            return -(.5 * abs(action) + abs(self._norm_theta(theta)) + abs(.1 * thdot))
-        else: #Safety
-            det_12 = 10.62620981660255
-            max_theta = 3.092505268377452
-            return -max(
-                abs((theta * 3.436116964863835) / det_12),
-                abs((theta * 9.326603190344699 + thdot * max_theta) / det_12) #Try: **2/Action
-            )
+        # if self.reward is not None: #TODO: Clean
+        #     # #Opposing -
+        #     return -(.5 * abs(action) + abs(self._norm_theta(theta)) + abs(.1 * thdot))
+        #else: #Safety
+        det_12 = 10.62620981660255
+        max_theta = 3.092505268377452
+        return -max(
+            abs((theta * 3.436116964863835) / det_12),
+            abs((theta * 9.326603190344699 + thdot * max_theta) / det_12) #Try: **2/Action
+        )
 
 
     def _norm_theta(self, theta: float) -> float:
