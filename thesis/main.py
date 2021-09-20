@@ -178,16 +178,16 @@ def main(**kwargs):
                                       action: Union[int, float, np.ndarray],
                                       action_cbf: Union[int, float, np.ndarray]) -> float:
                         return -abs(action_cbf)
-                if kwargs["punishment"] == "lightpunish":
-                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                                      action: Union[int, float, np.ndarray],
-                                      action_cbf: Union[int, float, np.ndarray]) -> float:
-                        return -abs(action_cbf) * 0.5
-                elif kwargs["punishment"] == "heavypunish":
-                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                                      action: Union[int, float, np.ndarray],
-                                      action_cbf: Union[int, float, np.ndarray]) -> float:
-                        return -abs(action_cbf) * 4
+                # if kwargs["punishment"] == "lightpunish":
+                #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                #                       action: Union[int, float, np.ndarray],
+                #                       action_cbf: Union[int, float, np.ndarray]) -> float:
+                #         return -abs(action_cbf) * 0.5
+                # elif kwargs["punishment"] == "heavypunish":
+                #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                #                       action: Union[int, float, np.ndarray],
+                #                       action_cbf: Union[int, float, np.ndarray]) -> float:
+                #         return -abs(action_cbf) * 4
                 else:
                     punishment_fn = None
             else:
@@ -229,16 +229,16 @@ def main(**kwargs):
                                       action: Union[int, float, np.ndarray],
                                       mask: Union[int, float, np.ndarray]) -> float:
                         return -(1 - (np.sum(mask)-1) / (len(mask)-1)) * 10
-                if kwargs["punishment"] == "lightpunish":
-                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                                      action: Union[int, float, np.ndarray],
-                                      mask: Union[int, float, np.ndarray]) -> float:
-                        return -(1 - (np.sum(mask)-1) / (len(mask)-1)) * 5
-                elif kwargs["punishment"] == "heavypunish":
-                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                                      action: Union[int, float, np.ndarray],
-                                      mask: Union[int, float, np.ndarray]) -> float:
-                        return -(1 - (np.sum(mask)-1) / (len(mask)-1)) * 40
+                # if kwargs["punishment"] == "lightpunish":
+                #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                #                       action: Union[int, float, np.ndarray],
+                #                       mask: Union[int, float, np.ndarray]) -> float:
+                #         return -(1 - (np.sum(mask)-1) / (len(mask)-1)) * 5
+                # elif kwargs["punishment"] == "heavypunish":
+                #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                #                       action: Union[int, float, np.ndarray],
+                #                       mask: Union[int, float, np.ndarray]) -> float:
+                #         return -(1 - (np.sum(mask)-1) / (len(mask)-1)) * 40
                 else:
                     punishment_fn = None
             else:
