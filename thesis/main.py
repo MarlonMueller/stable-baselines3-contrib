@@ -109,15 +109,14 @@ def main(**kwargs):
     safe_region = SafeRegion(vertices=vertices)
 
     if "action_space" in kwargs and kwargs["action_space"] == "large":
-        transform_action_space_fn = lambda a: 2.5 * (a - 18)
-        alter_action_space = gym.spaces.Discrete(37)
+        transform_action_space_fn = lambda a: 5*(a-10) if a <= 9 else 5*(a-9)
+        alter_action_space = gym.spaces.Discrete(20)
     elif "action_space" in kwargs and kwargs["action_space"] == "small":
-        print("SmallAS")
-        transform_action_space_fn = lambda a: 1.5 * (a - 12)
-        alter_action_space = gym.spaces.Discrete(25)
+        transform_action_space_fn = lambda a: (a - 10)
+        alter_action_space = gym.spaces.Discrete(21)
     else:
-        transform_action_space_fn = lambda a: 2 * (a - 15)
-        alter_action_space = gym.spaces.Discrete(31)
+        transform_action_space_fn = lambda a: 3 * (a - 10)
+        alter_action_space = gym.spaces.Discrete(21)
 
     if 'safety' in kwargs and kwargs['safety'] is not None:
 
@@ -131,6 +130,11 @@ def main(**kwargs):
 
             # return -abs(action - action_shield) 1:1
             if "punishment" in kwargs:
+                if kwargs["punishment"] == "punish":
+                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                                      action: Union[int, float, np.ndarray],
+                                      action_shield: Union[int, float, np.ndarray]) -> float:
+                        return -abs(action - action_shield)
                 if kwargs["punishment"] == "lightpunish":
                     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                                       action: Union[int, float, np.ndarray],
@@ -169,6 +173,11 @@ def main(**kwargs):
                 return env.dynamics(theta, thdot, action)
 
             if "punishment" in kwargs:
+                if kwargs["punishment"] == "punish":
+                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                                      action: Union[int, float, np.ndarray],
+                                      action_cbf: Union[int, float, np.ndarray]) -> float:
+                        return -abs(action_cbf)
                 if kwargs["punishment"] == "lightpunish":
                     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                                       action: Union[int, float, np.ndarray],
@@ -215,6 +224,11 @@ def main(**kwargs):
 
             # We only care about the mask, fail-safe controller is not in use
             if "punishment" in kwargs:
+                if kwargs["punishment"] == "punish":
+                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                                      action: Union[int, float, np.ndarray],
+                                      mask: Union[int, float, np.ndarray]) -> float:
+                        return -(1 - (np.sum(mask)-1) / (len(mask)-1)) * 10
                 if kwargs["punishment"] == "lightpunish":
                     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                                       action: Union[int, float, np.ndarray],
@@ -316,7 +330,7 @@ def main(**kwargs):
                     return func
 
                 if kwargs['algorithm'] == "PPO":
-                    if 'flag' in kwargs and kwargs['flag'] == 25:
+                    if 'flag' in kwargs and kwargs['flag'] == 17:
                         model = base_algorithm(MlpPolicy,
                                                env,
                                                verbose=0,
@@ -430,7 +444,7 @@ def main(**kwargs):
 
 
                 elif kwargs['algorithm'] == "A2C":
-                    if 'flag' in kwargs and kwargs['flag'] == 26:
+                    if 'flag' in kwargs and kwargs['flag'] == 18:
                         model = base_algorithm(MlpPolicy,
                                                env,
                                                verbose=0,
@@ -1018,13 +1032,13 @@ if __name__ == '__main__':
     if args["flag"] == 0:
         args["algorithm"] = "PPO"
         args["safety"] = "shield"
-        args['total_timesteps'] = 10e4
+        args['total_timesteps'] = 7.5e4
         args['group'] = "NORMAL_SHIELD"
         main(**args)
     elif args["flag"] == 1:
         args["algorithm"] = "PPO"
         args["safety"] = "shield"
-        args['total_timesteps'] = 10e4
+        args['total_timesteps'] = 7.5e4
         args['group'] = "EASY_SHIELD"
         args["init"] = "zero"
         args["action_space"] = "small"
@@ -1032,20 +1046,20 @@ if __name__ == '__main__':
     elif args["flag"] == 2:
         args["algorithm"] = "PPO"
         args["safety"] = "shield"
-        args['total_timesteps'] = 10e4
+        args['total_timesteps'] = 7.5e4
         args['group'] = "HARD_SHIELD"
         args["action_space"] = "large"
         main(**args)
     elif args["flag"] == 3:
         args["algorithm"] = "PPO"
         args["safety"] = "mask"
-        args['total_timesteps'] = 10e4
+        args['total_timesteps'] = 7.5e4
         args['group'] = "NORMAL_MASK"
         main(**args)
     elif args["flag"] == 4:
         args["algorithm"] = "PPO"
         args["safety"] = "mask"
-        args['total_timesteps'] = 10e4
+        args['total_timesteps'] = 7.5e4
         args['group'] = "EASY_MASK"
         args["init"] = "zero"
         args["action_space"] = "small"
@@ -1053,165 +1067,104 @@ if __name__ == '__main__':
     elif args["flag"] == 5:
         args["algorithm"] = "PPO"
         args["safety"] = "mask"
-        args['total_timesteps'] = 10e4
+        args['total_timesteps'] = 7.5e4
         args['group'] = "HARD_MASK"
         args["action_space"] = "large"
         main(**args)
     elif args["flag"] == 6:
         args["algorithm"] = "PPO"
-        args['total_timesteps'] = 10e4
+        args['total_timesteps'] = 7.5e4
         args['group'] = "PPO_LAS"
         args["action_space"] = "large"
         main(**args)
     elif args["flag"] == 7:
         args["algorithm"] = "PPO"
-        args['total_timesteps'] = 10e4
+        args['total_timesteps'] = 7.5e4
         args['group'] = "PPO_SAS"
         args["action_space"] = "small"
         main(**args)
     elif args["flag"] == 8:
         args["algorithm"] = "PPO"
-        args['total_timesteps'] = 10e4
+        args['total_timesteps'] = 7.5e4
         args['group'] = "PPO"
         main(**args)
     elif args["flag"] == 9:
         args["algorithm"] = "PPO"
-        args['total_timesteps'] = 10e4
+        args['total_timesteps'] = 7.5e4
         args['group'] = "PPO_ZERO"
         args["init"] = "zero"
         main(**args)
     elif args["flag"] == 10:
         args["algorithm"] = "PPO"
-        args['total_timesteps'] = 10e4
+        args['total_timesteps'] = 7.5e4
         args['group'] = "PPO_EASY"
         args["init"] = "zero"
         args["action_space"] = "small"
         main(**args)
     elif args["flag"] == 11:
         args["algorithm"] = "PPO"
-        args['total_timesteps'] = 10e4
-        args['group'] = "PPO_OBS"
-        args["obs"] = True
+        args["safety"] = "shield"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "NORMAL_SHIELD_PUNISH"
+        args["punishment"] = "punish"
         main(**args)
     elif args["flag"] == 12:
         args["algorithm"] = "PPO"
-        args['total_timesteps'] = 10e4
-        args['group'] = "PPO_EASY_OBS"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "EASY_SHIELD_PUNISH"
         args["init"] = "zero"
         args["action_space"] = "small"
-        args["obs"] = True
+        args["punishment"] = "punish"
         main(**args)
     elif args["flag"] == 13:
         args["algorithm"] = "PPO"
         args["safety"] = "shield"
-        args['total_timesteps'] = 10e4
-        args['group'] = "NORMAL_SHIELD_HPUNISH"
-        args["punishment"] = "heavypunish"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "HARD_SHIELD_PUNISH"
+        args["action_space"] = "large"
+        args["punishment"] = "punish"
         main(**args)
     elif args["flag"] == 14:
         args["algorithm"] = "PPO"
-        args["safety"] = "shield"
-        args['total_timesteps'] = 10e4
-        args['group'] = "EASY_SHIELD_HPUNISH"
-        args["init"] = "zero"
-        args["action_space"] = "small"
-        args["punishment"] = "heavypunish"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "NORMAL_MASK_PUNISH"
+        args["punishment"] = "punish"
         main(**args)
     elif args["flag"] == 15:
         args["algorithm"] = "PPO"
-        args["safety"] = "shield"
-        args['total_timesteps'] = 10e4
-        args['group'] = "HARD_SHIELD_HPUNISH"
-        args["action_space"] = "large"
-        args["punishment"] = "heavypunish"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "EASY_MASK_PUNISH"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        args["punishment"] = "punish"
         main(**args)
     elif args["flag"] == 16:
         args["algorithm"] = "PPO"
         args["safety"] = "mask"
-        args['total_timesteps'] = 10e4
-        args['group'] = "NORMAL_MASK_HPUNISH"
-        args["punishment"] = "heavypunish"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "HARD_MASK_PUNISH"
+        args["punishment"] = "punish"
+        args["action_space"] = "large"
         main(**args)
     elif args["flag"] == 17:
-        args["algorithm"] = "PPO"
-        args["safety"] = "mask"
-        args['total_timesteps'] = 10e4
-        args['group'] = "EASY_MASK_HPUNISH"
-        args["init"] = "zero"
-        args["action_space"] = "small"
-        args["punishment"] = "heavypunish"
-        main(**args)
-    elif args["flag"] == 18:
-        args["algorithm"] = "PPO"
-        args["safety"] = "mask"
-        args['total_timesteps'] = 10e4
-        args['group'] = "HARD_MASK_HPUNISH"
-        args["punishment"] = "heavypunish"
-        args["action_space"] = "large"
-        main(**args)
-    elif args["flag"] == 19:
-        args["algorithm"] = "PPO"
-        args["safety"] = "shield"
-        args['total_timesteps'] = 10e4
-        args['group'] = "NORMAL_SHIELD_LPUNISH"
-        args["punishment"] = "lightpunish"
-        main(**args)
-    elif args["flag"] == 20:
-        args["algorithm"] = "PPO"
-        args["safety"] = "shield"
-        args['total_timesteps'] = 10e4
-        args['group'] = "EASY_SHIELD_LPUNISH"
-        args["init"] = "zero"
-        args["action_space"] = "small"
-        args["punishment"] = "lightpunish"
-        main(**args)
-    elif args["flag"] == 21:
-        args["algorithm"] = "PPO"
-        args["safety"] = "shield"
-        args['total_timesteps'] = 10e4
-        args['group'] = "HARD_SHIELD_LPUNISH"
-        args["action_space"] = "large"
-        args["punishment"] = "lightpunish"
-        main(**args)
-    elif args["flag"] == 22:
-        args["algorithm"] = "PPO"
-        args["safety"] = "mask"
-        args['total_timesteps'] = 10e4
-        args['group'] = "NORMAL_MASK_LPUNISH"
-        args["punishment"] = "lightpunish"
-        main(**args)
-    elif args["flag"] == 23:
-        args["algorithm"] = "PPO"
-        args["safety"] = "mask"
-        args['total_timesteps'] = 10e4
-        args['group'] = "EASY_MASK_LPUNISH"
-        args["punishment"] = "lightpunish"
-        args["init"] = "zero"
-        args["action_space"] = "small"
-        main(**args)
-    elif args["flag"] == 24:
-        args["algorithm"] = "PPO"
-        args["safety"] = "mask"
-        args['total_timesteps'] = 10e4
-        args['group'] = "HARD_MASK_LPUNISH"
-        args["punishment"] = "lightpunish"
-        args["action_space"] = "large"
-        main(**args)
-    elif args["flag"] == 25:
         args["algorithm"] = "PPO"
         args['total_timesteps'] = 15e4
         args['group'] = "PPO_UNTUNED"
         main(**args)
-    elif args["flag"] == 26:
+    elif args["flag"] == 18:
         args["algorithm"] = "A2C"
         args['total_timesteps'] = 15e4
         args['group'] = "A2C_UNTUNED"
         main(**args)
-    elif args["flag"] == 27:
+    elif args["flag"] == 19:
         args["algorithm"] = "A2C"
-        args['total_timesteps'] = 10e4
+        args['total_timesteps'] = 7.5e4
         args['group'] = "A2C"
         main(**args)
+
     # if not args['flag']:
     #     args['total_timesteps'] = 5e4
     #     #args['group'] ="A2C_TUNED_MODEL"
@@ -1292,44 +1245,42 @@ if __name__ == '__main__':
     #                     print(f"Finished training {args['group']} ...")
 
 
-    from thesis.util import tf_events_to_plot, external_legend_res
-    for tag in tags:
-        if tag == "main/avg_abs_action_rl":
-           y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
-        elif tag == "main/avg_abs_thdot":
-           y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
-        elif tag == "main/avg_abs_theta":
-           y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
-        elif tag == "main/avg_step_reward_rl":
-            y_label = "Mean reward per step $\overline{r}$"
-        elif tag == "main/episode_reward":
-            y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
-        elif tag== "main/max_safety_measure":
-            y_label = "Maximal reward $r_{\mathrm{max}}$"
-        elif tag == "main/no_violation":
-            y_label = "Mean safety violations"
-        else:
-           y_label = ''
-
-        #dirss = ["PPO_TUNED"]
-        #dirss = ["PPO_TUNED","PPO_TUNED_E", "PPO_TUNED_L"]
-        #dirss = ["PPO_TUNED", "PPO_TUNED_S", "PPO_TUNED_L"]
-        #dirss = ["PPO_TUNED", "PPO_TUNED_INIT"]
-        #dirss = ["PPO_TUNED_OBS"]
-        #dirsss = [["PPO_TUNED"], ["PPO_TUNED", "PPO_TUNED_INIT"],
-         #         ["PPO_TUNED","PPO_TUNED_E", "PPO_TUNED_L"],
-         #         ["PPO_TUNED", "PPO_TUNED_S", "PPO_TUNED_L"]]
-        # dirsss = [["N_SHIELD_NO", "E_SHIELD_NO", "H_SHIELD_NO"]]
-        # for i, dirss in enumerate(dirsss):
-        #     tf_events_to_plot(dirss=dirss, #"standard"
-        #                       tags=[tag],
-        #                       x_label='Episode',
-        #                       y_label=y_label,
-        #                       width=2.5, #5
-        #                       height=2.5, #2.5
-        #                       episode_length=100,
-        #                       window_size=41, #41
-        #                       save_as=f"pdfs/{i}{tag.split('/')[1]}")
+    # from thesis.util import tf_events_to_plot, external_legend_res
+    # for tag in tags:
+    #     if tag == "main/avg_abs_action_rl":
+    #        y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
+    #     elif tag == "main/avg_abs_thdot":
+    #        y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
+    #     elif tag == "main/avg_abs_theta":
+    #        y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
+    #     elif tag == "main/avg_step_reward_rl":
+    #         y_label = "Mean reward per step $\overline{r}$"
+    #     elif tag == "main/episode_reward":
+    #         y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
+    #     elif tag== "main/max_safety_measure":
+    #         y_label = "Maximal reward $r_{\mathrm{max}}$"
+    #     elif tag == "main/no_violation":
+    #         y_label = "Mean safety violations"
+    #     else:
+    #        y_label = ''
+    #
+    #
+    #     dirsss = [
+    #         ["PPO", "PPO_ZERO"], #["PPO"],
+    #         ["PPO", "PPO_SAS", "PPO_LAS"],
+    #         ["PPO", "PPO_EASY", "PPO_LAS"],
+    #         ["PPO", "PPO_EASY_OBS"]
+    #     ]
+    #     for i, dirss in enumerate(dirsss):
+    #         tf_events_to_plot(dirss=dirss, #"standard"
+    #                           tags=[tag],
+    #                           x_label='Episode',
+    #                           y_label=y_label,
+    #                           width=2.5, #5
+    #                           height=2.5, #2.5
+    #                           episode_length=100,
+    #                           window_size=41, #41
+    #                           save_as=f"pdfs/{i}{tag.split('/')[1]}")
 
     #labels = []
     #for label in dirss:
@@ -1410,7 +1361,7 @@ if __name__ == '__main__':
     #                      window_size=11,
     #                      save_as=f"pdfs/{tag.split('/')[1]}")
 
-    os.system("say The program finished.")
+    #os.system("say The program finished.")
 
     ########################
 

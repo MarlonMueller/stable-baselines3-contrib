@@ -750,10 +750,18 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
 
                     #TODO: Check PPO Episodes/Steps
 
+                    #["PPO"], ["PPO", "PPO_ZERO"],
+            #["PPO", "PPO_SAS", "PPO_LAS"],
+            #["PPO", "PPO_EASY", "PPO_LAS"],
+            #["PPO", "PPO_EASY_OBS"]
 
                     if label == "PPO_TUNED" or label == "PPO_UNTUNED" :
                         color = COLORS_PLOTS[0]
                         #color = "tab:purple"
+                    if label == "PPO_SAS" or label == "PPO_EASY" or label == "PPO_EASY_OBS" or label == "PPO_ZERO":
+                        color = COLORS_PLOTS[1]
+                    elif label == "PPO_LAS":
+                        color = COLORS_PLOTS[2]
                     elif label == "PPO_TUNED_S" or  label == "E_MASK_NO" or  label == "E_SHIELD_NO" or label == "PPO_TUNED_INIT" or label == "A2C_TUNED" or label == "A2C_UNTUNED" or label=="PPO_TUNED_OBS":
                          color = COLORS_PLOTS[1]
                     elif label == "PPO_TUNED_L" or  label == "H_MASK_NO" or  label == "H_SHIELD_NO":
@@ -820,15 +828,15 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     #if tag == "main/avg_step_reward_rl" or tag == "main/episode_reward" or tag=="main/max_safety_measure":
 
 
-                    plt.gca().set_ylim(top=.1)
-                    plt.gca().set_ylim(bottom=-1.1)
-                    plt.gca().set_yticks([0, -0.5, -1], minor=False)
-                    plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$'])
+                    #plt.gca().set_ylim(top=.1)
+                    #plt.gca().set_ylim(bottom=-1.1)
+                    #plt.gca().set_yticks([0, -0.5, -1], minor=False)
+                    #plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$'])
 
-                    #plt.gca().set_ylim(top=.25)
-                    #plt.gca().set_yticks([0, -0.5, -1, -10], minor=False)
-                    #plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$', '$-10$'])
-                    # plt.gca().set_yscale("symlog", linthresh=1)
+                    plt.gca().set_yscale("symlog", linthresh=1)
+                    plt.gca().set_ylim(top=.25)
+                    plt.gca().set_yticks([0, -0.5, -1, -10], minor=False)
+                    plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$', '$-10$'])
                     plt.gca().set_yticks([-0.25, -0.75], minor=True)
                     plt.gca().set_xlim(right=500)
                     plt.gca().set_xticks([0, 250, 500], minor=False)

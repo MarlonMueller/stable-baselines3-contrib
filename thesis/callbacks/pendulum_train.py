@@ -150,7 +150,7 @@ class PendulumTrainCallback(BaseCallback):
 
             self.logger.record('main/episode_reward', infos['episode']['r'])
             #self.logger.record('main/episode_length', infos['episode']['l'])
-            self.logger.record('main/episode_time',infos['episode']['t']) # exclude='tensorboard'
+            #self.logger.record('main/episode_time',infos['episode']['t']) # exclude='tensorboard'
 
             self.logger.record('main/avg_abs_theta', self.total_abs_theta / infos['episode']['l'])
             self.logger.record('main/avg_abs_thdot', self.total_abs_thdot / infos['episode']['l'])
