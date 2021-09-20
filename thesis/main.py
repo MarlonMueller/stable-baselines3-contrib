@@ -1106,7 +1106,7 @@ if __name__ == '__main__':
         args["safety"] = "shield"
         args['total_timesteps'] = 10e4
         args['group'] = "NORMAL_SHIELD_HPUNISH"
-        args["punishment"] == "heavypunish"
+        args["punishment"] = "heavypunish"
         main(**args)
     elif args["flag"] == 14:
         args["algorithm"] = "PPO"
@@ -1115,7 +1115,7 @@ if __name__ == '__main__':
         args['group'] = "EASY_SHIELD_HPUNISH"
         args["init"] = "zero"
         args["action_space"] = "small"
-        args["punishment"] == "heavypunish"
+        args["punishment"] = "heavypunish"
         main(**args)
     elif args["flag"] == 15:
         args["algorithm"] = "PPO"
@@ -1123,14 +1123,14 @@ if __name__ == '__main__':
         args['total_timesteps'] = 10e4
         args['group'] = "HARD_SHIELD_HPUNISH"
         args["action_space"] = "large"
-        args["punishment"] == "heavypunish"
+        args["punishment"] = "heavypunish"
         main(**args)
     elif args["flag"] == 16:
         args["algorithm"] = "PPO"
         args["safety"] = "mask"
         args['total_timesteps'] = 10e4
         args['group'] = "NORMAL_MASK_HPUNISH"
-        args["punishment"] == "heavypunish"
+        args["punishment"] = "heavypunish"
         main(**args)
     elif args["flag"] == 17:
         args["algorithm"] = "PPO"
@@ -1139,14 +1139,14 @@ if __name__ == '__main__':
         args['group'] = "EASY_MASK_HPUNISH"
         args["init"] = "zero"
         args["action_space"] = "small"
-        args["punishment"] == "heavypunish"
+        args["punishment"] = "heavypunish"
         main(**args)
     elif args["flag"] == 18:
         args["algorithm"] = "PPO"
         args["safety"] = "mask"
         args['total_timesteps'] = 10e4
         args['group'] = "HARD_MASK_HPUNISH"
-        args["punishment"] == "heavypunish"
+        args["punishment"] = "heavypunish"
         args["action_space"] = "large"
         main(**args)
     elif args["flag"] == 19:
@@ -1154,7 +1154,7 @@ if __name__ == '__main__':
         args["safety"] = "shield"
         args['total_timesteps'] = 10e4
         args['group'] = "NORMAL_SHIELD_LPUNISH"
-        args["punishment"] == "lightpunish"
+        args["punishment"] = "lightpunish"
         main(**args)
     elif args["flag"] == 20:
         args["algorithm"] = "PPO"
@@ -1163,7 +1163,7 @@ if __name__ == '__main__':
         args['group'] = "EASY_SHIELD_LPUNISH"
         args["init"] = "zero"
         args["action_space"] = "small"
-        args["punishment"] == "lightpunish"
+        args["punishment"] = "lightpunish"
         main(**args)
     elif args["flag"] == 21:
         args["algorithm"] = "PPO"
@@ -1171,21 +1171,21 @@ if __name__ == '__main__':
         args['total_timesteps'] = 10e4
         args['group'] = "HARD_SHIELD_LPUNISH"
         args["action_space"] = "large"
-        args["punishment"] == "lightpunish"
+        args["punishment"] = "lightpunish"
         main(**args)
     elif args["flag"] == 22:
         args["algorithm"] = "PPO"
         args["safety"] = "mask"
         args['total_timesteps'] = 10e4
         args['group'] = "NORMAL_MASK_LPUNISH"
-        args["punishment"] == "lightpunish"
+        args["punishment"] = "lightpunish"
         main(**args)
     elif args["flag"] == 23:
         args["algorithm"] = "PPO"
         args["safety"] = "mask"
         args['total_timesteps'] = 10e4
         args['group'] = "EASY_MASK_LPUNISH"
-        args["punishment"] == "lightpunish"
+        args["punishment"] = "lightpunish"
         args["init"] = "zero"
         args["action_space"] = "small"
         main(**args)
@@ -1194,7 +1194,7 @@ if __name__ == '__main__':
         args["safety"] = "mask"
         args['total_timesteps'] = 10e4
         args['group'] = "HARD_MASK_LPUNISH"
-        args["punishment"] == "lightpunish"
+        args["punishment"] = "lightpunish"
         args["action_space"] = "large"
         main(**args)
     elif args["flag"] == 25:

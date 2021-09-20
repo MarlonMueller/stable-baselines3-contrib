@@ -1,6 +1,7 @@
 #!/bin/bash
-for i in {0..0}
+for i in {0..27}
 do
         echo "Creating session $i"
-        taskset --cpu-list $i tmux new-session -s $i "source activate safety_wrappers; python3.8 -m thesis.main --flag $i";
+        tmux new-session -d -s $i "source activate safety_wrappers; taskset --cpu-list $i python3.8 -m thesis.main --flag $i";
 done
+
