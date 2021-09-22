@@ -1086,145 +1086,145 @@ if __name__ == '__main__':
     # # # #
     #
 
-    # args["train"] = True
-    # args["name"] = "run"
-    # args['iterations'] = 10
-    #
-    # if args["flag"] == 0:
-    #     args["algorithm"] = "PPO"
-    #     args["safety"] = "shield"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "NORMAL_SHIELD"
-    #     main(**args)
-    # elif args["flag"] == 1:
-    #     args["algorithm"] = "PPO"
-    #     args["safety"] = "shield"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "EASY_SHIELD"
-    #     args["init"] = "zero"
-    #     args["action_space"] = "small"
-    #     main(**args)
-    # elif args["flag"] == 2:
-    #     args["algorithm"] = "PPO"
-    #     args["safety"] = "shield"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "HARD_SHIELD"
-    #     args["action_space"] = "large"
-    #     main(**args)
-    # elif args["flag"] == 3:
-    #     args["algorithm"] = "PPO"
-    #     args["safety"] = "mask"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "NORMAL_MASK"
-    #     main(**args)
-    # elif args["flag"] == 4:
-    #     args["algorithm"] = "PPO"
-    #     args["safety"] = "mask"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "EASY_MASK"
-    #     args["init"] = "zero"
-    #     args["action_space"] = "small"
-    #     main(**args)
-    # elif args["flag"] == 5:
-    #     args["algorithm"] = "PPO"
-    #     args["safety"] = "mask"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "HARD_MASK"
-    #     args["action_space"] = "large"
-    #     main(**args)
-    # elif args["flag"] == 6:
-    #     args["algorithm"] = "PPO"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "PPO_LAS"
-    #     args["action_space"] = "large"
-    #     main(**args)
-    # elif args["flag"] == 7:
-    #     args["algorithm"] = "PPO"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "PPO_SAS"
-    #     args["action_space"] = "small"
-    #     main(**args)
-    # elif args["flag"] == 8:
-    #     args["algorithm"] = "PPO"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "PPO"
-    #     main(**args)
-    # elif args["flag"] == 9:
-    #     args["algorithm"] = "PPO"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "PPO_ZERO"
-    #     args["init"] = "zero"
-    #     main(**args)
-    # elif args["flag"] == 10:
-    #     args["algorithm"] = "PPO"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "PPO_EASY"
-    #     args["init"] = "zero"
-    #     args["action_space"] = "small"
-    #     main(**args)
-    # elif args["flag"] == 11:
-    #     args["algorithm"] = "PPO"
-    #     args["safety"] = "shield"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "NORMAL_SHIELD_PUNISH"
-    #     args["punishment"] = "punish"
-    #     main(**args)
-    # elif args["flag"] == 12:
-    #     args["algorithm"] = "PPO"
-    #     args["safety"] = "shield"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "EASY_SHIELD_PUNISH"
-    #     args["init"] = "zero"
-    #     args["action_space"] = "small"
-    #     args["punishment"] = "punish"
-    #     main(**args)
-    # elif args["flag"] == 13:
-    #     args["algorithm"] = "PPO"
-    #     args["safety"] = "shield"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "HARD_SHIELD_PUNISH"
-    #     args["action_space"] = "large"
-    #     args["punishment"] = "punish"
-    #     main(**args)
-    # elif args["flag"] == 14:
-    #     args["algorithm"] = "PPO"
-    #     args["safety"] = "mask"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "NORMAL_MASK_PUNISH"
-    #     args["punishment"] = "punish"
-    #     main(**args)
-    # elif args["flag"] == 15:
-    #     args["algorithm"] = "PPO"
-    #     args["safety"] = "mask"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "EASY_MASK_PUNISH"
-    #     args["init"] = "zero"
-    #     args["action_space"] = "small"
-    #     args["punishment"] = "punish"
-    #     main(**args)
-    # elif args["flag"] == 16:
-    #     args["algorithm"] = "PPO"
-    #     args["safety"] = "mask"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "HARD_MASK_PUNISH"
-    #     args["punishment"] = "punish"
-    #     args["action_space"] = "large"
-    #     main(**args)
-    # elif args["flag"] == 17:
-    #     args["algorithm"] = "A2C"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "A2C"
-    #     main(**args)
-    # elif args["flag"] == 18:
-    #     args["algorithm"] = "A2C"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "A2C_UNTUNED"
-    #     main(**args)
-    # elif args["flag"] == 19:
-    #     args["algorithm"] = "PPO"
-    #     args['total_timesteps'] = 7.5e4
-    #     args['group'] = "PPO_UNTUNED"
-    #     main(**args)
+    args["train"] = True
+    args["name"] = "run"
+    args['iterations'] = 5
+
+    if args["flag"] == 0:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "NORMAL_SHIELD"
+        main(**args)
+    elif args["flag"] == 1:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "EASY_SHIELD"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        main(**args)
+    elif args["flag"] == 2:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "HARD_SHIELD"
+        args["action_space"] = "large"
+        main(**args)
+    elif args["flag"] == 3:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "NORMAL_MASK"
+        main(**args)
+    elif args["flag"] == 4:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "EASY_MASK"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        main(**args)
+    elif args["flag"] == 5:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "HARD_MASK"
+        args["action_space"] = "large"
+        main(**args)
+    elif args["flag"] == 6:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "PPO_LAS"
+        args["action_space"] = "large"
+        main(**args)
+    elif args["flag"] == 7:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "PPO_SAS"
+        args["action_space"] = "small"
+        main(**args)
+    elif args["flag"] == 8:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "PPO"
+        main(**args)
+    elif args["flag"] == 9:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "PPO_ZERO"
+        args["init"] = "zero"
+        main(**args)
+    elif args["flag"] == 10:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "PPO_EASY"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        main(**args)
+    elif args["flag"] == 11:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "NORMAL_SHIELD_PUNISH"
+        args["punishment"] = "punish"
+        main(**args)
+    elif args["flag"] == 12:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "EASY_SHIELD_PUNISH"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        args["punishment"] = "punish"
+        main(**args)
+    elif args["flag"] == 13:
+        args["algorithm"] = "PPO"
+        args["safety"] = "shield"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "HARD_SHIELD_PUNISH"
+        args["action_space"] = "large"
+        args["punishment"] = "punish"
+        main(**args)
+    elif args["flag"] == 14:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "NORMAL_MASK_PUNISH"
+        args["punishment"] = "punish"
+        main(**args)
+    elif args["flag"] == 15:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "EASY_MASK_PUNISH"
+        args["init"] = "zero"
+        args["action_space"] = "small"
+        args["punishment"] = "punish"
+        main(**args)
+    elif args["flag"] == 16:
+        args["algorithm"] = "PPO"
+        args["safety"] = "mask"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "HARD_MASK_PUNISH"
+        args["punishment"] = "punish"
+        args["action_space"] = "large"
+        main(**args)
+    elif args["flag"] == 17:
+        args["algorithm"] = "A2C"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "A2C"
+        main(**args)
+    elif args["flag"] == 18:
+        args["algorithm"] = "A2C"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "A2C_UNTUNED"
+        main(**args)
+    elif args["flag"] == 19:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "PPO_UNTUNED"
+        main(**args)
 
     # if not args['flag']:
     #     args['total_timesteps'] = 5e4
@@ -1303,45 +1303,45 @@ if __name__ == '__main__':
     #                     #    main(**args)
     #                     print(f"Finished training {args['group']} ...")
 
-    from thesis.util import tf_events_to_plot, external_legend_res
-
-    for tag in tags:
-        if tag == "main/avg_abs_action_rl":
-            y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
-        elif tag == "main/avg_abs_thdot":
-            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
-        elif tag == "main/avg_abs_theta":
-            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
-        elif tag == "main/avg_step_reward_rl":
-            y_label = "Mean reward per step $\overline{r}$"
-        elif tag == "main/episode_reward":
-            y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
-        elif tag == "main/max_safety_measure":
-            y_label = "Maximal reward $r_{\mathrm{max}}$"
-        elif tag == "main/no_violation":
-            y_label = "Mean safety violations"
-        else:
-            y_label = ''
-
-        dirsss = [
-            ["A2C_UNTUNED","PPO_UNTUNED"],
-            ["PPO", "A2C"],
-            ["PPO","PPO_ZERO"],
-            ["PPO", "PPO_LAS", "PPO_SAS"],
-            ["PPO", "PPO_LAS", "PPO_EASY"],
-            ["PPO", "PPO_EASY_OBS"],
-            ["PPO", "PPO_EASY_OBS"]
-        ]
-        for i, dirss in enumerate(dirsss):
-            tf_events_to_plot(dirss=dirss, #"standard"
-                              tags=[tag],
-                              x_label='Episode',
-                              y_label=y_label,
-                              width=2.5, #5
-                              height=2.5, #2.5
-                              episode_length=100,
-                              window_size=41, #41
-                              save_as=f"pdfs/{i}{tag.split('/')[1]}")
+    # from thesis.util import tf_events_to_plot, external_legend_res
+    #
+    # for tag in tags:
+    #     if tag == "main/avg_abs_action_rl":
+    #         y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
+    #     elif tag == "main/avg_abs_thdot":
+    #         y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
+    #     elif tag == "main/avg_abs_theta":
+    #         y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
+    #     elif tag == "main/avg_step_reward_rl":
+    #         y_label = "Mean reward per step $\overline{r}$"
+    #     elif tag == "main/episode_reward":
+    #         y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
+    #     elif tag == "main/max_safety_measure":
+    #         y_label = "Maximal reward $r_{\mathrm{max}}$"
+    #     elif tag == "main/no_violation":
+    #         y_label = "Mean safety violations"
+    #     else:
+    #         y_label = ''
+    #
+    #     dirsss = [
+    #         ["A2C_UNTUNED","PPO_UNTUNED"],
+    #         ["PPO", "A2C"],
+    #         ["PPO","PPO_ZERO"],
+    #         ["PPO", "PPO_LAS", "PPO_SAS"],
+    #         ["PPO", "PPO_LAS", "PPO_EASY"],
+    #         ["PPO", "PPO_EASY_OBS"],
+    #         ["PPO", "PPO_EASY_OBS"]
+    #     ]
+    #     for i, dirss in enumerate(dirsss):
+    #         tf_events_to_plot(dirss=dirss, #"standard"
+    #                           tags=[tag],
+    #                           x_label='Episode',
+    #                           y_label=y_label,
+    #                           width=2.5, #5
+    #                           height=2.5, #2.5
+    #                           episode_length=100,
+    #                           window_size=41, #41
+    #                           save_as=f"pdfs/{i}{tag.split('/')[1]}")
 
     # labels = []
     # for label in dirss:
