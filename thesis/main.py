@@ -1133,11 +1133,11 @@ if __name__ == '__main__':
         args["punishment"] = "punish"
     elif args["flag"] == 11:
         args["safety"] = "mask"
-        args['group'] = "MASK_NORMAL"
+        args['group'] = "MASK_NORMAL" ####
     elif args["flag"] == 12:
         args["safety"] = "mask"
         args['group'] = "MASK_SAS"
-        args["action_space"] = "small"
+        args["action_space"] = "small" ####
     elif args["flag"] == 13:
         args["safety"] = "mask"
         args['group'] = "MASK_ZERO"
@@ -1150,7 +1150,7 @@ if __name__ == '__main__':
         args["safety"] = "mask"
         args['group'] = "MASK_SAS_PUN"
         args["action_space"] = "small"
-        args["punishment"] = "punish"
+        args["punishment"] = "punish" ####
     elif args["flag"] == 16:
         args["safety"] = "mask"
         args['group'] = "MASK_ZERO_PUN"

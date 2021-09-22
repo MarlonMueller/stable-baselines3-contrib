@@ -131,7 +131,7 @@ class SafetyMask(gym.Wrapper):
             #TODO: Explain args punishment in notebook
             if self._punishment_fn is not None:
                 punishment = self._punishment_fn(self.env, self._safe_region, action_mask, self._last_mask)
-                info["mask"] = {"action": None,
+                info["mask"] = {"action": 0,
                                 "mask": self._last_mask,
                                 "action_mask": action_mask,
                                 "reward": reward,
@@ -139,7 +139,7 @@ class SafetyMask(gym.Wrapper):
                                 }
                 reward += punishment
             else:
-                info["mask"] = {"action": None,
+                info["mask"] = {"action": 0,
                                 "mask": self._last_mask,
                                 "action_mask": action_mask,
                                 "reward": reward,
