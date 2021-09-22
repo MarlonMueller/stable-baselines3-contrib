@@ -330,13 +330,13 @@ def main(**kwargs):
                     return func
 
                 if kwargs['algorithm'] == "PPO":
-                    if 'flag' in kwargs and kwargs['flag'] == 17:
-                        model = base_algorithm(MlpPolicy,
-                                               env,
-                                               verbose=0,
-                                               tensorboard_log=tensorboard_log)
-                        print("UNTUNED!")
-                    else:
+                    # #if 'flag' in kwargs and kwargs['flag'] == 17:
+                    model = base_algorithm(MlpPolicy,
+                                           env,
+                                           verbose=0,
+                                           tensorboard_log=tensorboard_log)
+
+                    #else:
 
                         #TUNE1 - gut, aber ausbrecher am Ende
                         # model = base_algorithm(MlpPolicy,
@@ -418,39 +418,58 @@ def main(**kwargs):
                         #                            activation_fn=nn.ReLU,
                         #                            ortho_init=True)
                         #                        )
-                        model = base_algorithm(MlpPolicy,
-                                               env,
-                                               verbose=0,
-                                               tensorboard_log=tensorboard_log,
-                                               batch_size=2,
-                                               n_steps=2,
-                                               gamma=0.9,
-                                               learning_rate=1e-4,
-                                               ent_coef=0.00015,
-                                               clip_range=0.2,
-                                               n_epochs=2,
-                                               gae_lambda=1.0,
-                                               max_grad_norm=0.8,
-                                               vf_coef=1.0,
-                                               policy_kwargs=dict(
-                                                   net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                                                   activation_fn=nn.ReLU,
-                                                   ortho_init=True)
-                                               )
-
+                        #OLD BEST
+                        # model = base_algorithm(MlpPolicy,
+                        #                        env,
+                        #                        verbose=0,
+                        #                        tensorboard_log=tensorboard_log,
+                        #                        batch_size=2,
+                        #                        n_steps=2,
+                        #                        gamma=0.9,
+                        #                        learning_rate=1e-4,
+                        #                        ent_coef=0.00015,
+                        #                        clip_range=0.2,
+                        #                        n_epochs=2,
+                        #                        gae_lambda=1.0,
+                        #                        max_grad_norm=0.8,
+                        #                        vf_coef=1.0,
+                        #                        policy_kwargs=dict(
+                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                        #                            activation_fn=nn.ReLU,
+                        #                            ortho_init=True)
+                        #                        )
+                    # model = base_algorithm(MlpPolicy,
+                    #                        env,
+                    #                        verbose=0,
+                    #                        tensorboard_log=tensorboard_log,
+                    #                        batch_size=8,
+                    #                        n_steps=2,
+                    #                        gamma=0.95,
+                    #                        learning_rate=0.0005,
+                    #                        ent_coef=0,
+                    #                        clip_range=0.2,
+                    #                        n_epochs=2,
+                    #                        gae_lambda=1.0,
+                    #                        max_grad_norm=0.8,
+                    #                        vf_coef=1.0,
+                    #                        policy_kwargs=dict(
+                    #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                    #                            activation_fn=nn.ReLU,
+                    #                            ortho_init=True)
+                    #                        )
 
 
                                            #activation_fn=tanh) #lr_schedule, act_fn, net_arch, otho_init
 
 
                 elif kwargs['algorithm'] == "A2C":
-                    if 'flag' in kwargs and kwargs['flag'] == 18:
-                        model = base_algorithm(MlpPolicy,
-                                               env,
-                                               verbose=0,
-                                               tensorboard_log=tensorboard_log)
-                        print("UNTUNED!")
-                    else:
+                    # if 'flag' in kwargs and kwargs['flag'] == 18:
+                    model = base_algorithm(MlpPolicy,
+                                           env,
+                                           verbose=0,
+                                           tensorboard_log=tensorboard_log)
+                    #     print("UNTUNED!")
+                    # else:
                         #Tune1 - convergiert manchmal net
                         # model = base_algorithm(MlpPolicy,
                         #                    env,
@@ -533,25 +552,25 @@ def main(**kwargs):
                         #                            ortho_init=True)
                         #                        )
                         #Tune4 - 1000
-                        model = base_algorithm(MlpPolicy,
-                                               env,
-                                               verbose=0,
-                                               use_rms_prop=False,
-                                               normalize_advantage=True,
-                                               tensorboard_log=tensorboard_log,
-                                               ent_coef=0.1,
-                                               max_grad_norm=0.8,
-                                               n_steps=8,
-                                               gae_lambda=1.0,
-                                               vf_coef=0.285,
-                                               gamma=0.9,
-                                               learning_rate=0.001,
-                                               use_sde=False,
-                                               policy_kwargs=dict(
-                                                   net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                                                   activation_fn=nn.ReLU,
-                                                   ortho_init=True)
-                                               )
+                    # model = base_algorithm(MlpPolicy,
+                    #                        env,
+                    #                        verbose=0,
+                    #                        use_rms_prop=False,
+                    #                        normalize_advantage=True,
+                    #                        tensorboard_log=tensorboard_log,
+                    #                        ent_coef=0.0,
+                    #                        max_grad_norm=0.5,
+                    #                        n_steps=8,
+                    #                        gae_lambda=1.0,
+                    #                        vf_coef=0.4,
+                    #                        gamma=0.99,
+                    #                        learning_rate=0.0007,
+                    #                        use_sde=False,
+                    #                        policy_kwargs=dict(
+                    #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                    #                            activation_fn=nn.ReLU,
+                    #                            ortho_init=True)
+                    #                        )
                                            #policy_kwargs="dict(log_std_init=-2, ortho_init=False)")
                     # model = base_algorithm(MlpPolicy,
                     #                        env, verbose=0,
@@ -1149,16 +1168,6 @@ if __name__ == '__main__':
         args["punishment"] = "punish"
         args["action_space"] = "large"
         main(**args)
-    elif args["flag"] == 17:
-        args["algorithm"] = "PPO"
-        args['total_timesteps'] = 15e4
-        args['group'] = "PPO_UNTUNED"
-        main(**args)
-    elif args["flag"] == 18:
-        args["algorithm"] = "A2C"
-        args['total_timesteps'] = 15e4
-        args['group'] = "A2C_UNTUNED"
-        main(**args)
     elif args["flag"] == 19:
         args["algorithm"] = "A2C"
         args['total_timesteps'] = 7.5e4
@@ -1213,7 +1222,7 @@ if __name__ == '__main__':
         #"main/avg_abs_thdot",  # ?
         #"main/avg_abs_theta",  # ?
         #"main/avg_safety_measure",  #
-        #"main/episode_reward",  #
+        "main/episode_reward",  #
         #"main/episode_time",  #
         #"main/max_abs_action_rl",  # ??
         #"main/max_abs_safety_correction",  #
@@ -1223,7 +1232,7 @@ if __name__ == '__main__':
         #"main/no_violation",  #
         #"main/rel_abs_safety_correction",
         #"main/avg_step_punishment",  #
-        "main/avg_step_reward_rl"  # ???
+        #"main/avg_step_reward_rl"  # ???
     ]
 
     #PRELIMINARY
@@ -1245,42 +1254,44 @@ if __name__ == '__main__':
     #                     print(f"Finished training {args['group']} ...")
 
 
-    # from thesis.util import tf_events_to_plot, external_legend_res
-    # for tag in tags:
-    #     if tag == "main/avg_abs_action_rl":
-    #        y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
-    #     elif tag == "main/avg_abs_thdot":
-    #        y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
-    #     elif tag == "main/avg_abs_theta":
-    #        y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
-    #     elif tag == "main/avg_step_reward_rl":
-    #         y_label = "Mean reward per step $\overline{r}$"
-    #     elif tag == "main/episode_reward":
-    #         y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
-    #     elif tag== "main/max_safety_measure":
-    #         y_label = "Maximal reward $r_{\mathrm{max}}$"
-    #     elif tag == "main/no_violation":
-    #         y_label = "Mean safety violations"
-    #     else:
-    #        y_label = ''
-    #
-    #
-    #     dirsss = [
-    #         ["PPO", "PPO_ZERO"], #["PPO"],
-    #         ["PPO", "PPO_SAS", "PPO_LAS"],
-    #         ["PPO", "PPO_EASY", "PPO_LAS"],
-    #         ["PPO", "PPO_EASY_OBS"]
-    #     ]
-    #     for i, dirss in enumerate(dirsss):
-    #         tf_events_to_plot(dirss=dirss, #"standard"
-    #                           tags=[tag],
-    #                           x_label='Episode',
-    #                           y_label=y_label,
-    #                           width=2.5, #5
-    #                           height=2.5, #2.5
-    #                           episode_length=100,
-    #                           window_size=41, #41
-    #                           save_as=f"pdfs/{i}{tag.split('/')[1]}")
+    from thesis.util import tf_events_to_plot, external_legend_res
+    for tag in tags:
+        if tag == "main/avg_abs_action_rl":
+           y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
+        elif tag == "main/avg_abs_thdot":
+           y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
+        elif tag == "main/avg_abs_theta":
+           y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
+        elif tag == "main/avg_step_reward_rl":
+            y_label = "Mean reward per step $\overline{r}$"
+        elif tag == "main/episode_reward":
+            y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
+        elif tag== "main/max_safety_measure":
+            y_label = "Maximal reward $r_{\mathrm{max}}$"
+        elif tag == "main/no_violation":
+            y_label = "Mean safety violations"
+        else:
+           y_label = ''
+
+
+        # dirsss = [
+        #     #["A2C_UNTUNED","PPO_UNTUNED"]
+        #     ["A2C", "PPO_UNTUNED"]
+        #     #["PPO","PPO_ZERO"], ["PPO"],
+        #     #["PPO", "PPO_LAS", "PPO_SAS"],
+        #     #["PPO", "PPO_LAS", "PPO_EASY"],
+        #     #["PPO", "PPO_EASY_OBS"]
+        # ]
+        # for i, dirss in enumerate(dirsss):
+        #     tf_events_to_plot(dirss=dirss, #"standard"
+        #                       tags=[tag],
+        #                       x_label='Episode',
+        #                       y_label=y_label,
+        #                       width=2.5, #5
+        #                       height=2.5, #2.5
+        #                       episode_length=100,
+        #                       window_size=41, #41
+        #                       save_as=f"pdfs/{i}{tag.split('/')[1]}")
 
     #labels = []
     #for label in dirss:

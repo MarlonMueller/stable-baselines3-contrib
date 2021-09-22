@@ -112,8 +112,7 @@ class MathPendulumEnv(Env):
         return [new_theta, new_thdot]
 
     def _get_obs(self, theta, thdot) -> GymObs:
-        return np.array([theta, thdot])
-
+        return np.array([theta, thdot], dtype=object)
 
     def _get_reward(self, theta: float, thdot: float, action: Union[int, np.ndarray]) -> float:
         # if self.reward is not None: #TODO: Clean

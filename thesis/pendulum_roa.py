@@ -23,7 +23,7 @@ class PendulumRegionOfAttraction(SafeRegion):
     def compute_roa():
         """
         """
-        import matlab
+        import matlab.engine
         eng = matlab.engine.start_matlab()
         dir = os.path.dirname(os.path.abspath(__file__))
         path_matlab = eng.genpath(f'{dir}/matlab')
