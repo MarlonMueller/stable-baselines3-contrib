@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 COLORS_PLOTS = [
     'tab:blue', #blue
     'tab:orange', #orange
-    'tab:purple', #green
+    'tab:green', #green
     '#f0266b' #magenta
 ]
 
@@ -795,7 +795,7 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     #plt.plot(range(1, len(mean) + 1), mean, label=label.replace('_','/'), linewidth=1.25)
 
                     # plt.gca().axhline(1, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.75)
-                    # plt.gca().axhline(0, linestyle='dotted', color='green', linewidth=.75)
+                    # plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75)
                     # plt.gca().axhline(.5, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5)
                     # plt.gca().axhline(0.25, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
                     #                   zorder=1)

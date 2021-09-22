@@ -107,3 +107,25 @@ class PendulumRegionOfAttraction(SafeRegion):
         theta = fac_2 * (-max_theta)
         thdot = fac_1 * 3.436116964863835 + fac_2 * 9.326603190344699
         return [theta, thdot]
+
+
+if __name__ == '__main__':
+    from math import sin
+    def dynamics(theta: float, thdot: float, torque: float):
+        new_theta = theta + 0.05 * thdot
+        new_thdot = thdot + 0.05 * ((9.81) * sin(theta) + 1. / (1 ** 2) * torque)
+        return [new_theta, new_thdot]
+    theta_roa = 3.092505268377452
+    vertices = np.array([
+        [-theta_roa, 12.762720155208534],  # LeftUp
+        [theta_roa, -5.890486225480862],  # RightUp
+        [theta_roa, -12.762720155208534],  # RightLow
+        [-theta_roa, 5.890486225480862]  # LeftLow
+    ])
+    safe_region = SafeRegion(vertices=vertices)
+    #for i in range(0,33,3):
+    #    print(i)
+    #    print(dynamics(2.96832, -12.17228, i) in safe_region)
+
+    print(dynamics(2.96832, -12.17228, 18.923017468258237))
+    print(dynamics(2.96832, -12.17228, 18.923017468258237) in safe_region)

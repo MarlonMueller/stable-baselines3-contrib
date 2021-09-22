@@ -67,7 +67,6 @@ def main(**kwargs):
         obs = True
 
     if "init" in kwargs and kwargs["init"] == "zero":
-        print("Zero Init.")
         env = gym.make(kwargs['env_id'], init="zero", obs=obs)
     else:
         env = gym.make(kwargs['env_id'], obs=obs)
@@ -110,14 +109,14 @@ def main(**kwargs):
     safe_region = SafeRegion(vertices=vertices)
 
     if "action_space" in kwargs and kwargs["action_space"] == "large":
-        transform_action_space_fn = lambda a: 2.5 * (a - 18)
-        alter_action_space = gym.spaces.Discrete(37)
+        transform_action_space_fn = lambda a: 5 * (a - 10) if a <= 9 else 5 * (a - 9)
+        alter_action_space = gym.spaces.Discrete(20)
     elif "action_space" in kwargs and kwargs["action_space"] == "small":
-        transform_action_space_fn = lambda a: 1.5 * (a - 12)
-        alter_action_space = gym.spaces.Discrete(25)
+        transform_action_space_fn = lambda a: (a - 10)
+        alter_action_space = gym.spaces.Discrete(21)
     else:
-        transform_action_space_fn = lambda a: 2 * (a - 15)
-        alter_action_space = gym.spaces.Discrete(31)
+        transform_action_space_fn = lambda a: 3 * (a - 10)
+        alter_action_space = gym.spaces.Discrete(21)
 
     if 'safety' in kwargs and kwargs['safety'] is not None:
 
@@ -254,38 +253,38 @@ def main(**kwargs):
                 alter_action_space=alter_action_space)
 
     else:
-
-        class ActionInfoWrapper(gym.Wrapper):
-            def __init__(self, env, alter_action_space=None,
-                         transform_action_space_fn=None):
-                super().__init__(env)
-
-                if alter_action_space is not None:
-                    self.action_space = alter_action_space
-
-                if transform_action_space_fn is not None:
-                    if isinstance(transform_action_space_fn, str):
-                        fn = getattr(self.env, transform_action_space_fn)
-                        if not callable(fn):
-                            raise ValueError(f"Attribute {fn} is not a method")
-                        self._transform_action_space_fn = fn
-                    else:
-                        self._transform_action_space_fn = transform_action_space_fn
-                else:
-                    self._transform_action_space_fn = None
-
-            def step(self, action) -> GymStepReturn:
-
-                if self._transform_action_space_fn is not None:
-                    action = self._transform_action_space_fn(action)
-
-                obs, reward, done, info = self.env.step(action)
-                info["standard"] = {"action": action, "reward": reward}
-                return obs, reward, done, info
-
-        env = ActionInfoWrapper(env,
-                                transform_action_space_fn=transform_action_space_fn,
-                                alter_action_space=alter_action_space)
+        pass #TODO:UN
+        # class ActionInfoWrapper(gym.Wrapper):
+        #     def __init__(self, env, alter_action_space=None,
+        #                  transform_action_space_fn=None):
+        #         super().__init__(env)
+        #
+        #         if alter_action_space is not None:
+        #             self.action_space = alter_action_space
+        #
+        #         if transform_action_space_fn is not None:
+        #             if isinstance(transform_action_space_fn, str):
+        #                 fn = getattr(self.env, transform_action_space_fn)
+        #                 if not callable(fn):
+        #                     raise ValueError(f"Attribute {fn} is not a method")
+        #                 self._transform_action_space_fn = fn
+        #             else:
+        #                 self._transform_action_space_fn = transform_action_space_fn
+        #         else:
+        #             self._transform_action_space_fn = None
+        #
+        #     def step(self, action) -> GymStepReturn:
+        #
+        #         if self._transform_action_space_fn is not None:
+        #             action = self._transform_action_space_fn(action)
+        #
+        #         obs, reward, done, info = self.env.step(action)
+        #         info["standard"] = {"action": action, "reward": reward}
+        #         return obs, reward, done, info
+        #
+        # env = ActionInfoWrapper(env,
+        #                         transform_action_space_fn=transform_action_space_fn,
+        #                         alter_action_space=alter_action_space)
 
     if not is_wrapped(env, Monitor):
         env = Monitor(env)
@@ -305,21 +304,21 @@ def main(**kwargs):
                 model = base_algorithm(MaskableActorCriticPolicy,
                                        env,
                                        verbose=0,
-                                       tensorboard_log=tensorboard_log,
-                                       n_epochs=2,
-                                       batch_size=2,
-                                       clip_range=0.2,
-                                       learning_rate=0.001,
-                                       n_steps=8,
-                                       gamma=0.9,
-                                       ent_coef=0.1,
-                                       vf_coef=0.285,
-                                       max_grad_norm=0.8,
-                                       policy_kwargs=dict(
-                                           net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                                           activation_fn=nn.ReLU,
-                                           ortho_init=True)
-                                       )
+                                       tensorboard_log=tensorboard_log)
+                #                        n_epochs=2,
+                #                        batch_size=2,
+                #                        clip_range=0.2,
+                #                        learning_rate=0.001,
+                #                        n_steps=8,
+                #                        gamma=0.9,
+                #                        ent_coef=0.1,
+                #                        vf_coef=0.285,
+                #                        max_grad_norm=0.8,
+                #                        policy_kwargs=dict(
+                #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                #                            activation_fn=nn.ReLU,
+                #                            ortho_init=True)
+                #                        )
             else:
 
                 def linear_schedule(initial_value: Union[float, str]) -> Callable[[float], float]:
@@ -344,31 +343,32 @@ def main(**kwargs):
 
 
                 if kwargs['algorithm'] == "PPO":
-                    if 'flag' in kwargs and kwargs['flag'] == 19:
-                        model = base_algorithm(
+                    #if 'flag' in kwargs and kwargs['flag'] == 19:
+                    print(base_algorithm)
+                    model = base_algorithm(
                             MlpPolicy,
                             env,
                             verbose=0,
                             tensorboard_log=tensorboard_log)
-                    else:
-                        model = base_algorithm(MlpPolicy,
-                                               env,
-                                               verbose=0,
-                                               tensorboard_log=tensorboard_log,
-                                               n_epochs=2,
-                                               batch_size=2,
-                                               clip_range=0.2,
-                                               learning_rate=0.001,
-                                               n_steps=8,
-                                               gamma=0.9,
-                                               ent_coef=0.1,
-                                               vf_coef=0.285,
-                                               max_grad_norm=0.8,
-                                               policy_kwargs=dict(
-                                                   net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                                                   activation_fn=nn.ReLU,
-                                                   ortho_init=True)
-                                               )
+                    # else:
+                    #     model = base_algorithm(MlpPolicy,
+                    #                            env,
+                    #                            verbose=0,
+                    #                            tensorboard_log=tensorboard_log,
+                    #                            n_epochs=2,
+                    #                            batch_size=2,
+                    #                            clip_range=0.2,
+                    #                            learning_rate=0.001,
+                    #                            n_steps=8,
+                    #                            gamma=0.9,
+                    #                            ent_coef=0.1,
+                    #                            vf_coef=0.285,
+                    #                            max_grad_norm=0.8,
+                    #                            policy_kwargs=dict(
+                    #                                net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                    #                                activation_fn=nn.ReLU,
+                    #                                ortho_init=True)
+                    #                            )
 
                         # else:
 
@@ -495,29 +495,30 @@ def main(**kwargs):
                         # activation_fn=tanh) #lr_schedule, act_fn, net_arch, otho_init
 
                 elif kwargs['algorithm'] == "A2C":
-                    if 'flag' in kwargs and kwargs['flag'] == 18:
-                        model = base_algorithm(MlpPolicy,
+                    #if 'flag' in kwargs and kwargs['flag'] == 18:
+                    print(base_algorithm)
+                    model = base_algorithm(MlpPolicy,
                                                env,
                                                verbose=0,
                                                tensorboard_log=tensorboard_log)
-                    else:
-                        model = base_algorithm(MlpPolicy,
-                                               env,
-                                               verbose=0,
-                                               tensorboard_log=tensorboard_log,
-                                               use_rms_prop=False,
-                                               normalize_advantage=True,
-                                               learning_rate=0.001,
-                                               n_steps=8,
-                                               gamma=0.9,
-                                               ent_coef=0.1,
-                                               vf_coef=0.285,
-                                               max_grad_norm=0.8,
-                                               policy_kwargs=dict(
-                                                   net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                                                   activation_fn=nn.ReLU,
-                                                   ortho_init=True)
-                                               )
+                    # else:
+                    #     model = base_algorithm(MlpPolicy,
+                    #                            env,
+                    #                            verbose=0,
+                    #                            tensorboard_log=tensorboard_log,
+                    #                            use_rms_prop=False,
+                    #                            normalize_advantage=True,
+                    #                            learning_rate=0.001,
+                    #                            n_steps=8,
+                    #                            gamma=0.9,
+                    #                            ent_coef=0.1,
+                    #                            vf_coef=0.285,
+                    #                            max_grad_norm=0.8,
+                    #                            policy_kwargs=dict(
+                    #                                net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                    #                                activation_fn=nn.ReLU,
+                    #                                ortho_init=True)
+                    #                            )
 
                     #     print("UNTUNED!")
                     # else:
@@ -634,9 +635,9 @@ def main(**kwargs):
                     #                        learning_rate=0.00730,
                     #                        ent_coef=2.5111150,
                     #                        vf_coef=0.79)
-                else:
-                    from stable_baselines3 import DQN
-                    model = DQN('MlpPolicy', env, verbose=0, tensorboard_log=tensorboard_log)
+                #else:
+                #    from stable_baselines3 import DQN
+                #    model = DQN('MlpPolicy', env, verbose=0, tensorboard_log=tensorboard_log)
 
             # TODO: Remove
             # from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
@@ -1089,142 +1090,212 @@ if __name__ == '__main__':
     args["train"] = True
     args["name"] = "run"
     args['iterations'] = 5
+    args["algorithm"] = "A2C"
+    args['total_timesteps'] = 7.5e4
 
     if args["flag"] == 0:
-        args["algorithm"] = "PPO"
-        args["safety"] = "shield"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "NORMAL_SHIELD"
-        main(**args)
+        args['group'] = "A2C"
     elif args["flag"] == 1:
         args["algorithm"] = "PPO"
-        args["safety"] = "shield"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "EASY_SHIELD"
-        args["init"] = "zero"
-        args["action_space"] = "small"
-        main(**args)
-    elif args["flag"] == 2:
-        args["algorithm"] = "PPO"
-        args["safety"] = "shield"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "HARD_SHIELD"
-        args["action_space"] = "large"
-        main(**args)
-    elif args["flag"] == 3:
-        args["algorithm"] = "PPO"
-        args["safety"] = "mask"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "NORMAL_MASK"
-        main(**args)
-    elif args["flag"] == 4:
-        args["algorithm"] = "PPO"
-        args["safety"] = "mask"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "EASY_MASK"
-        args["init"] = "zero"
-        args["action_space"] = "small"
-        main(**args)
-    elif args["flag"] == 5:
-        args["algorithm"] = "PPO"
-        args["safety"] = "mask"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "HARD_MASK"
-        args["action_space"] = "large"
-        main(**args)
-    elif args["flag"] == 6:
-        args["algorithm"] = "PPO"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "PPO_LAS"
-        args["action_space"] = "large"
-        main(**args)
-    elif args["flag"] == 7:
-        args["algorithm"] = "PPO"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "PPO_SAS"
-        args["action_space"] = "small"
-        main(**args)
-    elif args["flag"] == 8:
-        args["algorithm"] = "PPO"
-        args['total_timesteps'] = 7.5e4
         args['group'] = "PPO"
-        main(**args)
+    elif args["flag"] == 2:
+        args['group'] = "LAS"
+        args["action_space"] = "large"
+    elif args["flag"] == 3:
+        args['group'] = "SAS"
+        args["action_space"] = "small"
+    elif args["flag"] == 4:
+        args['group'] = "ZERO"
+        args["init"] = "zero"
+    elif args["flag"] == 5:
+        args["safety"] = "shield"
+        args['group'] = "SHIELD_NORMAL"
+    elif args["flag"] == 6:
+        args["safety"] = "shield"
+        args['group'] = "SHIELD_SAS"
+        args["action_space"] = "small"
+    elif args["flag"] == 7:
+        args["safety"] = "shield"
+        args['group'] = "SHIELD_ZERO"
+        args["init"] = "zero"
+    elif args["flag"] == 8:
+        args["safety"] = "shield"
+        args['group'] = "SHIELD_NORMAL_PUN"
+        args["punishment"] = "punish"
     elif args["flag"] == 9:
-        args["algorithm"] = "PPO"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "PPO_ZERO"
-        args["init"] = "zero"
-        main(**args)
+        args["safety"] = "shield"
+        args['group'] = "SHIELD_SAS_PUN"
+        args["action_space"] = "small"
+        args["punishment"] = "punish"
     elif args["flag"] == 10:
-        args["algorithm"] = "PPO"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "PPO_EASY"
+        args["safety"] = "shield"
+        args['group'] = "SHIELD_ZERO_PUN"
         args["init"] = "zero"
-        args["action_space"] = "small"
-        main(**args)
+        args["punishment"] = "punish"
     elif args["flag"] == 11:
-        args["algorithm"] = "PPO"
-        args["safety"] = "shield"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "NORMAL_SHIELD_PUNISH"
-        args["punishment"] = "punish"
-        main(**args)
+        args["safety"] = "mask"
+        args['group'] = "MASK_NORMAL"
     elif args["flag"] == 12:
-        args["algorithm"] = "PPO"
-        args["safety"] = "shield"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "EASY_SHIELD_PUNISH"
-        args["init"] = "zero"
+        args["safety"] = "mask"
+        args['group'] = "MASK_SAS"
         args["action_space"] = "small"
-        args["punishment"] = "punish"
-        main(**args)
     elif args["flag"] == 13:
-        args["algorithm"] = "PPO"
-        args["safety"] = "shield"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "HARD_SHIELD_PUNISH"
-        args["action_space"] = "large"
-        args["punishment"] = "punish"
-        main(**args)
-    elif args["flag"] == 14:
-        args["algorithm"] = "PPO"
         args["safety"] = "mask"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "NORMAL_MASK_PUNISH"
-        args["punishment"] = "punish"
-        main(**args)
-    elif args["flag"] == 15:
-        args["algorithm"] = "PPO"
-        args["safety"] = "mask"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "EASY_MASK_PUNISH"
+        args['group'] = "MASK_ZERO"
         args["init"] = "zero"
+    elif args["flag"] == 14:
+        args["safety"] = "mask"
+        args['group'] = "MASK_NORMAL_PUN"
+        args["punishment"] = "punish"
+    elif args["flag"] == 15:
+        args["safety"] = "mask"
+        args['group'] = "MASK_SAS_PUN"
         args["action_space"] = "small"
         args["punishment"] = "punish"
-        main(**args)
     elif args["flag"] == 16:
-        args["algorithm"] = "PPO"
         args["safety"] = "mask"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "HARD_MASK_PUNISH"
+        args['group'] = "MASK_ZERO_PUN"
+        args["init"] = "zero"
         args["punishment"] = "punish"
-        args["action_space"] = "large"
-        main(**args)
-    elif args["flag"] == 17:
-        args["algorithm"] = "A2C"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "A2C"
-        main(**args)
-    elif args["flag"] == 18:
-        args["algorithm"] = "A2C"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "A2C_UNTUNED"
-        main(**args)
-    elif args["flag"] == 19:
-        args["algorithm"] = "PPO"
-        args['total_timesteps'] = 7.5e4
-        args['group'] = "PPO_UNTUNED"
-        main(**args)
+    main(**args)
+
+    #
+    # if args["flag"] == 0:
+    #     args["algorithm"] = "PPO"
+    #     args["safety"] = "shield"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "NORMAL_SHIELD"
+    #     main(**args)
+    # elif args["flag"] == 1:
+    #     args["algorithm"] = "PPO"
+    #     args["safety"] = "shield"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "EASY_SHIELD"
+    #     args["init"] = "zero"
+    #     args["action_space"] = "small"
+    #     main(**args)
+    # elif args["flag"] == 2:
+    #     args["algorithm"] = "PPO"
+    #     args["safety"] = "shield"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "HARD_SHIELD"
+    #     args["action_space"] = "large"
+    #     main(**args)
+    # elif args["flag"] == 3:
+    #     args["algorithm"] = "PPO"
+    #     args["safety"] = "mask"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "NORMAL_MASK"
+    #     main(**args)
+    # elif args["flag"] == 4:
+    #     args["algorithm"] = "PPO"
+    #     args["safety"] = "mask"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "EASY_MASK"
+    #     args["init"] = "zero"
+    #     args["action_space"] = "small"
+    #     main(**args)
+    # elif args["flag"] == 5:
+    #     args["algorithm"] = "PPO"
+    #     args["safety"] = "mask"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "HARD_MASK"
+    #     args["action_space"] = "large"
+    #     main(**args)
+    # elif args["flag"] == 6:
+    #     args["algorithm"] = "A2C"
+    #     args['total_timesteps'] = 15e4
+    #     args['group'] = "A2C"
+    #     #args['safety'] = "shield"
+    #     #args["action_space"] = "large"
+    #     main(**args)
+    # elif args["flag"] == 7:
+    #     args["algorithm"] = "A2C"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "PPO_SAS"
+    #     args["action_space"] = "small"
+    #     main(**args)
+    # elif args["flag"] == 8:
+    #     args["algorithm"] = "PPO"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "PPO"
+    #     main(**args)
+    # elif args["flag"] == 9:
+    #     args["algorithm"] = "A2C"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "A2C_ZERO"
+    #     args["init"] = "zero"
+    #     main(**args)
+    # elif args["flag"] == 10:
+    #     args["algorithm"] = "A2C"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "A2C_EASY"
+    #     args["init"] = "zero"
+    #     args["action_space"] = "small"
+    #     main(**args)
+    # elif args["flag"] == 11:
+    #     args["algorithm"] = "PPO"
+    #     args["safety"] = "shield"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "NORMAL_SHIELD_PUNISH"
+    #     args["punishment"] = "punish"
+    #     main(**args)
+    # elif args["flag"] == 12:
+    #     args["algorithm"] = "PPO"
+    #     args["safety"] = "shield"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "EASY_SHIELD_PUNISH"
+    #     args["init"] = "zero"
+    #     args["action_space"] = "small"
+    #     args["punishment"] = "punish"
+    #     main(**args)
+    # elif args["flag"] == 13:
+    #     args["algorithm"] = "PPO"
+    #     args["safety"] = "shield"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "HARD_SHIELD_PUNISH"
+    #     args["action_space"] = "large"
+    #     args["punishment"] = "punish"
+    #     main(**args)
+    # elif args["flag"] == 14:
+    #     args["algorithm"] = "PPO"
+    #     args["safety"] = "mask"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "NORMAL_MASK_PUNISH"
+    #     args["punishment"] = "punish"
+    #     main(**args)
+    # elif args["flag"] == 15:
+    #     args["algorithm"] = "PPO"
+    #     args["safety"] = "mask"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "EASY_MASK_PUNISH"
+    #     args["init"] = "zero"
+    #     args["action_space"] = "small"
+    #     args["punishment"] = "punish"
+    #     main(**args)
+    # elif args["flag"] == 16:
+    #     args["algorithm"] = "PPO"
+    #     args["safety"] = "mask"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "HARD_MASK_PUNISH"
+    #     args["punishment"] = "punish"
+    #     args["action_space"] = "large"
+    #     main(**args)
+    # elif args["flag"] == 17:
+    #     args["algorithm"] = "A2C"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "A2C"
+    #     main(**args)
+    # elif args["flag"] == 18:
+    #     args["algorithm"] = "A2C"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "A2C_UNTUNED"
+    #     main(**args)
+    # elif args["flag"] == 19:
+    #     args["algorithm"] = "PPO"
+    #     args['total_timesteps'] = 7.5e4
+    #     args['group'] = "PPO_UNTUNED"
+    #     main(**args)
 
     # if not args['flag']:
     #     args['total_timesteps'] = 5e4
@@ -1272,7 +1343,7 @@ if __name__ == '__main__':
         # "main/avg_abs_thdot",  # ?
         # "main/avg_abs_theta",  # ?
         # "main/avg_safety_measure",  #
-        "main/episode_reward",  #
+        #"main/episode_reward",  #
         # "main/episode_time",  #
         # "main/max_abs_action_rl",  # ??
         # "main/max_abs_safety_correction",  #
@@ -1282,7 +1353,7 @@ if __name__ == '__main__':
         # "main/no_violation",  #
         # "main/rel_abs_safety_correction",
         # "main/avg_step_punishment",  #
-        # "main/avg_step_reward_rl"  # ???
+         "main/avg_step_reward_rl"  # ???
     ]
 
     # PRELIMINARY
@@ -1303,8 +1374,8 @@ if __name__ == '__main__':
     #                     #    main(**args)
     #                     print(f"Finished training {args['group']} ...")
 
-    # from thesis.util import tf_events_to_plot, external_legend_res
-    #
+    from thesis.util import tf_events_to_plot, external_legend_res
+
     # for tag in tags:
     #     if tag == "main/avg_abs_action_rl":
     #         y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
@@ -1324,13 +1395,11 @@ if __name__ == '__main__':
     #         y_label = ''
     #
     #     dirsss = [
-    #         ["A2C_UNTUNED","PPO_UNTUNED"],
+    #         #["A2C_UNTUNED","PPO_UNTUNED"],
     #         ["PPO", "A2C"],
-    #         ["PPO","PPO_ZERO"],
-    #         ["PPO", "PPO_LAS", "PPO_SAS"],
-    #         ["PPO", "PPO_LAS", "PPO_EASY"],
-    #         ["PPO", "PPO_EASY_OBS"],
-    #         ["PPO", "PPO_EASY_OBS"]
+    #         #["PPO","PPO_ZERO"],
+    #         #["PPO", "PPO_LAS", "PPO_SAS"]
+    #         #["PPO", "PPO_LAS", "PPO_EASY"],
     #     ]
     #     for i, dirss in enumerate(dirsss):
     #         tf_events_to_plot(dirss=dirss, #"standard"

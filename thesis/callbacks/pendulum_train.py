@@ -19,6 +19,7 @@ class PendulumTrainCallback(BaseCallback):
         self.num_steps = 0
 
         self.safe_episode = True
+        self.safe_episode_cont = True
         self.total_abs_theta = 0
         self.total_abs_thdot = 0
         self.max_abs_theta = 0
@@ -77,6 +78,12 @@ class PendulumTrainCallback(BaseCallback):
 
         if state not in self._safe_region:  # [0][0] not necessary
             self.safe_episode = False
+            if "shield" in infos.keys():
+                if infos['shield']["action_shield"] is None:
+                    self.safe_episode_cont = False
+            elif "mask" in infos.keys():
+                if infos['mask']["action_mask"] is None:
+                    self.safe_episode_cont = False
 
         #theta, thdot = state
         #cutoff = 1 + 1e-15
@@ -206,9 +213,11 @@ class PendulumTrainCallback(BaseCallback):
             # Time, Avg. Total distance to ROA?
 
             self.logger.record('main/no_violation', self.safe_episode)
+            self.logger.record('main/no_cont_violation', self.safe_episode_cont)
 
 
             self.safe_episode = True
+            self.safe_episode_cont = True
             self.total_abs_theta = 0
             self.total_abs_thdot = 0
             self.max_abs_theta = 0
