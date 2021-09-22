@@ -253,38 +253,37 @@ def main(**kwargs):
                 alter_action_space=alter_action_space)
 
     else:
-        pass #TODO:UN
-        # class ActionInfoWrapper(gym.Wrapper):
-        #     def __init__(self, env, alter_action_space=None,
-        #                  transform_action_space_fn=None):
-        #         super().__init__(env)
-        #
-        #         if alter_action_space is not None:
-        #             self.action_space = alter_action_space
-        #
-        #         if transform_action_space_fn is not None:
-        #             if isinstance(transform_action_space_fn, str):
-        #                 fn = getattr(self.env, transform_action_space_fn)
-        #                 if not callable(fn):
-        #                     raise ValueError(f"Attribute {fn} is not a method")
-        #                 self._transform_action_space_fn = fn
-        #             else:
-        #                 self._transform_action_space_fn = transform_action_space_fn
-        #         else:
-        #             self._transform_action_space_fn = None
-        #
-        #     def step(self, action) -> GymStepReturn:
-        #
-        #         if self._transform_action_space_fn is not None:
-        #             action = self._transform_action_space_fn(action)
-        #
-        #         obs, reward, done, info = self.env.step(action)
-        #         info["standard"] = {"action": action, "reward": reward}
-        #         return obs, reward, done, info
-        #
-        # env = ActionInfoWrapper(env,
-        #                         transform_action_space_fn=transform_action_space_fn,
-        #                         alter_action_space=alter_action_space)
+        class ActionInfoWrapper(gym.Wrapper):
+            def __init__(self, env, alter_action_space=None,
+                         transform_action_space_fn=None):
+                super().__init__(env)
+
+                if alter_action_space is not None:
+                    self.action_space = alter_action_space
+
+                if transform_action_space_fn is not None:
+                    if isinstance(transform_action_space_fn, str):
+                        fn = getattr(self.env, transform_action_space_fn)
+                        if not callable(fn):
+                            raise ValueError(f"Attribute {fn} is not a method")
+                        self._transform_action_space_fn = fn
+                    else:
+                        self._transform_action_space_fn = transform_action_space_fn
+                else:
+                    self._transform_action_space_fn = None
+
+            def step(self, action) -> GymStepReturn:
+
+                if self._transform_action_space_fn is not None:
+                    action = self._transform_action_space_fn(action)
+
+                obs, reward, done, info = self.env.step(action)
+                info["standard"] = {"action": action, "reward": reward}
+                return obs, reward, done, info
+
+        env = ActionInfoWrapper(env,
+                                transform_action_space_fn=transform_action_space_fn,
+                                alter_action_space=alter_action_space)
 
     if not is_wrapped(env, Monitor):
         env = Monitor(env)
