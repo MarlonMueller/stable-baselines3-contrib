@@ -1089,14 +1089,14 @@ if __name__ == '__main__':
     args["train"] = True
     args["name"] = "run"
     args['iterations'] = 5
-    args["algorithm"] = "A2C"
+    args["algorithm"] = "PPO"
     args['total_timesteps'] = 7.5e4
 
     if args["flag"] == 0:
-        args['group'] = "A2C"
-    elif args["flag"] == 1:
-        args["algorithm"] = "PPO"
         args['group'] = "PPO"
+    elif args["flag"] == 1:
+        args["algorithm"] = "A2C"
+        args['group'] = "A2C"
     elif args["flag"] == 2:
         args['group'] = "LAS"
         args["action_space"] = "large"
@@ -1373,8 +1373,8 @@ if __name__ == '__main__':
     #                     #    main(**args)
     #                     print(f"Finished training {args['group']} ...")
 
-    from thesis.util import tf_events_to_plot, external_legend_res
-
+    # from thesis.util import tf_events_to_plot, external_legend_res
+    #
     # for tag in tags:
     #     if tag == "main/avg_abs_action_rl":
     #         y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
