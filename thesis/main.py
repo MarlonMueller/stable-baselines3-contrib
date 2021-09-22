@@ -302,7 +302,24 @@ def main(**kwargs):
 
             if 'safety' in kwargs and kwargs['safety'] == "mask":
                 from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
-                model = base_algorithm(MaskableActorCriticPolicy, env, verbose=0, tensorboard_log=tensorboard_log)
+                model = base_algorithm(MaskableActorCriticPolicy,
+                                       env,
+                                       verbose=0,
+                                       tensorboard_log=tensorboard_log,
+                                       n_epochs=2,
+                                       batch_size=2,
+                                       clip_range=0.2,
+                                       learning_rate=0.001,
+                                       n_steps=8,
+                                       gamma=0.9,
+                                       ent_coef=0.1,
+                                       vf_coef=0.285,
+                                       max_grad_norm=0.8,
+                                       policy_kwargs=dict(
+                                           net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                                           activation_fn=nn.ReLU,
+                                           ortho_init=True)
+                                       )
             else:
 
                 def linear_schedule(initial_value: Union[float, str]) -> Callable[[float], float]:
@@ -325,6 +342,7 @@ def main(**kwargs):
 
                     return func
 
+
                 if kwargs['algorithm'] == "PPO":
                     if 'flag' in kwargs and kwargs['flag'] == 19:
                         model = base_algorithm(
@@ -340,7 +358,6 @@ def main(**kwargs):
                                                n_epochs=2,
                                                batch_size=2,
                                                clip_range=0.2,
-                                               normalize_advantage=True,
                                                learning_rate=0.001,
                                                n_steps=8,
                                                gamma=0.9,
