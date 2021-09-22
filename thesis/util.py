@@ -717,7 +717,7 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     df = pd.DataFrame.from_records(summary_iterator.Scalars(tag),
                                                    columns=summary_iterator.Scalars(tag)[0]._fields)
 
-                    values.append(df["value"][:1500].to_list())
+                    values.append(df["value"][:750].to_list())
                     #values.append(df["value"][:500].to_list())
 
                     #if summary_df.empty:
@@ -804,12 +804,12 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
 
 
 
-                    # plt.gca().axhline(-1, linestyle='dotted', color='magenta', linewidth=.75, zorder=1)
-                    # plt.gca().axhline(-0.5, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5, zorder=1)
-                    # plt.gca().axhline(-0.25, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5, zorder=1)
-                    # plt.gca().axhline(-0.75, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5, zorder=1)
-                    # plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75, zorder=1)
-                    # plt.gca().axhline(-10, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5, zorder=1)
+                    plt.gca().axhline(-1, linestyle='dotted', color='magenta', linewidth=.75, zorder=1)
+                    plt.gca().axhline(-0.5, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5, zorder=1)
+                    plt.gca().axhline(-0.25, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5, zorder=1)
+                    plt.gca().axhline(-0.75, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5, zorder=1)
+                    plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75, zorder=1)
+                    plt.gca().axhline(-10, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5, zorder=1)
 
                     #plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75)
                     #plt.gca().axhline(-500, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5)
@@ -836,16 +836,16 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     #plt.gca().set_yticks([0, -0.5, -1], minor=False)
                     #plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$'])
 
-                    # plt.gca().set_yscale("symlog", linthresh=1)
-                    # plt.gca().set_ylim(top=.25)
-                    # plt.gca().set_yticks([0, -0.5, -1, -10], minor=False)
-                    # plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$', '$-10$'])
-                    # plt.gca().set_yticks([-0.25, -0.75], minor=True)
-                    # plt.gca().set_xlim(right=750)
-                    # plt.gca().set_xticks([0, 250, 500, 750], minor=False)
-                    # minor_ticks = [125, 375, 625]
-                    # #minor_ticks = [62.5, 125, 187.5, 312.5, 375, 437.5]
-                    # plt.gca().set_xticks(minor_ticks, minor=True)
+                    plt.gca().set_yscale("symlog", linthresh=1)
+                    plt.gca().set_ylim(top=.25)
+                    plt.gca().set_yticks([0, -0.5, -1, -10], minor=False)
+                    plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$', '$-10$'])
+                    plt.gca().set_yticks([-0.25, -0.75], minor=True)
+                    plt.gca().set_xlim(right=750)
+                    plt.gca().set_xticks([0, 250, 500, 750], minor=False)
+                    minor_ticks = [125, 375, 625]
+                    #minor_ticks = [62.5, 125, 187.5, 312.5, 375, 437.5]
+                    plt.gca().set_xticks(minor_ticks, minor=True)
 
                     #plt.gca().set_xlim(right=200)
                     #plt.xticks([0,1250,2500])
@@ -872,19 +872,19 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     # plt.gca().set_xticks(minor_ticks, minor=True)
 
                     #plt.gca().set_ylim(top=750)
-                    plt.gca().set_ylim(bottom=-3000)
-                    plt.gca().set_xlim(right=750)
-                    plt.gca().set_yticks([0, -1000, -2000], minor=False)
-                    plt.gca().set_yticklabels(['$0$', '$-1000$', '$-2000$'])
-                    plt.gca().set_xticks([0, 250, 500, 750], minor=False)
-                    minor_ticks = [125, 375, 625]
-                    plt.gca().set_xticks(minor_ticks, minor=True)
-                    plt.gca().axhline(0, linestyle='dotted', color="black", linewidth=.75, zorder=1)
-                    plt.gca().axhline(-1000, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5, zorder=1)
-                    plt.gca().axhline(-2000, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
-                                      zorder=1)
-                    plt.gca().yaxis.set_label_position("right")
-                    plt.gca().yaxis.tick_right()
+                    # plt.gca().set_ylim(bottom=-3000)
+                    # plt.gca().set_xlim(right=750)
+                    # plt.gca().set_yticks([0, -1000, -2000], minor=False)
+                    # plt.gca().set_yticklabels(['$0$', '$-1000$', '$-2000$'])
+                    # plt.gca().set_xticks([0, 250, 500, 750], minor=False)
+                    # minor_ticks = [125, 375, 625]
+                    # plt.gca().set_xticks(minor_ticks, minor=True)
+                    # plt.gca().axhline(0, linestyle='dotted', color="black", linewidth=.75, zorder=1)
+                    # plt.gca().axhline(-1000, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5, zorder=1)
+                    # plt.gca().axhline(-2000, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                    #                   zorder=1)
+                    # plt.gca().yaxis.set_label_position("right")
+                    # plt.gca().yaxis.tick_right()
                     #plt.gca().axhline(-3000, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
                     #                  zorder=1)
 

@@ -32,10 +32,11 @@ import numpy as np
 from numpy import pi
 
 logger = logging.getLogger(__name__)
-#Try different optimizers
+
+
+# Try different optimizers
 
 def main(**kwargs):
-
     logger.info(f"kargs {kwargs}")
 
     module = importlib.import_module('stable_baselines3')
@@ -59,7 +60,7 @@ def main(**kwargs):
 
     # Initialize environment
     if kwargs['env_id'] not in [env_spec.id for env_spec in gym.envs.registry.all()]:
-         KeyError(f"Environment {kwargs['env_id']} is not registered")
+        KeyError(f"Environment {kwargs['env_id']} is not registered")
 
     obs = None
     if "obs" in kwargs and kwargs["obs"]:
@@ -82,8 +83,8 @@ def main(**kwargs):
     #     else:
     #         env = gym.make(kwargs['env_id'])
 
-    #TODO
-    #if 'safety' not in kwargs:
+    # TODO
+    # if 'safety' not in kwargs:
     #    env.action_space = gym.Discrete(15)
 
     # If not wrapped in VecEnv (__getattr__ set)
@@ -97,19 +98,19 @@ def main(**kwargs):
 
     # Define safe regions
     from sb3_contrib.common.safety.safe_region import SafeRegion
-    #TODO: PendulumSafeRegion
+    # TODO: PendulumSafeRegion
 
     theta_roa = 3.092505268377452
     vertices = np.array([
-         [-theta_roa, 12.762720155208534],  # LeftUp
-         [theta_roa, -5.890486225480862],  # RightUp
-         [theta_roa, -12.762720155208534],  # RightLow
-         [-theta_roa, 5.890486225480862]  # LeftLow
+        [-theta_roa, 12.762720155208534],  # LeftUp
+        [theta_roa, -5.890486225480862],  # RightUp
+        [theta_roa, -12.762720155208534],  # RightLow
+        [-theta_roa, 5.890486225480862]  # LeftLow
     ])
     safe_region = SafeRegion(vertices=vertices)
 
     if "action_space" in kwargs and kwargs["action_space"] == "large":
-        transform_action_space_fn = lambda a: 5*(a-10) if a <= 9 else 5*(a-9)
+        transform_action_space_fn = lambda a: 5 * (a - 10) if a <= 9 else 5 * (a - 9)
         alter_action_space = gym.spaces.Discrete(20)
     elif "action_space" in kwargs and kwargs["action_space"] == "small":
         transform_action_space_fn = lambda a: (a - 10)
@@ -119,7 +120,6 @@ def main(**kwargs):
         alter_action_space = gym.spaces.Discrete(21)
 
     if 'safety' in kwargs and kwargs['safety'] is not None:
-
 
         if kwargs['safety'] == "shield":
             from sb3_contrib.common.wrappers import SafetyShield
@@ -166,7 +166,7 @@ def main(**kwargs):
 
             def actuated_dynamics_fn(env: gym.Env) -> np.ndarray:
                 return np.array([0, (env.dt / (env.m * env.l ** 2))])
-                #return np.array([(env.dt ** 2 / (env.m * env.l ** 2)), (env.dt / (env.m * env.l ** 2))])
+                # return np.array([(env.dt ** 2 / (env.m * env.l ** 2)), (env.dt / (env.m * env.l ** 2))])
 
             def dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
                 theta, thdot = env.state
@@ -193,7 +193,6 @@ def main(**kwargs):
             else:
                 punishment_fn = None
 
-
             if "gamma" not in kwargs:
                 kwargs["gamma"] = .5
 
@@ -209,9 +208,9 @@ def main(**kwargs):
                 alter_action_space=alter_action_space,
                 gamma=kwargs["gamma"])
 
-            #TODO, f und g as other methods in env?
-            #TODO Erklärung Problem
-            #TODO Liste Thesis
+            # TODO, f und g as other methods in env?
+            # TODO Erklärung Problem
+            # TODO Liste Thesis
 
 
 
@@ -228,7 +227,7 @@ def main(**kwargs):
                     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                                       action: Union[int, float, np.ndarray],
                                       mask: Union[int, float, np.ndarray]) -> float:
-                        return -(1 - (np.sum(mask)-1) / (len(mask)-1)) * 10
+                        return -(1 - (np.sum(mask) - 1) / (len(mask) - 1)) * 10
                 # if kwargs["punishment"] == "lightpunish":
                 #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                 #                       action: Union[int, float, np.ndarray],
@@ -244,7 +243,6 @@ def main(**kwargs):
             else:
                 punishment_fn = None
 
-
             # Wrap with SafetyMask
             env = SafetyMask(
                 env=env,
@@ -258,8 +256,8 @@ def main(**kwargs):
     else:
 
         class ActionInfoWrapper(gym.Wrapper):
-            def __init__(self,env, alter_action_space = None,
-             transform_action_space_fn = None):
+            def __init__(self, env, alter_action_space=None,
+                         transform_action_space_fn=None):
                 super().__init__(env)
 
                 if alter_action_space is not None:
@@ -288,8 +286,6 @@ def main(**kwargs):
         env = ActionInfoWrapper(env,
                                 transform_action_space_fn=transform_action_space_fn,
                                 alter_action_space=alter_action_space)
-
-
 
     if not is_wrapped(env, Monitor):
         env = Monitor(env)
@@ -330,15 +326,36 @@ def main(**kwargs):
                     return func
 
                 if kwargs['algorithm'] == "PPO":
-                    # #if 'flag' in kwargs and kwargs['flag'] == 17:
-                    model = base_algorithm(MlpPolicy,
-                                           env,
-                                           verbose=0,
-                                           tensorboard_log=tensorboard_log)
+                    if 'flag' in kwargs and kwargs['flag'] == 19:
+                        model = base_algorithm(
+                            MlpPolicy,
+                            env,
+                            verbose=0,
+                            tensorboard_log=tensorboard_log)
+                    else:
+                        model = base_algorithm(MlpPolicy,
+                                               env,
+                                               verbose=0,
+                                               tensorboard_log=tensorboard_log,
+                                               n_epochs=2,
+                                               batch_size=2,
+                                               clip_range=0.2,
+                                               normalize_advantage=True,
+                                               learning_rate=0.001,
+                                               n_steps=8,
+                                               gamma=0.9,
+                                               ent_coef=0.1,
+                                               vf_coef=0.285,
+                                               max_grad_norm=0.8,
+                                               policy_kwargs=dict(
+                                                   net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                                                   activation_fn=nn.ReLU,
+                                                   ortho_init=True)
+                                               )
 
-                    #else:
+                        # else:
 
-                        #TUNE1 - gut, aber ausbrecher am Ende
+                        # TUNE1 - gut, aber ausbrecher am Ende
                         # model = base_algorithm(MlpPolicy,
                         #                    env,
                         #                    verbose=0,
@@ -398,7 +415,7 @@ def main(**kwargs):
                         #                            activation_fn=nn.ReLU,
                         #                            ortho_init=True)
                         #                        )
-                        #Tune 4
+                        # Tune 4
                         # model = base_algorithm(MlpPolicy,
                         #                        env,
                         #                        verbose=0,
@@ -418,7 +435,7 @@ def main(**kwargs):
                         #                            activation_fn=nn.ReLU,
                         #                            ortho_init=True)
                         #                        )
-                        #OLD BEST
+                        # OLD BEST
                         # model = base_algorithm(MlpPolicy,
                         #                        env,
                         #                        verbose=0,
@@ -438,120 +455,137 @@ def main(**kwargs):
                         #                            activation_fn=nn.ReLU,
                         #                            ortho_init=True)
                         #                        )
-                    # model = base_algorithm(MlpPolicy,
-                    #                        env,
-                    #                        verbose=0,
-                    #                        tensorboard_log=tensorboard_log,
-                    #                        batch_size=8,
-                    #                        n_steps=2,
-                    #                        gamma=0.95,
-                    #                        learning_rate=0.0005,
-                    #                        ent_coef=0,
-                    #                        clip_range=0.2,
-                    #                        n_epochs=2,
-                    #                        gae_lambda=1.0,
-                    #                        max_grad_norm=0.8,
-                    #                        vf_coef=1.0,
-                    #                        policy_kwargs=dict(
-                    #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                    #                            activation_fn=nn.ReLU,
-                    #                            ortho_init=True)
-                    #                        )
-
-
-                                           #activation_fn=tanh) #lr_schedule, act_fn, net_arch, otho_init
-
-
-                elif kwargs['algorithm'] == "A2C":
-                    # if 'flag' in kwargs and kwargs['flag'] == 18:
-                    model = base_algorithm(MlpPolicy,
-                                           env,
-                                           verbose=0,
-                                           tensorboard_log=tensorboard_log)
-                    #     print("UNTUNED!")
-                    # else:
-                        #Tune1 - convergiert manchmal net
-                        # model = base_algorithm(MlpPolicy,
-                        #                    env,
-                        #                    verbose=0,
-                        #                    use_rms_prop=False,
-                        #                    normalize_advantage=True,
-                        #                    tensorboard_log=tensorboard_log,
-                        #                    ent_coef=0.03489354223693093,
-                        #                    max_grad_norm=2,
-                        #                    n_steps=2,
-                        #                    gae_lambda=1.0,
-                        #                    vf_coef=0.6841529890300497,
-                        #                    gamma=0.9,
-                        #                    learning_rate=linear_schedule(0.0015845365679309144),
-                        #                    use_sde=False,
-                        #                    policy_kwargs=dict(
-                        #                        net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                        #                        activation_fn=nn.ReLU,
-                        #                        ortho_init=True)
-                        #                    )
-                        #Tune2 - A2 durchgehend zacken
                         # model = base_algorithm(MlpPolicy,
                         #                        env,
                         #                        verbose=0,
-                        #                        use_rms_prop=False,
-                        #                        normalize_advantage=True,
                         #                        tensorboard_log=tensorboard_log,
-                        #                        ent_coef=0.05877945647872223,
-                        #                        max_grad_norm=5,
+                        #                        batch_size=8,
                         #                        n_steps=2,
-                        #                        gae_lambda=0.92,
-                        #                        vf_coef=0.2993644201737006,
                         #                        gamma=0.95,
-                        #                        learning_rate=0.001058460163315873,
-                        #                        use_sde=False,
+                        #                        learning_rate=0.0005,
+                        #                        ent_coef=0,
+                        #                        clip_range=0.2,
+                        #                        n_epochs=2,
+                        #                        gae_lambda=1.0,
+                        #                        max_grad_norm=0.8,
+                        #                        vf_coef=1.0,
                         #                        policy_kwargs=dict(
                         #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
                         #                            activation_fn=nn.ReLU,
                         #                            ortho_init=True)
                         #                        )
 
-                        # Tune3 - Katastrophe
-                        # model = base_algorithm(MlpPolicy,
-                        #                        env,
-                        #                        verbose=0,
-                        #                        use_rms_prop=False,
-                        #                        normalize_advantage=True,
-                        #                        tensorboard_log=tensorboard_log,
-                        #                        ent_coef=0.476890,
-                        #                        max_grad_norm=0.7,
-                        #                        n_steps=4,
-                        #                        gae_lambda=1.0,
-                        #                        vf_coef=0,
-                        #                        gamma=0.95,
-                        #                        learning_rate=0.00088739150,
-                        #                        use_sde=False,
-                        #                        policy_kwargs=dict(
-                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                        #                            activation_fn=nn.Tanh,
-                        #                            ortho_init=True)
-                        #                        )
-                        # Tune4 -Gut, Mehr Varianz
-                        # model = base_algorithm(MlpPolicy,
-                        #                        env,
-                        #                        verbose=0,
-                        #                        use_rms_prop=False,
-                        #                        normalize_advantage=True,
-                        #                        tensorboard_log=tensorboard_log,
-                        #                        ent_coef=0.01,
-                        #                        max_grad_norm=0.9,
-                        #                        n_steps=2,
-                        #                        gae_lambda=0.8,
-                        #                        vf_coef=0.99,
-                        #                        gamma=0.9,
-                        #                        learning_rate=0.004,
-                        #                        use_sde=False,
-                        #                        policy_kwargs=dict(
-                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                        #                            activation_fn=nn.Tanh,
-                        #                            ortho_init=True)
-                        #                        )
-                        #Tune4 - 1000
+                        # activation_fn=tanh) #lr_schedule, act_fn, net_arch, otho_init
+
+                elif kwargs['algorithm'] == "A2C":
+                    if 'flag' in kwargs and kwargs['flag'] == 18:
+                        model = base_algorithm(MlpPolicy,
+                                               env,
+                                               verbose=0,
+                                               tensorboard_log=tensorboard_log)
+                    else:
+                        model = base_algorithm(MlpPolicy,
+                                               env,
+                                               verbose=0,
+                                               tensorboard_log=tensorboard_log,
+                                               use_rms_prop=False,
+                                               normalize_advantage=True,
+                                               learning_rate=0.001,
+                                               n_steps=8,
+                                               gamma=0.9,
+                                               ent_coef=0.1,
+                                               vf_coef=0.285,
+                                               max_grad_norm=0.8,
+                                               policy_kwargs=dict(
+                                                   net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                                                   activation_fn=nn.ReLU,
+                                                   ortho_init=True)
+                                               )
+
+                    #     print("UNTUNED!")
+                    # else:
+                    # Tune1 - convergiert manchmal net
+                    # model = base_algorithm(MlpPolicy,
+                    #                    env,
+                    #                    verbose=0,
+                    #                    use_rms_prop=False,
+                    #                    normalize_advantage=True,
+                    #                    tensorboard_log=tensorboard_log,
+                    #                    ent_coef=0.03489354223693093,
+                    #                    max_grad_norm=2,
+                    #                    n_steps=2,
+                    #                    gae_lambda=1.0,
+                    #                    vf_coef=0.6841529890300497,
+                    #                    gamma=0.9,
+                    #                    learning_rate=linear_schedule(0.0015845365679309144),
+                    #                    use_sde=False,
+                    #                    policy_kwargs=dict(
+                    #                        net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                    #                        activation_fn=nn.ReLU,
+                    #                        ortho_init=True)
+                    #                    )
+                    # Tune2 - A2 durchgehend zacken
+                    # model = base_algorithm(MlpPolicy,
+                    #                        env,
+                    #                        verbose=0,
+                    #                        use_rms_prop=False,
+                    #                        normalize_advantage=True,
+                    #                        tensorboard_log=tensorboard_log,
+                    #                        ent_coef=0.05877945647872223,
+                    #                        max_grad_norm=5,
+                    #                        n_steps=2,
+                    #                        gae_lambda=0.92,
+                    #                        vf_coef=0.2993644201737006,
+                    #                        gamma=0.95,
+                    #                        learning_rate=0.001058460163315873,
+                    #                        use_sde=False,
+                    #                        policy_kwargs=dict(
+                    #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                    #                            activation_fn=nn.ReLU,
+                    #                            ortho_init=True)
+                    #                        )
+
+                    # Tune3 - Katastrophe
+                    # model = base_algorithm(MlpPolicy,
+                    #                        env,
+                    #                        verbose=0,
+                    #                        use_rms_prop=False,
+                    #                        normalize_advantage=True,
+                    #                        tensorboard_log=tensorboard_log,
+                    #                        ent_coef=0.476890,
+                    #                        max_grad_norm=0.7,
+                    #                        n_steps=4,
+                    #                        gae_lambda=1.0,
+                    #                        vf_coef=0,
+                    #                        gamma=0.95,
+                    #                        learning_rate=0.00088739150,
+                    #                        use_sde=False,
+                    #                        policy_kwargs=dict(
+                    #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                    #                            activation_fn=nn.Tanh,
+                    #                            ortho_init=True)
+                    #                        )
+                    # Tune4 -Gut, Mehr Varianz
+                    # model = base_algorithm(MlpPolicy,
+                    #                        env,
+                    #                        verbose=0,
+                    #                        use_rms_prop=False,
+                    #                        normalize_advantage=True,
+                    #                        tensorboard_log=tensorboard_log,
+                    #                        ent_coef=0.01,
+                    #                        max_grad_norm=0.9,
+                    #                        n_steps=2,
+                    #                        gae_lambda=0.8,
+                    #                        vf_coef=0.99,
+                    #                        gamma=0.9,
+                    #                        learning_rate=0.004,
+                    #                        use_sde=False,
+                    #                        policy_kwargs=dict(
+                    #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                    #                            activation_fn=nn.Tanh,
+                    #                            ortho_init=True)
+                    #                        )
+                    # Tune4 - 1000
                     # model = base_algorithm(MlpPolicy,
                     #                        env,
                     #                        verbose=0,
@@ -571,7 +605,7 @@ def main(**kwargs):
                     #                            activation_fn=nn.ReLU,
                     #                            ortho_init=True)
                     #                        )
-                                           #policy_kwargs="dict(log_std_init=-2, ortho_init=False)")
+                    # policy_kwargs="dict(log_std_init=-2, ortho_init=False)")
                     # model = base_algorithm(MlpPolicy,
                     #                        env, verbose=0,
                     #                        tensorboard_log=tensorboard_log,
@@ -585,11 +619,11 @@ def main(**kwargs):
                     #                        vf_coef=0.79)
                 else:
                     from stable_baselines3 import DQN
-                    model = DQN('MlpPolicy',env, verbose=0, tensorboard_log=tensorboard_log)
+                    model = DQN('MlpPolicy', env, verbose=0, tensorboard_log=tensorboard_log)
 
-            #TODO: Remove
-            #from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
-            #model = base_algorithm(MaskableActorCriticPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
+            # TODO: Remove
+            # from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
+            # model = base_algorithm(MaskableActorCriticPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
 
             callback = CallbackList([PendulumTrainCallback(safe_region=safe_region)])
 
@@ -599,7 +633,7 @@ def main(**kwargs):
             # log_interval=log_interval)
 
             # TODO: Overrides / maybe combine?
-            #save_model(name, model)
+            # save_model(name, model)
 
     elif 'rollout' in kwargs and kwargs['rollout']:
 
@@ -609,19 +643,17 @@ def main(**kwargs):
         callback = None
 
         if name != "DEBUG":
-
             model = load_model(name + '.zip', base_algorithm)
             model.set_env(env)
-
 
             callback = CallbackList([PendulumRolloutCallback(safe_region=safe_region)])
 
             # TODO: Not needed for training(?)
-            _logger = configure_logger(verbose=0, tb_log_name=name + '_E', tensorboard_log=os.getcwd() + '/tensorboard/')
+            _logger = configure_logger(verbose=0, tb_log_name=name + '_E',
+                                       tensorboard_log=os.getcwd() + '/tensorboard/')
             model.set_logger(logger=_logger)
 
             callback.init_callback(model=model)
-
 
         render = False
         if 'render' in kwargs and kwargs['render']:
@@ -631,8 +663,9 @@ def main(**kwargs):
         if 'safety' in kwargs and kwargs['safety'] == "env_safe_action":
             env_safe_action = True
 
-        #rollout(env, model, safe_region=safe_region, num_episodes=1, callback=callback, env_safe_action=env_safe_action, render=render, sleep=.05)
-        rollout(env, model, safe_region=safe_region, num_episodes=kwargs['iterations'], callback=callback, env_safe_action=env_safe_action,
+        # rollout(env, model, safe_region=safe_region, num_episodes=1, callback=callback, env_safe_action=env_safe_action, render=render, sleep=.05)
+        rollout(env, model, safe_region=safe_region, num_episodes=kwargs['iterations'], callback=callback,
+                env_safe_action=env_safe_action,
                 render=render, sleep=.1)
 
     if 'env' in locals(): env.close()
@@ -641,9 +674,8 @@ def main(**kwargs):
         rename_tf_events(kwargs["group"])
 
 
-def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, env_safe_action=False, render=False, rgb_array=False, sleep=0.1):
-
-
+def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, env_safe_action=False, render=False,
+            rgb_array=False, sleep=0.1):
     is_vec_env = isinstance(env, VecEnv)
     if is_vec_env:
         if env.num_envs != 1:
@@ -685,32 +717,32 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
 
             if model is not None:
 
-                action, state = model.predict(obs, state=state) #deterministic=deterministic
-                action = action[0] #Action is dict
+                action, state = model.predict(obs, state=state)  # deterministic=deterministic
+                action = action[0]  # Action is dict
                 print(action)
 
-                #TODO: Check if masking used - also rollout masking without model!
-                #if use_masking:
+                # TODO: Check if masking used - also rollout masking without model!
+                # if use_masking:
                 #    action_masks = get_action_masks(env)
                 #    actions, state = model.predict(obs,state=state, action_masks=action_masks)
 
 
             elif env_safe_action:
-                #TODO: Fix/Easier? / Could check for callable etc.
+                # TODO: Fix/Easier? / Could check for callable etc.
                 action = env.get_attr('safe_action')[0](env, safe_region, None)
 
             else:
-                #TODO: Sample is [] for box and otherwise not?
+                # TODO: Sample is [] for box and otherwise not?
                 action = env.action_space.sample()
                 if isinstance(action, np.ndarray):
                     action = action.item()
 
                 if is_masking_supported(env):
                     mask = get_action_masks(env)[0]
-                    action = random.choice(np.argwhere(mask==True))[0]
+                    action = random.choice(np.argwhere(mask == True))[0]
 
             obs, reward, done, info = env.step([action])
-            #print(reward)
+            # print(reward)
 
             if render:
                 # Prevent render after reset
@@ -738,7 +770,7 @@ def parse_arguments():
     parser.add_argument('-e', '--env_id', type=str, default='MathPendulum-v0', required=False,
                         help='ID of a registered environment')
     parser.add_argument('-t', '--total_timesteps', type=int, default=20e4, required=False,  # 400
-                        help='Total timesteps to train model') #TODO: Episodes
+                        help='Total timesteps to train model')  # TODO: Episodes
     parser.add_argument('-n', '--name', type=str, default='DEBUG', required=False,
                         help='Base name for generated data')
     parser.add_argument('-s', '--safety', type=str, default=None, required=False,
@@ -748,15 +780,16 @@ def parse_arguments():
     args, unknown = parser.parse_known_args()
     return vars(args)
 
+
 if __name__ == '__main__':
     args = parse_arguments()
 
     # Debug
-    #args['rollout'] = True
-    #args['render'] = True
-    #args['safety'] = "shield"
+    # args['rollout'] = True
+    # args['render'] = True
+    # args['safety'] = "shield"
 
-    #TODO: PPO Weird bug - total timesteps?
+    # TODO: PPO Weird bug - total timesteps?
 
     ########################
 
@@ -769,33 +802,32 @@ if __name__ == '__main__':
     )
 
     tags = [
-        "main/avg_abs_action_rl",#
-        "main/avg_abs_safety_correction",#
-        "main/avg_abs_thdot",#
-        "main/avg_abs_theta",#
-        "main/avg_safety_measure",#
-        "main/episode_reward",#
-        "main/episode_time",#
-        "main/max_abs_action_rl",#
-        "main/max_abs_safety_correction",#
-        "main/max_abs_thdot",#
-        "main/max_abs_theta", #
-        "main/max_safety_measure",#
-        "main/no_violation", #
+        "main/avg_abs_action_rl",  #
+        "main/avg_abs_safety_correction",  #
+        "main/avg_abs_thdot",  #
+        "main/avg_abs_theta",  #
+        "main/avg_safety_measure",  #
+        "main/episode_reward",  #
+        "main/episode_time",  #
+        "main/max_abs_action_rl",  #
+        "main/max_abs_safety_correction",  #
+        "main/max_abs_thdot",  #
+        "main/max_abs_theta",  #
+        "main/max_safety_measure",  #
+        "main/no_violation",  #
         "main/rel_abs_safety_correction",
-        "main/avg_step_punishment", #
-        "main/avg_step_reward_rl" #
+        "main/avg_step_punishment",  #
+        "main/avg_step_reward_rl"  #
     ]
 
-    #NoSafety:
-    #Violation Graph
-    #Opposite: Normal / Bigger Actio Space using 0 / Random Init. (Avg. (and Max?)): Avg. Step Reward, Th, Thdot? NOT: Action; Safety
-    #Safety: Normal / Bigger Actio Space using 0 / Random Init. (Avg. (and Max?)): Avg. Step Reward, Th, Thdot?
+    # NoSafety:
+    # Violation Graph
+    # Opposite: Normal / Bigger Actio Space using 0 / Random Init. (Avg. (and Max?)): Avg. Step Reward, Th, Thdot? NOT: Action; Safety
+    # Safety: Normal / Bigger Actio Space using 0 / Random Init. (Avg. (and Max?)): Avg. Step Reward, Th, Thdot?
 
-    #Shield:
+    # Shield:
 
-    #"{alg}_{safety}_{action_space}_{init}_{reward}_{punishment}_{str(gamma)}"
-
+    # "{alg}_{safety}_{action_space}_{init}_{reward}_{punishment}_{str(gamma)}"
 
     # dirss = [
     #    "PPO_no_safety_safetorqueas_zero_opposing",
@@ -821,8 +853,7 @@ if __name__ == '__main__':
     #     "PPO_no_safety_unsafetorqueas_random_opposing",
     # ]
 
-
-    #SHIELDING
+    # SHIELDING
     # dirss = [
     #
     #     "PPO_shield_safetorqueas_zero_safety_nopunish",
@@ -1008,26 +1039,20 @@ if __name__ == '__main__':
     #                       window_size=45,
     #                       save_as=f"pdfs/75HEAVYPUN{tag.split('/')[1]}")
 
+    # tags = ["main/avg_abs_theta"]
+    # tags = ["main/avg_abs_thdot"]
+    # TODO: Avg. Reward
 
+    # ------------------------
 
-    #tags = ["main/avg_abs_theta"]
-    #tags = ["main/avg_abs_thdot"]
-    #TODO: Avg. Reward
+    # All: Safety Measure / Rel? ActionRL?
 
+    # Violation Graph?
+    # Normal vs. Big Action Space using 0 and Random Init. (Avg. AND Max? Theta/Thdot) Max not needed Avg.StepReward
 
+    # Safety Measure later/Rel SafetyMeasureLater
 
-
-
-    #------------------------
-
-    #All: Safety Measure / Rel? ActionRL?
-
-    #Violation Graph?
-    #Normal vs. Big Action Space using 0 and Random Init. (Avg. AND Max? Theta/Thdot) Max not needed Avg.StepReward
-
-    #Safety Measure later/Rel SafetyMeasureLater
-
-    #remove_tf_logs()
+    # remove_tf_logs()
 
     # args['rollout'] = True
     # args['render'] = True
@@ -1168,10 +1193,20 @@ if __name__ == '__main__':
         args["punishment"] = "punish"
         args["action_space"] = "large"
         main(**args)
-    elif args["flag"] == 19:
+    elif args["flag"] == 17:
         args["algorithm"] = "A2C"
         args['total_timesteps'] = 7.5e4
         args['group'] = "A2C"
+        main(**args)
+    elif args["flag"] == 18:
+        args["algorithm"] = "A2C"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "A2C_UNTUNED"
+        main(**args)
+    elif args["flag"] == 19:
+        args["algorithm"] = "PPO"
+        args['total_timesteps'] = 7.5e4
+        args['group'] = "PPO_UNTUNED"
         main(**args)
 
     # if not args['flag']:
@@ -1193,17 +1228,15 @@ if __name__ == '__main__':
     #     args["algorithm"] = "PPO"
     #     main(**args)
 
-
-        # print("Test")
-        # args['total_timesteps'] = 10e4
-        # args['group'] = "A2C_UNTUNED_MODEL"
-        # args["algorithm"] = "A2C"
-        # main(**args)
-        # args['total_timesteps'] = 20e4
-        # args['group'] = "PPO_UNTUNED_MODEL"
-        # args["algorithm"] = "PPO"
-        # main(**args)
-
+    # print("Test")
+    # args['total_timesteps'] = 10e4
+    # args['group'] = "A2C_UNTUNED_MODEL"
+    # args["algorithm"] = "A2C"
+    # main(**args)
+    # args['total_timesteps'] = 20e4
+    # args['group'] = "PPO_UNTUNED_MODEL"
+    # args["algorithm"] = "PPO"
+    # main(**args)
 
     #
     # args["safety"] = "shield"
@@ -1217,25 +1250,25 @@ if __name__ == '__main__':
     # main(**args)
 
     tags = [
-        #"main/avg_abs_action_rl",  # ?
-        #"main/avg_abs_safety_correction",  #
-        #"main/avg_abs_thdot",  # ?
-        #"main/avg_abs_theta",  # ?
-        #"main/avg_safety_measure",  #
+        # "main/avg_abs_action_rl",  # ?
+        # "main/avg_abs_safety_correction",  #
+        # "main/avg_abs_thdot",  # ?
+        # "main/avg_abs_theta",  # ?
+        # "main/avg_safety_measure",  #
         "main/episode_reward",  #
-        #"main/episode_time",  #
-        #"main/max_abs_action_rl",  # ??
-        #"main/max_abs_safety_correction",  #
-        #"main/max_abs_thdot",  # ?
-        #"main/max_abs_theta",  # ?
-        #"main/max_safety_measure",  # ?
-        #"main/no_violation",  #
-        #"main/rel_abs_safety_correction",
-        #"main/avg_step_punishment",  #
-        #"main/avg_step_reward_rl"  # ???
+        # "main/episode_time",  #
+        # "main/max_abs_action_rl",  # ??
+        # "main/max_abs_safety_correction",  #
+        # "main/max_abs_thdot",  # ?
+        # "main/max_abs_theta",  # ?
+        # "main/max_safety_measure",  # ?
+        # "main/no_violation",  #
+        # "main/rel_abs_safety_correction",
+        # "main/avg_step_punishment",  #
+        # "main/avg_step_reward_rl"  # ???
     ]
 
-    #PRELIMINARY
+    # PRELIMINARY
     # dirss = []
     # for alg in ["PPO"]:#"A2C"]: # ["PPO", "A2C"]
     #     args["algorithm"] = alg
@@ -1253,34 +1286,34 @@ if __name__ == '__main__':
     #                     #    main(**args)
     #                     print(f"Finished training {args['group']} ...")
 
-
     from thesis.util import tf_events_to_plot, external_legend_res
+
     for tag in tags:
         if tag == "main/avg_abs_action_rl":
-           y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
+            y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
         elif tag == "main/avg_abs_thdot":
-           y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
+            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
         elif tag == "main/avg_abs_theta":
-           y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
+            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
         elif tag == "main/avg_step_reward_rl":
             y_label = "Mean reward per step $\overline{r}$"
         elif tag == "main/episode_reward":
             y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
-        elif tag== "main/max_safety_measure":
+        elif tag == "main/max_safety_measure":
             y_label = "Maximal reward $r_{\mathrm{max}}$"
         elif tag == "main/no_violation":
             y_label = "Mean safety violations"
         else:
-           y_label = ''
-
+            y_label = ''
 
         # dirsss = [
         #     #["A2C_UNTUNED","PPO_UNTUNED"]
-        #     ["A2C", "PPO_UNTUNED"]
-        #     #["PPO","PPO_ZERO"], ["PPO"],
-        #     #["PPO", "PPO_LAS", "PPO_SAS"],
-        #     #["PPO", "PPO_LAS", "PPO_EASY"],
-        #     #["PPO", "PPO_EASY_OBS"]
+        #     ["PPO", "A2C"]
+        #     ["PPO","PPO_ZERO"],
+        #     ["PPO", "PPO_LAS", "PPO_SAS"],
+        #     ["PPO", "PPO_LAS", "PPO_EASY"],
+        #     ["PPO", "PPO_EASY_OBS"],
+        #     ["PPO", "PPO_EASY_OBS"]
         # ]
         # for i, dirss in enumerate(dirsss):
         #     tf_events_to_plot(dirss=dirss, #"standard"
@@ -1293,12 +1326,11 @@ if __name__ == '__main__':
         #                       window_size=41, #41
         #                       save_as=f"pdfs/{i}{tag.split('/')[1]}")
 
-    #labels = []
-    #for label in dirss:
+    # labels = []
+    # for label in dirss:
     #    labels.append(label.replace('_','/'))
 
-    #external_legend_res(labels=labels, save_as=f"pdfs/leg_{tag.split('/')[1]}")
-
+    # external_legend_res(labels=labels, save_as=f"pdfs/leg_{tag.split('/')[1]}")
 
     # for alg in ["PPO", "A2C"]: #TODO: A2C run
     #     args["algorithm"] = alg
@@ -1332,36 +1364,33 @@ if __name__ == '__main__':
     #                             main(**args)
     #                         print(f"Finished training {args['group']} ...")
 
+    # args["group"] = "standard"
+    # main(**args)
 
-
-
-    #args["group"] = "standard"
-    #main(**args)
-
-    #Algorithm
+    # Algorithm
     # Different reward function
-    #Rollout after training
+    # Rollout after training
     # Do not start at 0,0, train at 0,0 - start random
     # Choose bigger action space than allowed
     # Same or different safety vs. reward function
 
     # Punish + diff. Punishment not just add reward but replace
-    #args["safety"] = "shield"
-    #args["group"] = "shield"
-    #main(**args)
+    # args["safety"] = "shield"
+    # args["group"] = "shield"
+    # main(**args)
 
     # Punish + Change method of punishment
-    #args["safety"] = "mask"
-    #args["group"] = "mask"
-    #main(**args)
+    # args["safety"] = "mask"
+    # args["group"] = "mask"
+    # main(**args)
 
     # Dif.. Gamma + Rollout, Punish + diff. Punishment
-    #args["safety"] = "cbf"
-    #args["group"] = "cbf"
-    #main(**args)
-    #tags = ["test"]
-    #from thesis.util import tf_events_to_plot
-    #for tag in tags:
+    # args["safety"] = "cbf"
+    # args["group"] = "cbf"
+    # main(**args)
+    # tags = ["test"]
+    # from thesis.util import tf_events_to_plot
+    # for tag in tags:
     #    tf_events_to_plot(dirss=["test"], #"standard"
     #                      tags=[tag],
     #                      x_label='Episode',
@@ -1372,33 +1401,33 @@ if __name__ == '__main__':
     #                      window_size=11,
     #                      save_as=f"pdfs/{tag.split('/')[1]}")
 
-    #os.system("say The program finished.")
+    # os.system("say The program finished.")
 
     ########################
 
-    #args["train"] = True
-    #args['iterations'] = 2
-    #args['total_timesteps'] = 1e4
-    #args["name"]="NoSafety"
-    #args["safety"] = "shield"
+    # args["train"] = True
+    # args['iterations'] = 2
+    # args['total_timesteps'] = 1e4
+    # args["name"]="NoSafety"
+    # args["safety"] = "shield"
 
-    #name = "test"
-    #args["group"] = name
-    #args["name"] = name
-    #args["name"] = "Shield_Punish"
-    #args["safety"] = "mask"
-    #args["name"] = "Mask"
-    #args["name"] = "Mask_Punish"
+    # name = "test"
+    # args["group"] = name
+    # args["name"] = name
+    # args["name"] = "Shield_Punish"
+    # args["safety"] = "mask"
+    # args["name"] = "Mask"
+    # args["name"] = "Mask_Punish"
     # args["safety"] = "cbf"
 
-    #args['train'] = True
-    #args['safety'] = 'mask'
-    #args['name'] = 'noSafetyTest'
+    # args['train'] = True
+    # args['safety'] = 'mask'
+    # args['name'] = 'noSafetyTest'
 
-    #args['rollout'] = True
-    #args['render'] = True
-    #args['safety'] = 'mask'
+    # args['rollout'] = True
+    # args['render'] = True
+    # args['safety'] = 'mask'
 
-    #args['name'] = 'maskTest'
+    # args['name'] = 'maskTest'
 
-    #main(**args)
+    # main(**args)
