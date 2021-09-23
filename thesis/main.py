@@ -1094,9 +1094,9 @@ if __name__ == '__main__':
     args['total_timesteps'] = 10e4
 
     if args["flag"] == 0:
+        args["algorithm"] = "PPO"
         args['group'] = "PPO"
     elif args["flag"] == 1:
-        args["algorithm"] = "A2C"
         args['group'] = "A2C"
     elif args["flag"] == 2:
         args['group'] = "LAS"
@@ -1372,11 +1372,11 @@ if __name__ == '__main__':
 
     tags = [
         # "main/avg_abs_action_rl",  # ?
-        # "main/avg_abs_safety_correction",  #
+        "main/avg_abs_safety_correction",  #
         # "main/avg_abs_thdot",  # ?
         # "main/avg_abs_theta",  # ?
         # "main/avg_safety_measure",  #
-        #"main/episode_reward",  #
+        # "main/episode_reward",  #
         # "main/episode_time",  #
         # "main/max_abs_action_rl",  # ??
         # "main/max_abs_safety_correction",  #
@@ -1386,7 +1386,7 @@ if __name__ == '__main__':
         # "main/no_violation",  #
         # "main/rel_abs_safety_correction",
         # "main/avg_step_punishment",  #
-         "main/avg_step_reward_rl"  # ???
+        #"main/avg_step_reward_rl"  # ???
     ]
 
     # PRELIMINARY
@@ -1407,43 +1407,52 @@ if __name__ == '__main__':
     #                     #    main(**args)
     #                     print(f"Finished training {args['group']} ...")
 
-    from thesis.util import tf_events_to_plot, external_legend_res
-
-    for tag in tags:
-        if tag == "main/avg_abs_action_rl":
-            y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
-        elif tag == "main/avg_abs_thdot":
-            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
-        elif tag == "main/avg_abs_theta":
-            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
-        elif tag == "main/avg_step_reward_rl":
-            y_label = "Mean reward per step $\overline{r}$"
-        elif tag == "main/episode_reward":
-            y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
-        elif tag == "main/max_safety_measure":
-            y_label = "Maximal reward $r_{\mathrm{max}}$"
-        elif tag == "main/no_violation":
-            y_label = "Mean safety violations"
-        else:
-            y_label = ''
-
-        # dirsss = [
-        #     #["A2C_UNTUNED","PPO_UNTUNED"],
-        #     ["PPO", "A2C"],
-        #     #["PPO","PPO_ZERO"],
-        #     #["PPO", "PPO_LAS", "PPO_SAS"]
-        #     #["PPO", "PPO_LAS", "PPO_EASY"],
-        # ]
-        # for i, dirss in enumerate(dirsss):
-        #     tf_events_to_plot(dirss=dirss, #"standard"
-        #                       tags=[tag],
-        #                       x_label='Episode',
-        #                       y_label=y_label,
-        #                       width=2.5, #5
-        #                       height=2.5, #2.5
-        #                       episode_length=100,
-        #                       window_size=41, #41
-        #                       save_as=f"pdfs/{i}{tag.split('/')[1]}")
+    # from thesis.util import tf_events_to_plot, external_legend_res
+    #
+    # for tag in tags:
+    #     if tag == "main/avg_abs_action_rl":
+    #         y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
+    #     elif tag == "main/avg_abs_thdot":
+    #         y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
+    #     elif tag == "main/avg_abs_theta":
+    #         y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
+    #     elif tag == "main/avg_step_reward_rl":
+    #         y_label = "Reward per step$" #%$\overline{r}
+    #     elif tag == "main/episode_reward":
+    #         y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
+    #     elif tag == "main/max_safety_measure":
+    #         y_label = "Maximal reward $r_{\mathrm{max}}$"
+    #     elif tag == "main/no_violation":
+    #         y_label = "Mean safety violation"
+    #     elif tag == "main/avg_abs_safety_correction":
+    #         y_label = "$Absolute safety correction$"
+    #     else:
+    #         y_label = ''
+    #
+    #     dirsss = [
+    #         #["A2C_UNTUNED","PPO_UNTUNED"],
+    #         #["PPO", "A2C"],
+    #         #["A2C","ZERO"],
+    #         #["SAS", "INIT"],
+    #         #["SAS", "A2C", "ZERO"]
+    #         #["MASK_SAS_PUN", "MASK_NORMAL_PUN", "MASK_ZERO_PUN"]
+    #         ["SHIELD_SAS", "SHIELD_NORMAL", "SHIELD_ZERO"]
+    #         #["SHIELD_SAS_PUN", "SHIELD_NORMAL_PUN", "SHIELD_ZERO_PUN"]
+    #         #["CBF_SAS_PUN", "CBF_NORMAL_PUN", "CBF_ZERO_PUN"]
+    #         #["CBF_HIGHGAMMA", "CBF_NORMAL", "CBF_LOWGAMMA"]
+    #         #["CBF_SAS", "CBF_NORMAL", "CBF_ZERO"]
+    #         #["PPO", "PPO_LAS", "PPO_EASY"],
+    #     ]
+    #     for i, dirss in enumerate(dirsss):
+    #         tf_events_to_plot(dirss=dirss, #"standard"
+    #                           tags=[tag],
+    #                           x_label='Episode',
+    #                           y_label=y_label,
+    #                           width=2.5, #5
+    #                           height=2.5, #2.5
+    #                           episode_length=100,
+    #                           window_size=61, #41
+    #                           save_as=f"pdfs/{i}{tag.split('/')[1]}")
 
     # labels = []
     # for label in dirss:
