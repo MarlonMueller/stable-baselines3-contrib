@@ -134,7 +134,7 @@ def main(**kwargs):
                                       action: Union[int, float, np.ndarray],
                                       action_shield: Union[int, float, np.ndarray]) -> float:
                         return -abs(action - action_shield)
-                if kwargs["punishment"] == "lightpunish":
+                elif kwargs["punishment"] == "lightpunish":
                     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                                       action: Union[int, float, np.ndarray],
                                       action_shield: Union[int, float, np.ndarray]) -> float:
@@ -177,7 +177,7 @@ def main(**kwargs):
                                       action: Union[int, float, np.ndarray],
                                       action_cbf: Union[int, float, np.ndarray]) -> float:
                         return -abs(action_cbf)
-                # if kwargs["punishment"] == "lightpunish":
+                # elif kwargs["punishment"] == "lightpunish":
                 #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                 #                       action: Union[int, float, np.ndarray],
                 #                       action_cbf: Union[int, float, np.ndarray]) -> float:
@@ -226,8 +226,8 @@ def main(**kwargs):
                     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                                       action: Union[int, float, np.ndarray],
                                       mask: Union[int, float, np.ndarray]) -> float:
-                        return -(1 - (np.sum(mask) - 1) / (len(mask) - 1)) * 10
-                # if kwargs["punishment"] == "lightpunish":
+                        return -(1 - (np.sum(mask) - 1) / (len(mask) - 1))
+                # elif kwargs["punishment"] == "lightpunish":
                 #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                 #                       action: Union[int, float, np.ndarray],
                 #                       mask: Union[int, float, np.ndarray]) -> float:
@@ -750,7 +750,8 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
 
             else:
                 # TODO: Sample is [] for box and otherwise not?
-                action = env.action_space.sample()
+                #action = env.action_space.sample()
+                action = -30
                 if isinstance(action, np.ndarray):
                     action = action.item()
 
@@ -1089,8 +1090,8 @@ if __name__ == '__main__':
     args["train"] = True
     args["name"] = "run"
     args['iterations'] = 5
-    args["algorithm"] = "PPO"
-    args['total_timesteps'] = 7.5e4
+    args["algorithm"] = "A2C"
+    args['total_timesteps'] = 10e4
 
     if args["flag"] == 0:
         args['group'] = "PPO"
@@ -1156,6 +1157,39 @@ if __name__ == '__main__':
         args['group'] = "MASK_ZERO_PUN"
         args["init"] = "zero"
         args["punishment"] = "punish"
+    elif args["flag"] == 17:
+        args["safety"] = "cbf"
+        args['group'] = "CBF_NORMAL" ####
+    elif args["flag"] == 18:
+        args["safety"] = "cbf"
+        args['group'] = "CBF_SAS"
+        args["action_space"] = "small" ####
+    elif args["flag"] == 19:
+        args["safety"] = "cbf"
+        args['group'] = "CBF_ZERO"
+        args["init"] = "zero"
+    elif args["flag"] == 20:
+        args["safety"] = "cbf"
+        args['group'] = "CBF_NORMAL_PUN"
+        args["punishment"] = "punish"
+    elif args["flag"] == 21:
+        args["safety"] = "cbf"
+        args['group'] = "CBF_SAS_PUN"
+        args["action_space"] = "small"
+        args["punishment"] = "punish" ####
+    elif args["flag"] == 22:
+        args["safety"] = "cbf"
+        args['group'] = "CBF_ZERO_PUN"
+        args["init"] = "zero"
+        args["punishment"] = "punish"
+    elif args["flag"] == 23:
+        args["safety"] = "cbf"
+        args['group'] = "CBF_HIGHGAMMA"
+        args['gamma'] = 0.99
+    elif args["flag"] == 24:
+        args["safety"] = "cbf"
+        args['group'] = "CBF_LOWGAMMA"
+        args['gamma'] = 0.01
     main(**args)
 
     #
@@ -1373,43 +1407,43 @@ if __name__ == '__main__':
     #                     #    main(**args)
     #                     print(f"Finished training {args['group']} ...")
 
-    # from thesis.util import tf_events_to_plot, external_legend_res
-    #
-    # for tag in tags:
-    #     if tag == "main/avg_abs_action_rl":
-    #         y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
-    #     elif tag == "main/avg_abs_thdot":
-    #         y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
-    #     elif tag == "main/avg_abs_theta":
-    #         y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
-    #     elif tag == "main/avg_step_reward_rl":
-    #         y_label = "Mean reward per step $\overline{r}$"
-    #     elif tag == "main/episode_reward":
-    #         y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
-    #     elif tag == "main/max_safety_measure":
-    #         y_label = "Maximal reward $r_{\mathrm{max}}$"
-    #     elif tag == "main/no_violation":
-    #         y_label = "Mean safety violations"
-    #     else:
-    #         y_label = ''
-    #
-    #     dirsss = [
-    #         #["A2C_UNTUNED","PPO_UNTUNED"],
-    #         ["PPO", "A2C"],
-    #         #["PPO","PPO_ZERO"],
-    #         #["PPO", "PPO_LAS", "PPO_SAS"]
-    #         #["PPO", "PPO_LAS", "PPO_EASY"],
-    #     ]
-    #     for i, dirss in enumerate(dirsss):
-    #         tf_events_to_plot(dirss=dirss, #"standard"
-    #                           tags=[tag],
-    #                           x_label='Episode',
-    #                           y_label=y_label,
-    #                           width=2.5, #5
-    #                           height=2.5, #2.5
-    #                           episode_length=100,
-    #                           window_size=41, #41
-    #                           save_as=f"pdfs/{i}{tag.split('/')[1]}")
+    from thesis.util import tf_events_to_plot, external_legend_res
+
+    for tag in tags:
+        if tag == "main/avg_abs_action_rl":
+            y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
+        elif tag == "main/avg_abs_thdot":
+            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
+        elif tag == "main/avg_abs_theta":
+            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
+        elif tag == "main/avg_step_reward_rl":
+            y_label = "Mean reward per step $\overline{r}$"
+        elif tag == "main/episode_reward":
+            y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
+        elif tag == "main/max_safety_measure":
+            y_label = "Maximal reward $r_{\mathrm{max}}$"
+        elif tag == "main/no_violation":
+            y_label = "Mean safety violations"
+        else:
+            y_label = ''
+
+        # dirsss = [
+        #     #["A2C_UNTUNED","PPO_UNTUNED"],
+        #     ["PPO", "A2C"],
+        #     #["PPO","PPO_ZERO"],
+        #     #["PPO", "PPO_LAS", "PPO_SAS"]
+        #     #["PPO", "PPO_LAS", "PPO_EASY"],
+        # ]
+        # for i, dirss in enumerate(dirsss):
+        #     tf_events_to_plot(dirss=dirss, #"standard"
+        #                       tags=[tag],
+        #                       x_label='Episode',
+        #                       y_label=y_label,
+        #                       width=2.5, #5
+        #                       height=2.5, #2.5
+        #                       episode_length=100,
+        #                       window_size=41, #41
+        #                       save_as=f"pdfs/{i}{tag.split('/')[1]}")
 
     # labels = []
     # for label in dirss:
@@ -1511,7 +1545,9 @@ if __name__ == '__main__':
 
     # args['rollout'] = True
     # args['render'] = True
-    # args['safety'] = 'mask'
+    # args['safety'] = 'cbf'
+    # args["gamma"] = 0.99999
+    # main(**args)
 
     # args['name'] = 'maskTest'
 

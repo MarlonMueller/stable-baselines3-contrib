@@ -43,10 +43,10 @@ class SafetyCBF(gym.Wrapper):
             raise ValueError("Either dynamics_fn or unactuated_dynamics have to be specified.")
 
         self._A, self._b = safe_region.halfspaces
-        self._P = matrix([0.],tc='d')
-        self._P = matrix([0.], tc='d')
-        #self._P = matrix([[1., 0], [0, 1e25]], tc='d')
-        #self._q = matrix([0, 0], tc='d')
+        #self._P = matrix([[0.]],tc='d')
+        #self._q = matrix([0.], tc='d')
+        self._P = matrix([[1., 0], [0, 1e55]], tc='d')
+        self._q = matrix([0, 0], tc='d')
 
         self._gamma = gamma
         self._safe_region = safe_region
@@ -126,11 +126,29 @@ class SafetyCBF(gym.Wrapper):
                                    self._gamma * self._b[i] for i in range(len(self._A))],
                                   dtype=np.double), tc='d')
 
+        # G = matrix(
+        #     np.asarray([[np.dot(p, self._actuated_dynamics_fn(self.env))] for p in self._A], dtype=np.double),
+        #     tc='d')
+        # if self._unactuated_dynamics_fn is not None:
+        #     h = matrix(np.asarray([-np.dot(self._A[i], self._unactuated_dynamics_fn(self.env))
+        #                            - np.dot(self._A[i], self._actuated_dynamics_fn(self.env)) * action
+        #                            + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
+        #                            self._gamma * self._b[i] for i in range(len(self._A))],
+        #                           dtype=np.double), tc='d')
+        # else:
+        #     h = matrix(np.asarray([- np.dot(self._A[i], self._dynamics_fn(self.env, action))
+        #                            + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
+        #                            self._gamma * self._b[i] for i in range(len(self._A))],
+        #                           dtype=np.double), tc='d')
+
+
         sol = solvers.qp(self._P, self._q, G, h)
 
         #TODO: actions if not just one action
         #action_bar = sol['x'][:-1]
         action_bar = sol['x'][0]
+        #print(action, sol['x'][0], sol['x'][1])
+
 
         obs, reward, done, info = self.env.step(action + action_bar)
 
