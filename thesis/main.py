@@ -1119,7 +1119,7 @@ if __name__ == '__main__':
 
     args["train"] = True
     args["name"] = "run"
-    args['iterations'] = 1
+    args['iterations'] = 5
     args['total_timesteps'] = 8e4
     args["algorithm"] = "PPO"
 
@@ -1176,6 +1176,7 @@ if __name__ == '__main__':
         args["safety"] = "mask"
         args["init"] = "zero"
         args["punishment"] = "punish"
+    main(**args)
 
     # if args["flag"] == 0:
     #     args["algorithm"] = "A2C"
