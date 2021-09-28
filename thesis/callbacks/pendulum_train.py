@@ -76,7 +76,7 @@ class PendulumTrainCallback(BaseCallback):
         # TODO: Maybe check if safety != 0 or not
         # TODO: Masking FailSafeAction
 
-        if state not in self._safe_region:  # [0][0] not necessary
+        if state not in self._safe_region or ("cbf" in infos.keys() and infos['cbf']["epsilon"] >= 1e-10):  # [0][0] not necessary
             self.safe_episode = False
             if "shield" in infos.keys():
                 if infos['shield']["action_shield"] is None:
@@ -84,6 +84,7 @@ class PendulumTrainCallback(BaseCallback):
             elif "mask" in infos.keys():
                 if infos['mask']["action_mask"] is None:
                     self.safe_episode_cont = False
+
 
         #theta, thdot = state
         #cutoff = 1 + 1e-15

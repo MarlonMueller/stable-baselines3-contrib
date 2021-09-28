@@ -227,7 +227,7 @@ def main(**kwargs):
                                       action: Union[int, float, np.ndarray],
                                       mask: Union[int, float, np.ndarray],
                                       next_mask: Union[int, float, np.ndarray]) -> float:
-                        return min(0, np.sum(next_mask[:-1]) - np.sum(mask[:-1]))
+                        return min(0, np.sum(next_mask[:-1]) - np.sum(mask[:-1])) * 5 #TODO
                 # elif kwargs["punishment"] == "lightpunish":
                 #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                 #                       action: Union[int, float, np.ndarray],
@@ -1119,134 +1119,188 @@ if __name__ == '__main__':
 
     args["train"] = True
     args["name"] = "run"
-    args['iterations'] = 5
+    args['iterations'] = 1
     args['total_timesteps'] = 8e4
     args["algorithm"] = "PPO"
 
     if args["flag"] == 0:
-        args["algorithm"] = "A2C"
-        args['group'] = "A2C_UNTUNED"
+        args['group'] = "CBF_5"
+        args["safety"] = "cbf"
     if args["flag"] == 1:
-        args["algorithm"] = "A2C"
-        args['group'] = "A2C_UNTUNED_SAS"
+        args['group'] = "CBF_SAS_5"
+        args["safety"] = "cbf"
         args["action_space"] = "small"
     if args["flag"] == 2:
-        args["algorithm"] = "A2C"
-        args['group'] = "A2C_UNTUNED_INIT"
+        args['group'] = "CBF_INIT_5"
+        args["safety"] = "cbf"
         args["init"] = "zero"
-
     if args["flag"] == 3:
-        args["algorithm"] = "A2C"
-        args['group'] = "A2C"
+        args['group'] = "CBF_95"
+        args["safety"] = "cbf"
+        args["gamma"] = 0.95
     if args["flag"] == 4:
-        args["algorithm"] = "A2C"
-        args['group'] = "A2C_SAS"
+        args['group'] = "CBF_SAS_95"
+        args["safety"] = "cbf"
         args["action_space"] = "small"
+        args["gamma"] = 0.95
     if args["flag"] == 5:
-        args["algorithm"] = "A2C"
-        args['group'] = "A2C_INIT"
+        args['group'] = "CBF_INIT_95"
+        args["gamma"] = 0.95
+        args["safety"] = "cbf"
         args["init"] = "zero"
-
     if args["flag"] == 6:
-        args['group'] = "PPO_UNTUNED"
+        args['group'] = "CBF_05"
+        args["safety"] = "cbf"
+        args["gamma"] = 0.05
     if args["flag"] == 7:
-        args['group'] = "PPO_UNTUNED_SAS"
+        args['group'] = "CBF_SAS_05"
+        args["safety"] = "cbf"
         args["action_space"] = "small"
+        args["gamma"] = 0.05
     if args["flag"] == 8:
-        args['group'] = "PPO_UNTUNED_INIT"
+        args['group'] = "CBF_INIT_05"
+        args["gamma"] = 0.05
+        args["safety"] = "cbf"
         args["init"] = "zero"
-
     if args["flag"] == 9:
-        args['group'] = "PPO"
+        args['group'] = "MASK_PUNH"
+        args["safety"] = "mask"
+        args["punishment"] = "punish"
     if args["flag"] == 10:
-        args['group'] = "PPO_SAS"
+        args['group'] = "MASK_SAS_PUNH"
+        args["safety"] = "mask"
         args["action_space"] = "small"
+        args["punishment"] = "punish"
     if args["flag"] == 11:
-        args['group'] = "PPO_INIT"
-        args["init"] = "zero"
-
-    if args["flag"] == 12:
-        args['group'] = "MASK"
-        args["safety"] = "mask"
-    if args["flag"] == 13:
-        args['group'] = "MASK_SAS"
-        args["safety"] = "mask"
-        args["action_space"] = "small"
-    if args["flag"] == 14:
-        args['group'] = "MASK_INIT"
-        args["safety"] = "mask"
-        args["init"] = "zero"
-
-    if args["flag"] == 15:
-        args['group'] = "MASK_PUN"
-        args["safety"] = "mask"
-        args["punishment"] = "punish"
-    if args["flag"] == 16:
-        args['group'] = "MASK_SAS_PUN"
-        args["safety"] = "mask"
-        args["action_space"] = "small"
-        args["punishment"] = "punish"
-    if args["flag"] == 17:
-        args['group'] = "MASK_INIT_PUN"
+        args['group'] = "MASK_INIT_PUNH"
         args["safety"] = "mask"
         args["init"] = "zero"
         args["punishment"] = "punish"
 
-    if args["flag"] == 18:
-        args['group'] = "CBF"
-        args["safety"] = "cbf"
-    if args["flag"] == 19:
-        args['group'] = "CBF_SAS"
-        args["safety"] = "cbf"
-        args["action_space"] = "small"
-    if args["flag"] == 20:
-        args['group'] = "CBF_INIT"
-        args["safety"] = "cbf"
-        args["init"] = "zero"
+    # if args["flag"] == 0:
+    #     args["algorithm"] = "A2C"
+    #     args['group'] = "A2C_UNTUNED"
+    # if args["flag"] == 1:
+    #     args["algorithm"] = "A2C"
+    #     args['group'] = "A2C_UNTUNED_SAS"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 2:
+    #     args["algorithm"] = "A2C"
+    #     args['group'] = "A2C_UNTUNED_INIT"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 3:
+    #     args["algorithm"] = "A2C"
+    #     args['group'] = "A2C"
+    # if args["flag"] == 4:
+    #     args["algorithm"] = "A2C"
+    #     args['group'] = "A2C_SAS"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 5:
+    #     args["algorithm"] = "A2C"
+    #     args['group'] = "A2C_INIT"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 6:
+    #     args['group'] = "PPO_UNTUNED"
+    # if args["flag"] == 7:
+    #     args['group'] = "PPO_UNTUNED_SAS"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 8:
+    #     args['group'] = "PPO_UNTUNED_INIT"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 9:
+    #     args['group'] = "PPO"
+    # if args["flag"] == 10:
+    #     args['group'] = "PPO_SAS"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 11:
+    #     args['group'] = "PPO_INIT"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 12:
+    #     args['group'] = "MASK"
+    #     args["safety"] = "mask"
+    # if args["flag"] == 13:
+    #     args['group'] = "MASK_SAS"
+    #     args["safety"] = "mask"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 14:
+    #     args['group'] = "MASK_INIT"
+    #     args["safety"] = "mask"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 15:
+    #     args['group'] = "MASK_PUN"
+    #     args["safety"] = "mask"
+    #     args["punishment"] = "punish"
+    # if args["flag"] == 16:
+    #     args['group'] = "MASK_SAS_PUN"
+    #     args["safety"] = "mask"
+    #     args["action_space"] = "small"
+    #     args["punishment"] = "punish"
+    # if args["flag"] == 17:
+    #     args['group'] = "MASK_INIT_PUN"
+    #     args["safety"] = "mask"
+    #     args["init"] = "zero"
+    #     args["punishment"] = "punish"
+    #
+    # if args["flag"] == 18:
+    #     args['group'] = "CBF"
+    #     args["safety"] = "cbf"
+    # if args["flag"] == 19:
+    #     args['group'] = "CBF_SAS"
+    #     args["safety"] = "cbf"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 20:
+    #     args['group'] = "CBF_INIT"
+    #     args["safety"] = "cbf"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 21:
+    #     args['group'] = "CBF_PUN"
+    #     args["safety"] = "cbf"
+    #     args["punishment"] = "punish"
+    # if args["flag"] == 22:
+    #     args['group'] = "CBF_SAS_PUN"
+    #     args["safety"] = "cbf"
+    #     args["action_space"] = "small"
+    #     args["punishment"] = "punish"
+    # if args["flag"] == 23:
+    #     args['group'] = "CBF_INIT_PUN"
+    #     args["safety"] = "cbf"
+    #     args["init"] = "zero"
+    #     args["punishment"] = "punish"
+    #
+    # if args["flag"] == 24:
+    #     args['group'] = "SHIELD"
+    #     args["safety"] = "shield"
+    # if args["flag"] == 25:
+    #     args['group'] = "SHIELD_SAS"
+    #     args["safety"] = "shield"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 26:
+    #     args['group'] = "SHIELD_INIT"
+    #     args["safety"] = "shield"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 27:
+    #     args['group'] = "SHIELD_PUN"
+    #     args["safety"] = "shield"
+    #     args["punishment"] = "punish"
+    # if args["flag"] == 28:
+    #     args['group'] = "SHIELD_SAS_PUN"
+    #     args["safety"] = "shield"
+    #     args["action_space"] = "small"
+    #     args["punishment"] = "punish"
+    # if args["flag"] == 29:
+    #     args['group'] = "SHIELD_INIT_PUN"
+    #     args["safety"] = "shield"
+    #     args["init"] = "zero"
+    #     args["punishment"] = "punish"
 
-    if args["flag"] == 21:
-        args['group'] = "CBF_PUN"
-        args["safety"] = "cbf"
-        args["punishment"] = "punish"
-    if args["flag"] == 22:
-        args['group'] = "CBF_SAS_PUN"
-        args["safety"] = "cbf"
-        args["action_space"] = "small"
-        args["punishment"] = "punish"
-    if args["flag"] == 23:
-        args['group'] = "CBF_INIT_PUN"
-        args["safety"] = "cbf"
-        args["init"] = "zero"
-        args["punishment"] = "punish"
-
-    if args["flag"] == 24:
-        args['group'] = "SHIELD"
-        args["safety"] = "shield"
-    if args["flag"] == 25:
-        args['group'] = "SHIELD_SAS"
-        args["safety"] = "shield"
-        args["action_space"] = "small"
-    if args["flag"] == 26:
-        args['group'] = "SHIELD_INIT"
-        args["safety"] = "shield"
-        args["init"] = "zero"
-
-    if args["flag"] == 27:
-        args['group'] = "SHIELD_PUN"
-        args["safety"] = "shield"
-        args["punishment"] = "punish"
-    if args["flag"] == 28:
-        args['group'] = "SHIELD_SAS_PUN"
-        args["safety"] = "shield"
-        args["action_space"] = "small"
-        args["punishment"] = "punish"
-    if args["flag"] == 29:
-        args['group'] = "SHIELD_INIT_PUN"
-        args["safety"] = "shield"
-        args["init"] = "zero"
-        args["punishment"] = "punish"
-
-    main(**args)
+    #main(**args)
 
 
     #
@@ -1262,11 +1316,11 @@ if __name__ == '__main__':
 
     tags = [
         # "main/avg_abs_action_rl",  # ?
-        #"main/avg_abs_safety_correction",  #
+        "main/avg_abs_safety_correction",  #
         # "main/avg_abs_thdot",  # ?
         # "main/avg_abs_theta",  # ?
         # "main/avg_safety_measure",  #
-        # "main/episode_reward",  #
+        #"main/episode_reward",  #
         # "main/episode_time",  #
         # "main/max_abs_action_rl",  # ??
         # "main/max_abs_safety_correction",  #
@@ -1276,7 +1330,7 @@ if __name__ == '__main__':
         # "main/no_violation",  #
         # "main/rel_abs_safety_correction",
         # "main/avg_step_punishment",  #
-        "main/avg_step_reward_rl"  # ???
+        #"main/avg_step_reward_rl"  # ???
     ]
 
     # PRELIMINARY
@@ -1297,52 +1351,55 @@ if __name__ == '__main__':
     #                     #    main(**args)
     #                     print(f"Finished training {args['group']} ...")
 
-    # from thesis.util import tf_events_to_plot, external_legend_res
-    #
-    # for tag in tags:
-    #     if tag == "main/avg_abs_action_rl":
-    #         y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
-    #     elif tag == "main/avg_abs_thdot":
-    #         y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
-    #     elif tag == "main/avg_abs_theta":
-    #         y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
-    #     elif tag == "main/avg_step_reward_rl":
-    #         y_label = "Reward per step" #%$\overline{r}
-    #     elif tag == "main/episode_reward":
-    #         y_label = "Episode reward ${r_{\mathrm{Episode}}}$"
-    #     elif tag == "main/max_safety_measure":
-    #         y_label = "Maximal reward $r_{\mathrm{max}}$"
-    #     elif tag == "main/no_violation":
-    #         y_label = "Mean safety violation"
-    #     elif tag == "main/avg_abs_safety_correction":
-    #         y_label = "$Absolute safety correction$"
-    #     else:
-    #         y_label = ''
+    from thesis.util import tf_events_to_plot, external_legend_res
 
-        # dirsss = [
-        #     #["A2C_UNTUNED","PPO_UNTUNED"],
-        #     #["PPO", "A2C"],
-        #     #["A2C","ZERO"],
-        #     #["SAS", "INIT"],
-        #     ["SAS", "PPO", "ZERO"]
-        #     #["MASK_SAS_PUN", "MASK_NORMAL_PUN", "MASK_ZERO_PUN"]
-        #     #["SHIELD_SAS", "SHIELD_NORMAL", "SHIELD_ZERO"]
-        #     #["SHIELD_SAS_PUN", "SHIELD_NORMAL_PUN", "SHIELD_ZERO_PUN"]
-        #     #["CBF_SAS_PUN", "CBF_NORMAL_PUN", "CBF_ZERO_PUN"]
-        #     #["CBF_HIGHGAMMA", "CBF_NORMAL", "CBF_LOWGAMMA"]
-        #     #["CBF_SAS", "CBF_NORMAL", "CBF_ZERO"]
-        #     #["PPO", "PPO_LAS", "PPO_EASY"],
-        # ]
-        # for i, dirss in enumerate(dirsss):
-        #     tf_events_to_plot(dirss=dirss, #"standard"
-        #                       tags=[tag],
-        #                       x_label='Episode',
-        #                       y_label=y_label,
-        #                       width=2.5, #5
-        #                       height=2.5, #2.5
-        #                       episode_length=100,
-        #                       window_size=61, #41
-        #                       save_as=f"pdfs/{i}{tag.split('/')[1]}")
+    for tag in tags:
+        if tag == "main/avg_abs_action_rl":
+            y_label = "$\mathrm{Mean\ absolute\ action\ } \overline{\left(\left|a\\right|\\right)}$"
+        elif tag == "main/avg_abs_thdot":
+            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
+        elif tag == "main/avg_abs_theta":
+            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
+        elif tag == "main/avg_step_reward_rl":
+            y_label = "Reward per step" #%$\overline{r}
+        elif tag == "main/episode_reward":
+            y_label = "Episode reward" #${r_{\mathrm{Episode}}}$
+        elif tag == "main/max_safety_measure":
+            y_label = "Maximal reward $r_{\mathrm{max}}$"
+        elif tag == "main/no_violation":
+            y_label = "Mean safety violation"
+        elif tag == "main/avg_abs_safety_correction":
+            y_label = "Safety correction per step"
+        else:
+            y_label = ''
+
+        dirsss = [
+            #["A2C_UNTUNED", "PPO_UNTUNED"]
+            #["PPO", "PPO_UNTUNED"],#Log/NotLog
+            #["PPO_SAS", "PPO", "PPO_INIT"],
+            #["A2C_UNTUNED_SAS", "A2C_UNTUNED", "A2C_UNTUNED_INIT"],
+            #["A2C_SAS", "A2C", "A2C_INIT"],
+            #["PPO_UNTUNED_SAS", "PPO_UNTUNED", "PPO_UNTUNED_INIT"],
+            #["PPO_SAS", "PPO", "PPO_INIT"],
+            #["MASK_SAS", "MASK", "MASK_INIT"],
+            #["SHIELD_SAS", "SHIELD", "SHIELD_INIT"],
+            #["MASK", "SHIELD"] #SAME FOR CBF NO VIOLATION PLOT
+            #["CBF_SAS", "CBF", "CBF_INIT"],
+            #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
+            #["SHIELD_SAS_PUN", "SHIELD_PUN", "SHIELD_INIT_PUN"],
+            ["CBF_SAS_PUN", "CBF_PUN", "CBF_INIT_PUN"]
+
+        ]
+        for i, dirss in enumerate(dirsss):
+            tf_events_to_plot(dirss=dirss, #"standard"
+                              tags=[tag],
+                              x_label='Episode',
+                              y_label=y_label,
+                              width=2.5, #5
+                              height=2.5, #2.5
+                              episode_length=100,
+                              window_size=11, #41
+                              save_as=f"pdfs/{i}{tag.split('/')[1]}")
 
     # labels = []
     # for label in dirss:

@@ -581,8 +581,8 @@ def phase_plot(width=2.5, height=2.5, l=1, m=1, g=9.81, K=None, max_torque=None,
     plt.gca().yaxis.grid(True, linestyle='dotted', linewidth=0.5)
     #plt.gca().axhline(0, color='gray', linewidth=0.5)
 
-    plt.gca().yaxis.set_label_position("right")
-    plt.gca().yaxis.tick_right()
+    #plt.gca().yaxis.set_label_position("right")
+    #plt.gca().yaxis.tick_right()
 
     if save_as:
         finalize_plot(x_label='$\\theta[\mathrm{rad}]$',
@@ -717,7 +717,7 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     df = pd.DataFrame.from_records(summary_iterator.Scalars(tag),
                                                    columns=summary_iterator.Scalars(tag)[0]._fields)
 
-                    values.append(df["value"][:1000].to_list())
+                    values.append(df["value"].to_list())
                     #values.append(df["value"][:500].to_list())
 
                     #if summary_df.empty:
@@ -758,23 +758,21 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
             #["PPO", "PPO_EASY", "PPO_LAS"],
             #["PPO", "PPO_EASY_OBS"]
 
-                    if label == "ZERO" or label == "LAS" or label=="MASK_ZERO" or label=="MASK_ZERO_PUN" or label=="SHIELD_ZERO" or label=="SHIELD_ZERO_PUN" or label=="CBF_ZERO" or label=="CBF_ZERO_PUN" or label=="CBF_LOWGAMMA":
+                    # ["MASK_SAS", "MASK", "MASK_INIT"],
+                    # ["SHIELD_SAS", "SHIELD", "SHIELD_INIT"],
+                    # ["CBF_SAS", "CBF", "CBF_INIT"],
+                    # ["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
+                    # ["SHIELD_SAS_PUN", "SHIELD_PUN", "SHIELD_INIT_PUN"],
+                    # ["CBF_SAS_PUN", "CBF_PUN", "CBF_INIT_PUN"]
+
+                    if "SAS" in label:
                         color = COLORS_PLOTS[1]
-                    elif label == "SAS" or label == "MASK_SAS" or label =="MASK_SAS_PUN" or label == "SHIELD_SAS" or label =="SHIELD_SAS_PUN" or label == "CBF_SAS" or label =="CBF_SAS_PUN" or label == "CBF_HIGHGAMMA":
-                        color = "tab:green"
-                    elif label == "PPO_TUNED" or label == "PPO_UNTUNED" :
-                        color = COLORS_PLOTS[0]
-                        #color = "tab:purple"
-                    elif  label == "PPO_SAS" or label == "PPO_EASY" or label == "PPO_EASY_OBS" or label == "PPO_ZERO":
-                        color = COLORS_PLOTS[1]
-                    elif label == "PPO_LAS":
+                    elif "INIT" in label:
                         color = COLORS_PLOTS[2]
-                    elif label == "PPO_TUNED_S" or  label == "E_MASK_NO" or  label == "E_SHIELD_NO" or label == "PPO_TUNED_INIT" or label == "A2C_TUNED" or label == "A2C_UNTUNED" or label=="PPO_TUNED_OBS":
-                         color = COLORS_PLOTS[1]
-                    elif label == "PPO_TUNED_L" or  label == "H_MASK_NO" or  label == "H_SHIELD_NO":
-                        color = COLORS_PLOTS[2]
-                    elif label == "PPO_TUNED_E":
-                        color = "tab:orange"
+                    elif label == "PPO_UNTUNED":
+                        color= "tab:olive"
+                    elif label == "A2C_UNTUNED":
+                        color= "tab:cyan"
                     else:
                         color = COLORS_PLOTS[0]
 
@@ -798,22 +796,31 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     #else:
                     #plt.plot(range(1, len(mean) + 1), mean, label=label.replace('_','/'), linewidth=1.25)
 
-                    # plt.gca().axhline(1, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.75)
-                    # plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75)
-                    # plt.gca().axhline(.5, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5)
+                    # plt.gca().axhline(1, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.75,zorder=1)
+                    # plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75,zorder=1)
+                    # plt.gca().axhline(.5, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,zorder=1)
                     # plt.gca().axhline(0.25, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
                     #                   zorder=1)
                     # plt.gca().axhline(0.75, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
                     #                   zorder=1)
 
-
-
-                    plt.gca().axhline(-1, linestyle='dotted', color='magenta', linewidth=.75, zorder=1)
-                    plt.gca().axhline(-0.5, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5, zorder=1)
-                    plt.gca().axhline(-0.25, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5, zorder=1)
-                    plt.gca().axhline(-0.75, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5, zorder=1)
+                    #Safety Measure
                     plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75, zorder=1)
-                    plt.gca().axhline(-10, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5, zorder=1)
+                    plt.gca().axhline(10, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                                      zorder=1)
+                    plt.gca().axhline(1, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                                      zorder=1)
+                    plt.gca().axhline(5, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
+                                      zorder=1)
+                    plt.gca().axhline(0.5, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
+                                      zorder=1)
+
+                    # plt.gca().axhline(-1, linestyle='dotted', color='magenta', linewidth=.75, zorder=1)
+                    # plt.gca().axhline(-0.5, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5, zorder=1)
+                    # plt.gca().axhline(-0.25, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5, zorder=1)
+                    # plt.gca().axhline(-0.75, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5, zorder=1)
+                    # plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75, zorder=1)
+                    # plt.gca().axhline(-10, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5, zorder=1)
 
                     #plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75)
                     #plt.gca().axhline(-500, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5)
@@ -843,41 +850,46 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     # plt.gca().yaxis.set_label_position("right")
                     # plt.gca().yaxis.tick_right()
 
+                    # SAFETY
                     # plt.gca().set_ylim(top=.1)
                     # plt.gca().set_ylim(bottom=-1.1)
                     # plt.gca().set_yticks([0, -0.5, -1], minor=False)
                     # plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$'])
-                    #
-                    plt.gca().set_yscale("symlog", linthresh=1)
-                    plt.gca().set_ylim(top=.25)
-                    plt.gca().set_yticks([0, -0.5, -1, -10], minor=False)
-                    plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$', '$-10$'])
-                    plt.gca().set_yticks([-0.25, -0.75], minor=True)
-                    plt.gca().set_xlim(right=1000)
-                    plt.gca().set_xticks([0, 250, 500, 750, 1000], minor=False)
-                    #plt.gca().set_xticks([0, 250, 500, 750], minor=False)
-                    minor_ticks = [125, 375, 625, 875]
-                    #minor_ticks = [62.5, 125, 187.5, 312.5, 375, 437.5]
-                    plt.gca().set_xticks(minor_ticks, minor=True)
-                    #plt.gca().yaxis.set_label_position("right")
-                    #plt.gca().yaxis.tick_right()
+
+                    # plt.gca().set_yscale("symlog", linthresh=1)
+                    # plt.gca().set_ylim(top=.25)
+                    # plt.gca().set_yticks([0, -0.5, -1, -10], minor=False)
+                    # plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$', '$-10$'])
+                    # plt.gca().set_yticks([-0.25, -0.75], minor=True)
+                    # plt.gca().set_xlim(right=800)
+                    # plt.gca().set_xticks([0, 200, 400, 600, 800], minor=False)
+                    # #plt.gca().set_xticks([0, 250, 500, 750], minor=False)
+                    # minor_ticks = [100, 300, 500, 700]
+                    # #minor_ticks = [62.5, 125, 187.5, 312.5, 375, 437.5]
+                    # plt.gca().set_xticks(minor_ticks, minor=True)
+                    # #plt.gca().yaxis.set_label_position("right")
+                    # #plt.gca().yaxis.tick_right()
 
                     #plt.gca().set_xlim(right=200)
                     #plt.xticks([0,1250,2500])
                     #plt.xticks([0, 1000, 2000], minor=True)
 
-                    # plt.gca().set_xlim(right=1000)
-                    # plt.gca().set_ylim(top=1.1)
-                    # plt.gca().set_yticks([0, 0.5, 1], minor=False)
-                    # plt.gca().set_yticks([0.25, 0.75], minor=True)
-                    # #plt.gca().set_yticks([0.5], minor=True)
-                    # plt.gca().set_ylim(bottom=-0.1)
-                    # plt.gca().set_yticklabels(['$0\%$', '$50\%$', '$100\%$'])
-                    # plt.gca().set_xticks([0, 250, 500, 750, 1000], minor=False)
-                    # minor_ticks = [125, 375, 625, 875]
-                    # plt.gca().set_xticks(minor_ticks, minor=True)
-                    # plt.gca().yaxis.set_label_position("right")
-                    # plt.gca().yaxis.tick_right()
+                    plt.gca().set_yscale("symlog", linthresh=1)
+                    plt.gca().set_xlim(right=800)
+                    #plt.gca().set_ylim(top=1.1)
+                    #plt.gca().set_yticks([0, 0.5, 1], minor=False)
+                    #plt.gca().set_yticks([0.25, 0.75], minor=True)
+                    #plt.gca().set_yticks([0.5], minor=True)
+                    plt.gca().set_ylim(bottom=-0.1)
+                    #plt.gca().set_yticklabels(['$0\%$', '$50\%$', '$100\%$'])
+                    plt.gca().set_xticks([0, 200, 400, 600, 800], minor=False)
+                    plt.gca().set_yticks([10, 1, 0], minor=False)
+                    plt.gca().set_yticklabels(['$10$', '$1$', '$0$'])
+                    plt.gca().set_yticks([5, 0.5], minor=True)
+                    minor_ticks = [100, 300, 500, 700]
+                    plt.gca().set_xticks(minor_ticks, minor=True)
+                    plt.gca().yaxis.set_label_position("right")
+                    plt.gca().yaxis.tick_right()
 
                     # plt.gca().set_ylim(top=250)
                     # plt.gca().set_ylim(bottom=-2000)
@@ -887,21 +899,34 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     # plt.gca().set_xticks(minor_ticks, minor=True)
 
                     #plt.gca().set_ylim(top=750)
-                    # plt.gca().set_ylim(bottom=-3000)
-                    # plt.gca().set_xlim(right=750)
-                    # plt.gca().set_yticks([0, -1000, -2000], minor=False)
-                    # plt.gca().set_yticklabels(['$0$', '$-1000$', '$-2000$'])
-                    # plt.gca().set_xticks([0, 250, 500, 750], minor=False)
-                    # minor_ticks = [125, 375, 625]
+                    #plt.gca().set_ylim(bottom=-3000)
+
+                    ## TOTAL PLOT
+                    # plt.gca().set_xlim(right=800)
+                    # #plt.gca().set_yticks([0, -2000, -4000], minor=False)
+                    # #plt.gca().set_yticklabels(['$0$', '$-2000$', '$-4000$'])
+                    # #minor_ticks = [-1000, -3000, -5000]
+                    # #plt.gca().set_yticks(minor_ticks, minor=True)
+                    # plt.gca().set_xticks([0, 200, 400, 600, 800], minor=False)
+                    # minor_ticks = [100, 300, 500, 700]
                     # plt.gca().set_xticks(minor_ticks, minor=True)
                     # plt.gca().axhline(0, linestyle='dotted', color="black", linewidth=.75, zorder=1)
-                    # plt.gca().axhline(-1000, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5, zorder=1)
-                    # plt.gca().axhline(-2000, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                    # plt.gca().axhline(-1000, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
                     #                   zorder=1)
-                    # plt.gca().yaxis.set_label_position("right")
-                    # plt.gca().yaxis.tick_right()
+                    # plt.gca().axhline(-3000, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
+                    #                   zorder=1)
+                    # plt.gca().axhline(-5000, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
+                    #                   zorder=1)
+                    # plt.gca().axhline(-2000, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5, zorder=1)
+                    # plt.gca().axhline(-4000, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                    #                   zorder=1)
+
+
+
+                    #plt.gca().yaxis.set_label_position("right")
+                    #plt.gca().yaxis.tick_right()
                     #plt.gca().axhline(-3000, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
-                    #                  zorder=1)
+                    #                 zorder=1)
 
         #if x_label == "Episode":
             #TODO: 0/1
@@ -931,12 +956,12 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
         colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22',
                   '#17becf']
 
-        a2c = Line2D([0], [0], color=colors[1], label='Equilib.')
-        ppo = Line2D([0], [0], color=colors[0], label='Random')
-        roa = Line2D([0], [0], color="magenta", label='ROA')
+        a2c = Line2D([0], [0], color="tab:cyan", label='A2C')
+        ppo = Line2D([0], [0], color="tab:olive", label='PPO')
+        #roa = Line2D([0], [0], color="magenta", label='ROA')
 
         #plt.legend(loc="lower right", handles=[roa])
-        #plt.legend(loc="lower right", handles=[ppo, a2c])
+        #plt.legend(loc="lower right", handles=[a2c,ppo])
         #plt.legend(loc="upper left", fontsize=7, bbox_to_anchor=(1.05, 1))
         #plt.suptitle(tags[0].replace("_",'-'))
 
@@ -1087,7 +1112,9 @@ if __name__ == '__main__':
     #safety_measure_plot(v1, v2, K=gain_matrix, vertices=vertices, save_as=save_as)
     #external_legend_res(["$s_0\sim\mathrm{ROA}$", "$s_0=[0\,0]^{\mathsf{T}}$"], colors=["tab:blue", "tab:orange"], save_as="pdfs/tmp", ncols=2,
              #           equi=False)
-    external_legend_res(["PPO", "A2C"], colors=["tab:green", "tab:green"], save_as="pdfs/tmp", ncols=2, equi = False)
+    #external_legend_res(["$s_0=[0\,0]^{\mathsf{T}}$", "$\mathrm{Default}$", "$|\mathcal{A}|_{\downarrow}$"], colors=["tab:green", "tab:blue", "tab:orange"],
+    #                    save_as="pdfs/tmp", ncols=3, equi=False)
+    #external_legend_res(["$\mathrm{PPO}_{\mathrm{untuned}}$", "$\mathrm{PPO}_{\mathrm{tuned}}$"], colors=["tab:olive", "tab:blue"], save_as="pdfs/tmp", ncols=2, equi = False)
     #external_legend_res(["Safe", "Unsafe", "ROA"], colors=["green","red", 'magenta'], save_as="pdfs/tmp", ncols=2, equi=False)
 
     #from thesis.pendulum_roa import PendulumRegionOfAttraction
@@ -1129,13 +1156,13 @@ if __name__ == '__main__':
     #            vertices=None,
     #            boxes=None,
     #            save_as=save_as)
-    # save_as = "phaseLQR"
-    # phase_plot(K=gain_matrix,
-    #            max_torque=None,
-    #            max_theta=None,
-    #            vertices=None,
-    #            boxes=None,
-    #            save_as=save_as)
+    save_as = "phaseLQR"
+    phase_plot(K=gain_matrix,
+               max_torque=None,
+               max_theta=None,
+               vertices=None,
+               boxes=None,
+               save_as=save_as)
     # save_as = "phaseRestrictedParted"
     # phase_plot(K=gain_matrix,
     #            max_torque=max_torque,
