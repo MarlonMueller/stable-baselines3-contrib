@@ -133,7 +133,7 @@ class PendulumTrainCallback(BaseCallback):
             # TODO: compare action rl
             action_rl = infos['mask']["action"]
             self.total_reward_rl += infos['mask']["reward"]
-            mask = infos['mask']["mask"][:-1]
+            mask = infos['mask']["last_mask"][:-1]
             correction = np.count_nonzero(mask == 0)
             self.total_abs_safety_correction += correction
             if correction > self.max_abs_safety_correction:

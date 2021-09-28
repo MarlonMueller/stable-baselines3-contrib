@@ -55,24 +55,21 @@ class SafetyMask(gym.Wrapper):
         self._num_actions = self.action_space.n + 1
         self.action_space = gym.spaces.Discrete(self._num_actions)
 
-        def _mask_fn(_: gym.Env) -> np.ndarray:
+            # mask = np.zeros(self._num_actions)
+            # for i in range(self._num_actions-1):
+            #     if self._transform_action_space_fn is not None:
+            #         action = self._transform_action_space_fn(i)
+            #     else:
+            #         action = i
+            #     if self._dynamics_fn(self.env, action) in self._safe_region:
+            #         mask[i] = True
+            #
+            # if not mask.any():
+            #     mask[-1] = True
+            #
+            # self._last_mask = mask
+            # return mask
 
-            mask = np.zeros(self._num_actions)
-            for i in range(self._num_actions-1):
-                if self._transform_action_space_fn is not None:
-                    action = self._transform_action_space_fn(i)
-                else:
-                    action = i
-                if self._dynamics_fn(self.env, action) in self._safe_region:
-                    mask[i] = True
-
-            if not mask.any():
-                mask[-1] = True
-
-            self._last_mask = mask
-            return mask
-
-        self.env = ActionMasker(self.env, action_mask_fn=_mask_fn)
 
         if isinstance(dynamics_fn, str):
             fn = getattr(self.env, dynamics_fn)
@@ -112,9 +109,39 @@ class SafetyMask(gym.Wrapper):
         else:
             self._transform_action_space_fn = None
 
+        #self._mask = self.compute_mask()
+
+        def _mask_fn(_: gym.Env) -> np.ndarray:
+            return self._mask
+
+        self.env = ActionMasker(self.env, action_mask_fn=_mask_fn)
+
+        #self.env = ActionMasker(self.env, action_mask_fn=_mask_fn)
+
+
+    def compute_mask(self):
+        mask = np.zeros(self._num_actions)
+        for i in range(self._num_actions - 1):
+            if self._transform_action_space_fn is not None:
+                action = self._transform_action_space_fn(i)
+            else:
+                action = i
+            if self._dynamics_fn(self.env, action) in self._safe_region:
+                mask[i] = True
+
+        if not mask.any():
+            mask[-1] = True
+
+        return mask
+
+    def reset(self, **kwargs):
+        obs = self.env.reset(**kwargs)
+        self._mask = self.compute_mask()
+        return obs
+
     def step(self, action) -> GymStepReturn:
 
-        if action == self._num_actions - 1:
+        if action == self._num_actions - 1: #or check if last mask empty
             zero_mask = True
         else:
             zero_mask = False
@@ -124,15 +151,22 @@ class SafetyMask(gym.Wrapper):
 
         if zero_mask:
             #TODO: Explain None
+
             action_mask = self._safe_action_fn(self.env, self._safe_region, None)
             obs, reward, done, info = self.env.step(action_mask)
+
+            # Precompute next mask
+            next_mask = self.compute_mask()
+
+
 
             #TODO: Update Notebook info returns
             #TODO: Explain args punishment in notebook
             if self._punishment_fn is not None:
-                punishment = self._punishment_fn(self.env, self._safe_region, action_mask, self._last_mask)
+                punishment = self._punishment_fn(self.env, self._safe_region, action_mask, self._mask, next_mask)
                 info["mask"] = {"action": 0,
-                                "mask": self._last_mask,
+                                "last_mask": self._mask,
+                                "next_mask": next_mask,
                                 "action_mask": action_mask,
                                 "reward": reward,
                                 "punishment": punishment,
@@ -140,28 +174,34 @@ class SafetyMask(gym.Wrapper):
                 reward += punishment
             else:
                 info["mask"] = {"action": 0,
-                                "mask": self._last_mask,
+                                "last_mask": self._mask,
+                                "next_mask": next_mask,
                                 "action_mask": action_mask,
                                 "reward": reward,
                                 "punishment": None
                                 }
         else:
             obs, reward, done, info = self.env.step(action)
+            # Precompute next mask
+            next_mask = self.compute_mask()
             if self._punishment_fn is not None:
-                punishment = self._punishment_fn(self.env, self._safe_region, action, self._last_mask)
+                punishment = self._punishment_fn(self.env, self._safe_region, action, self._mask, next_mask)
                 info["mask"] = {"action": action,
-                                "mask": self._last_mask,
+                                "last_mask": self._mask,
+                                "next_mask": next_mask,
                                 "action_mask": None,
                                 "reward": reward,
                                 "punishment": punishment}
                 reward += punishment
             else:
                 info["mask"] = {"action": action,
-                                "mask": self._last_mask,
+                                "last_mask": self._mask,
+                                "next_mask": next_mask,
                                 "action_mask": None,
                                 "reward": reward,
                                 "punishment": None
                                 }
 
+        self._mask = next_mask
         # Pot. Mask Punishment
         return obs, reward, done, info

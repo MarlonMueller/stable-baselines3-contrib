@@ -84,7 +84,7 @@ class MathPendulumEnv(Env):
         self.reset()
 
 
-    def reset(self) -> GymObs:
+    def reset(self, **kwargs) -> GymObs:
 
         # Start at theta=0; thdot=0
         if self.init is not None and self.init == "zero":
@@ -93,7 +93,6 @@ class MathPendulumEnv(Env):
             self.state = np.asarray(self._safe_region.sample())
 
         self.last_action = None
-
         return self._get_obs(*self.state)
 
     def step(self, action: Union[float, np.ndarray]) -> GymStepReturn:
