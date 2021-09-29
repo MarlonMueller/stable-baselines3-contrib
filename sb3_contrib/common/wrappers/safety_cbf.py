@@ -147,7 +147,7 @@ class SafetyCBF(gym.Wrapper):
         #TODO: actions if not just one action
         #action_bar = sol['x'][:-1]
         action_bar = sol['x'][0]
-        print(action, sol['x'][0], sol['x'][1])
+        #print(action, sol['x'][0], sol['x'][1])
 
 
         obs, reward, done, info = self.env.step(action + action_bar)

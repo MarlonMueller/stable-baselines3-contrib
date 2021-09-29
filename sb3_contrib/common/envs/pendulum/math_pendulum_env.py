@@ -30,7 +30,7 @@ class MathPendulumEnv(Env):
         else:
             return -np.dot(gain_matrix, env.state)
 
-    def __init__(self, init=None, obs=None):
+    def __init__(self, init=None):
 
         # Length
         self.l = 1.
@@ -42,7 +42,6 @@ class MathPendulumEnv(Env):
         self.dt = .05
 
         self.init = init #TODO
-        self.obs = obs
 
         self.rng = np.random.default_rng()
 
@@ -50,7 +49,8 @@ class MathPendulumEnv(Env):
         from gym.spaces import Discrete
         #self.action_space = Discrete(15)
 
-        max_torque = 30.898877999566082
+        max_torque = 60.898877999566082
+        #max_torque = 30.898877999566082
         self.action_space = Box(
             low=-max_torque,
             high=max_torque,
