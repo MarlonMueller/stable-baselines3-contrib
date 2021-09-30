@@ -36,6 +36,7 @@ class PendulumTrainCallback(BaseCallback):
 
         self.total_punishment = 0
         self.total_reward_rl = 0
+        self.mask_lqr_correction = 0
 
         #self.max_ac; max correction possible? -> wäre wie abs safety correction but relative
         self.max_thdot = 5.890486225480862
@@ -137,6 +138,8 @@ class PendulumTrainCallback(BaseCallback):
             mask = infos['mask']["last_mask"][:-1]
             correction = np.count_nonzero(mask == 0)
             self.total_abs_safety_correction += correction
+            if infos['mask']["action_mask"] is not None:
+                self.mask_lqr_correction += abs(infos['mask']["action_mask"])
             if correction > self.max_abs_safety_correction:
                 self.max_abs_safety_correction = correction
             if infos['mask']["punishment"] is not None:
@@ -173,6 +176,8 @@ class PendulumTrainCallback(BaseCallback):
             self.logger.record('main/avg_step_reward_rl', self.total_reward_rl / infos['episode']['l'])
 
             if 'mask' in infos.keys() or 'shield' in infos.keys() or 'cbf' in infos.keys():
+
+                self.logger.record('main/avg_abs_masklqr_correction', self.mask_lqr_correction / infos['episode']['l'])
 
                 self.logger.record('main/avg_abs_safety_correction', self.total_abs_safety_correction / infos['episode']['l'])
                 self.logger.record('main/max_abs_safety_correction', self.max_abs_safety_correction)
@@ -231,6 +236,7 @@ class PendulumTrainCallback(BaseCallback):
 
             self.total_safey_measure = 0
             self.max_safety_measure = 0
+            self.mask_lqr_correction = 0
 
             self.total_reward_rl = 0
             self.total_punishment = 0

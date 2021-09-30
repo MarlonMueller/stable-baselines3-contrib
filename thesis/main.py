@@ -228,7 +228,11 @@ def main(**kwargs):
                                       action: Union[int, float, np.ndarray],
                                       mask: Union[int, float, np.ndarray],
                                       next_mask: Union[int, float, np.ndarray]) -> float:
-                        return min(0, np.sum(next_mask[:-1]) - np.sum(mask[:-1]))
+                        if mask[-1] == 1:
+                            #print(mask)
+                            return min(0, np.sum(next_mask[:-1]) - np.sum(mask[:-1]), -abs(action))
+                        else:
+                            return min(0, np.sum(next_mask[:-1]) - np.sum(mask[:-1]))
                 # elif kwargs["punishment"] == "lightpunish":
                 #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                 #                       action: Union[int, float, np.ndarray],
@@ -584,60 +588,60 @@ if __name__ == '__main__':
     args['total_timesteps'] = 8e4
     args["algorithm"] = "PPO"
 
-
-    if args["flag"] == 0:
-        args["algorithm"] = "A2C"
-        args['group'] = "A2C_UNTUNED"
-    if args["flag"] == 1:
-        args["algorithm"] = "A2C"
-        args['group'] = "A2C_UNTUNED_SAS"
-        args["action_space"] = "small"
-    if args["flag"] == 2:
-        args["algorithm"] = "A2C"
-        args['group'] = "A2C_UNTUNED_INIT"
-        args["init"] = "zero"
-
-    if args["flag"] == 3:
-        args["algorithm"] = "A2C"
-        args['group'] = "A2C"
-    if args["flag"] == 4:
-        args["algorithm"] = "A2C"
-        args['group'] = "A2C_SAS"
-        args["action_space"] = "small"
-    if args["flag"] == 5:
-        args["algorithm"] = "A2C"
-        args['group'] = "A2C_INIT"
-        args["init"] = "zero"
-
-    if args["flag"] == 6:
-        args['group'] = "PPO_UNTUNED"
-    if args["flag"] == 7:
-        args['group'] = "PPO_UNTUNED_SAS"
-        args["action_space"] = "small"
-    if args["flag"] == 8:
-        args['group'] = "PPO_UNTUNED_INIT"
-        args["init"] = "zero"
-
-    if args["flag"] == 9:
-        args['group'] = "PPO"
-    if args["flag"] == 10:
-        args['group'] = "PPO_SAS"
-        args["action_space"] = "small"
-    if args["flag"] == 11:
-        args['group'] = "PPO_INIT"
-        args["init"] = "zero"
-
-    if args["flag"] == 12:
-        args['group'] = "MASK"
-        args["safety"] = "mask"
-    if args["flag"] == 13:
-        args['group'] = "MASK_SAS"
-        args["safety"] = "mask"
-        args["action_space"] = "small"
-    if args["flag"] == 14:
-        args['group'] = "MASK_INIT"
-        args["safety"] = "mask"
-        args["init"] = "zero"
+    #
+    # if args["flag"] == 0:
+    #     args["algorithm"] = "A2C"
+    #     args['group'] = "A2C_UNTUNED"
+    # if args["flag"] == 1:
+    #     args["algorithm"] = "A2C"
+    #     args['group'] = "A2C_UNTUNED_SAS"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 2:
+    #     args["algorithm"] = "A2C"
+    #     args['group'] = "A2C_UNTUNED_INIT"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 3:
+    #     args["algorithm"] = "A2C"
+    #     args['group'] = "A2C"
+    # if args["flag"] == 4:
+    #     args["algorithm"] = "A2C"
+    #     args['group'] = "A2C_SAS"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 5:
+    #     args["algorithm"] = "A2C"
+    #     args['group'] = "A2C_INIT"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 6:
+    #     args['group'] = "PPO_UNTUNED"
+    # if args["flag"] == 7:
+    #     args['group'] = "PPO_UNTUNED_SAS"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 8:
+    #     args['group'] = "PPO_UNTUNED_INIT"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 9:
+    #     args['group'] = "PPO"
+    # if args["flag"] == 10:
+    #     args['group'] = "PPO_SAS"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 11:
+    #     args['group'] = "PPO_INIT"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 12:
+    #     args['group'] = "MASK"
+    #     args["safety"] = "mask"
+    # if args["flag"] == 13:
+    #     args['group'] = "MASK_SAS"
+    #     args["safety"] = "mask"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 14:
+    #     args['group'] = "MASK_INIT"
+    #     args["safety"] = "mask"
+    #     args["init"] = "zero"
 
     if args["flag"] == 15:
         args['group'] = "MASK_PUN"
@@ -654,59 +658,59 @@ if __name__ == '__main__':
         args["init"] = "zero"
         args["punishment"] = "punish"
 
-    if args["flag"] == 18:
-        args['group'] = "CBF"
-        args["safety"] = "cbf"
-    if args["flag"] == 19:
-        args['group'] = "CBF_SAS"
-        args["safety"] = "cbf"
-        args["action_space"] = "small"
-    if args["flag"] == 20:
-        args['group'] = "CBF_INIT"
-        args["safety"] = "cbf"
-        args["init"] = "zero"
-
-    if args["flag"] == 21:
-        args['group'] = "CBF_PUN"
-        args["safety"] = "cbf"
-        args["punishment"] = "punish"
-    if args["flag"] == 22:
-        args['group'] = "CBF_SAS_PUN"
-        args["safety"] = "cbf"
-        args["action_space"] = "small"
-        args["punishment"] = "punish"
-    if args["flag"] == 23:
-        args['group'] = "CBF_INIT_PUN"
-        args["safety"] = "cbf"
-        args["init"] = "zero"
-        args["punishment"] = "punish"
-
-    if args["flag"] == 24:
-        args['group'] = "SHIELD"
-        args["safety"] = "shield"
-    if args["flag"] == 25:
-        args['group'] = "SHIELD_SAS"
-        args["safety"] = "shield"
-        args["action_space"] = "small"
-    if args["flag"] == 26:
-        args['group'] = "SHIELD_INIT"
-        args["safety"] = "shield"
-        args["init"] = "zero"
-
-    if args["flag"] == 27:
-        args['group'] = "SHIELD_PUN"
-        args["safety"] = "shield"
-        args["punishment"] = "punish"
-    if args["flag"] == 28:
-        args['group'] = "SHIELD_SAS_PUN"
-        args["safety"] = "shield"
-        args["action_space"] = "small"
-        args["punishment"] = "punish"
-    if args["flag"] == 29:
-        args['group'] = "SHIELD_INIT_PUN"
-        args["safety"] = "shield"
-        args["init"] = "zero"
-        args["punishment"] = "punish"
+    # if args["flag"] == 18:
+    #     args['group'] = "CBF"
+    #     args["safety"] = "cbf"
+    # if args["flag"] == 19:
+    #     args['group'] = "CBF_SAS"
+    #     args["safety"] = "cbf"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 20:
+    #     args['group'] = "CBF_INIT"
+    #     args["safety"] = "cbf"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 21:
+    #     args['group'] = "CBF_PUN"
+    #     args["safety"] = "cbf"
+    #     args["punishment"] = "punish"
+    # if args["flag"] == 22:
+    #     args['group'] = "CBF_SAS_PUN"
+    #     args["safety"] = "cbf"
+    #     args["action_space"] = "small"
+    #     args["punishment"] = "punish"
+    # if args["flag"] == 23:
+    #     args['group'] = "CBF_INIT_PUN"
+    #     args["safety"] = "cbf"
+    #     args["init"] = "zero"
+    #     args["punishment"] = "punish"
+    #
+    # if args["flag"] == 24:
+    #     args['group'] = "SHIELD"
+    #     args["safety"] = "shield"
+    # if args["flag"] == 25:
+    #     args['group'] = "SHIELD_SAS"
+    #     args["safety"] = "shield"
+    #     args["action_space"] = "small"
+    # if args["flag"] == 26:
+    #     args['group'] = "SHIELD_INIT"
+    #     args["safety"] = "shield"
+    #     args["init"] = "zero"
+    #
+    # if args["flag"] == 27:
+    #     args['group'] = "SHIELD_PUN"
+    #     args["safety"] = "shield"
+    #     args["punishment"] = "punish"
+    # if args["flag"] == 28:
+    #     args['group'] = "SHIELD_SAS_PUN"
+    #     args["safety"] = "shield"
+    #     args["action_space"] = "small"
+    #     args["punishment"] = "punish"
+    # if args["flag"] == 29:
+    #     args['group'] = "SHIELD_INIT_PUN"
+    #     args["safety"] = "shield"
+    #     args["init"] = "zero"
+    #     args["punishment"] = "punish"
 
     main(**args)
 
