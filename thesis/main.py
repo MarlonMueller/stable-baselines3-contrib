@@ -631,32 +631,32 @@ if __name__ == '__main__':
     #     args['group'] = "PPO_INIT"
     #     args["init"] = "zero"
     #
-    # if args["flag"] == 12:
-    #     args['group'] = "MASK"
-    #     args["safety"] = "mask"
-    # if args["flag"] == 13:
-    #     args['group'] = "MASK_SAS"
-    #     args["safety"] = "mask"
-    #     args["action_space"] = "small"
-    # if args["flag"] == 14:
-    #     args['group'] = "MASK_INIT"
-    #     args["safety"] = "mask"
-    #     args["init"] = "zero"
-
-    if args["flag"] == 15:
-        args['group'] = "MASK_PUN"
+    if args["flag"] == 12:
+        args['group'] = "MASK"
         args["safety"] = "mask"
-        args["punishment"] = "punish"
-    if args["flag"] == 16:
-        args['group'] = "MASK_SAS_PUN"
+    if args["flag"] == 13:
+        args['group'] = "MASK_SAS"
         args["safety"] = "mask"
         args["action_space"] = "small"
-        args["punishment"] = "punish"
-    if args["flag"] == 17:
-        args['group'] = "MASK_INIT_PUN"
+    if args["flag"] == 14:
+        args['group'] = "MASK_INIT"
         args["safety"] = "mask"
         args["init"] = "zero"
-        args["punishment"] = "punish"
+
+    # if args["flag"] == 15:
+    #     args['group'] = "MASK_PUN"
+    #     args["safety"] = "mask"
+    #     args["punishment"] = "punish"
+    # if args["flag"] == 16:
+    #     args['group'] = "MASK_SAS_PUN"
+    #     args["safety"] = "mask"
+    #     args["action_space"] = "small"
+    #     args["punishment"] = "punish"
+    # if args["flag"] == 17:
+    #     args['group'] = "MASK_INIT_PUN"
+    #     args["safety"] = "mask"
+    #     args["init"] = "zero"
+    #     args["punishment"] = "punish"
 
     # if args["flag"] == 18:
     #     args['group'] = "CBF"
@@ -771,9 +771,10 @@ if __name__ == '__main__':
 
 
 
-    #tags = [
+    tags = [
         # "main/avg_abs_action_rl",  # ?
         #"main/avg_abs_safety_correction",  #
+        "main/avg_abs_masklqr_correction",
         # "main/avg_abs_thdot",  # ?
         # "main/avg_abs_theta",  # ?
         # "main/avg_safety_measure",  #
@@ -784,11 +785,11 @@ if __name__ == '__main__':
         # "main/max_abs_thdot",  # ?
         # "main/max_abs_theta",  # ?
         # "main/max_safety_measure",  # ?
-        # "main/no_violation",  #
+         #"main/no_violation",  #
         # "main/rel_abs_safety_correction",
         # "main/avg_step_punishment",  #
         #"main/avg_step_reward_rl"  # ???
-    #]
+    ]
 
     # PRELIMINARY
     # dirss = []
@@ -810,46 +811,46 @@ if __name__ == '__main__':
 
     from thesis.util import tf_events_to_plot, external_legend_res
 
-    # for tag in tags:
-    #     if tag == "main/avg_abs_action_rl":
-    #         y_label = "Absolute action per step"# \overline{\left(\left|a\\right|\\right)}$"
-    #     elif tag == "main/avg_abs_thdot":
-    #         y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
-    #     elif tag == "main/avg_abs_theta":
-    #         y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
-    #     elif tag == "main/avg_step_reward_rl":
-    #         y_label = "Reward per step" #%$\overline{r}
-    #     elif tag == "main/episode_reward":
-    #         y_label = "Episode return" #${r_{\mathrm{Episode}}}$
-    #     elif tag == "main/max_safety_measure":
-    #         y_label = "Maximal reward $r_{\mathrm{max}}$"
-    #     elif tag == "main/no_violation":
-    #         y_label = "Mean safety violation"
-    #     elif tag == "main/avg_abs_safety_correction":
-    #         y_label = "Safety correction per step"
-    #     else:
-    #         y_label = ''
-    #
-    #     dirsss = [
-            #["A2C_UNTUNED", "PPO_UNTUNED"]
-            #["PPO", "PPO_UNTUNED"],#Log/NotLog
-            #["PPO_SAS", "PPO", "PPO_INIT"],
-            #["A2C_UNTUNED_SAS", "A2C_UNTUNED", "A2C_UNTUNED_INIT"],
-            #["A2C_SAS", "A2C", "A2C_INIT"],
-            #["PPO_UNTUNED_SAS", "PPO_UNTUNED", "PPO_UNTUNED_INIT"],
-            #["PPO_SAS", "PPO", "PPO_INIT"],
-            #["MASK_SAS", "MASK", "MASK_INIT"],
-            #["SHIELD_SAS", "SHIELD", "SHIELD_INIT"],
-            #["MASK", "SHIELD"] #SAME FOR CBF NO VIOLATION PLOT
-            #["CBF_SAS", "CBF", "CBF_INIT"],
-            #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
-            #["SHIELD_SAS_PUN", "SHIELD_PUN", "SHIELD_INIT_PUN"],
-            #["CBF_SAS_PUN", "CBF_PUN", "CBF_INIT_PUN"],
-            #["MASK_SAS_PUNH", "MASK_PUNH", "MASK_INIT_PUNH"],
-            #["CBF_SAS_05", "CBF_05", "CBF_INIT_05"],
-            #["CBF_SAS_5", "CBF_5", "CBF_INIT_5"],
-            #["CBF_SAS_95", "CBF_95", "CBF_INIT_95"],
-        #]
+    for tag in tags:
+        if tag == "main/avg_abs_action_rl":
+            y_label = "Absolute action per step"# \overline{\left(\left|a\\right|\\right)}$"
+        elif tag == "main/avg_abs_thdot":
+            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
+        elif tag == "main/avg_abs_theta":
+            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
+        elif tag == "main/avg_step_reward_rl":
+            y_label = "Reward per step" #%$\overline{r}
+        elif tag == "main/episode_reward":
+            y_label = "Episode return" #${r_{\mathrm{Episode}}}$
+        elif tag == "main/max_safety_measure":
+            y_label = "Maximal reward $r_{\mathrm{max}}$"
+        elif tag == "main/no_violation":
+            y_label = "Safety violation"
+        elif tag == "main/avg_abs_safety_correction":
+            y_label = "Safety correction per step"
+        else:
+            y_label = "Safety correction per step"
+
+        dirsss = [
+        #["A2C_UNTUNED", "PPO_UNTUNED"]
+        #["PPO", "PPO_UNTUNED"],#Log/NotLog
+        #["PPO_SAS", "PPO", "PPO_INIT"],
+        #["A2C_UNTUNED_SAS", "A2C_UNTUNED", "A2C_UNTUNED_INIT"],
+        #["A2C_SAS", "A2C", "A2C_INIT"],
+        #["PPO_UNTUNED_SAS", "PPO_UNTUNED", "PPO_UNTUNED_INIT"],
+        #["PPO_SAS", "PPO", "PPO_INIT"],
+        #["MASK_SAS", "MASK", "MASK_INIT"],
+        #["SHIELD_SAS", "SHIELD", "SHIELD_INIT"],
+        #["MASK", "SHIELD"] #SAME FOR CBF NO VIOLATION PLOT
+        #["CBF_SAS", "CBF", "CBF_INIT"],
+        ["MASK_SAS_NEWPUN", "MASK_NEWPUN", "MASK_INIT_NEWPUN"],
+        #["SHIELD_SAS_PUN", "SHIELD_PUN", "SHIELD_INIT_PUN"],
+        #["CBF_SAS_PUN", "CBF_PUN", "CBF_INIT_PUN"],
+        #["MASK_SAS_PUNH", "MASK_PUNH", "MASK_INIT_PUNH"],
+        #["CBF_SAS_05", "CBF_05", "CBF_INIT_05"],
+        #["CBF_SAS_5", "CBF_5", "CBF_INIT_5"],
+        #["CBF_SAS_95", "CBF_95", "CBF_INIT_95"],
+        ]
         # for i, dirss in enumerate(dirsss):
         #     tf_events_to_plot(dirss=dirss, #"standard"
         #                       tags=[tag],
