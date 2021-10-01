@@ -55,6 +55,8 @@ def main(**kwargs):
         name = 'DEBUG'
         kwargs['total_timesteps'] = 1e3
         remove_tf_logs(name + '_1', name + '_E_1')
+    elif "rollout" in kwargs and kwargs['rollout']:
+        name = f"{kwargs['name']}"
     else:
         name = f"{kwargs['name']}_{kwargs['algorithm']}"
 
@@ -111,12 +113,11 @@ def main(**kwargs):
     # if "action_space" in kwargs and kwargs["action_space"] == "large":
     #     transform_action_space_fn = lambda a: 5 * (a - 10) if a <= 9 else 5 * (a - 9)
     #     alter_action_space = gym.spaces.Discrete(20)
+    alter_action_space = gym.spaces.Discrete(21) #21! TODO
     if "action_space" in kwargs and kwargs["action_space"] == "small":
         transform_action_space_fn = lambda a: 0.65 * (a - 10)
-        alter_action_space = gym.spaces.Discrete(21)
     else:
         transform_action_space_fn = lambda a: 3 * (a - 10)
-        alter_action_space = gym.spaces.Discrete(21)
 
     if 'safety' in kwargs and kwargs['safety'] is not None:
 
@@ -268,12 +269,12 @@ def main(**kwargs):
                 self.action_space = alter_action_space
 
                 #if transform_action_space_fn is not None:
-                    # if isinstance(transform_action_space_fn, str):
-                    #     fn = getattr(self.env, transform_action_space_fn)
-                    #     if not callable(fn):
-                    #         raise ValueError(f"Attribute {fn} is not a method")
-                    #     self._transform_action_space_fn = fn
-                    # else:
+                # if isinstance(transform_action_space_fn, str):
+                #     fn = getattr(self.env, transform_action_space_fn)
+                #     if not callable(fn):
+                #         raise ValueError(f"Attribute {fn} is not a method")
+                #     self._transform_action_space_fn = fn
+                # else:
                 self._transform_action_space_fn = transform_action_space_fn
                 #else:
                 #    self._transform_action_space_fn = None
@@ -351,10 +352,10 @@ def main(**kwargs):
                 if kwargs['algorithm'] == "PPO":
                     if 'flag' in kwargs and (kwargs['flag'] == 6 or kwargs['flag'] == 7 or kwargs['flag'] == 8):
                         model = base_algorithm(
-                               MlpPolicy,
-                               env,
-                               verbose=0,
-                               tensorboard_log=tensorboard_log)
+                            MlpPolicy,
+                            env,
+                            verbose=0,
+                            tensorboard_log=tensorboard_log)
 
                     else:
                         model = base_algorithm(MlpPolicy,
@@ -381,9 +382,9 @@ def main(**kwargs):
                 elif kwargs['algorithm'] == "A2C":
                     if 'flag' in kwargs and kwargs['flag'] <= 2:
                         model = base_algorithm(MlpPolicy,
-                                                   env,
-                                                   verbose=0,
-                                                   tensorboard_log=tensorboard_log)
+                                               env,
+                                               verbose=0,
+                                               tensorboard_log=tensorboard_log)
                     else:
                         model = base_algorithm(MlpPolicy,
                                                env,
@@ -425,37 +426,39 @@ def main(**kwargs):
             save_model(kwargs["group"]+"/"+str(iteration+1), model)
 
     elif 'rollout' in kwargs and kwargs['rollout']:
-        pass
-        # env = DummyVecEnv([lambda: env])
-        #
-        # model = None
-        # callback = None
-        #
-        # if name != "DEBUG":
-        #     model = load_model(name + '.zip', base_algorithm)
-        #     model.set_env(env)
-        #
-        #     callback = CallbackList([PendulumRolloutCallback(safe_region=safe_region)])
-        #
-        #     # TODO: Not needed for training(?)
-        #     _logger = configure_logger(verbose=0, tb_log_name=name + '_E',
-        #                                tensorboard_log=os.getcwd() + '/tensorboard/')
-        #     model.set_logger(logger=_logger)
-        #
-        #     callback.init_callback(model=model)
-        #
-        # render = False
-        # if 'render' in kwargs and kwargs['render']:
-        #     render = True
-        #
-        # env_safe_action = False
-        # if 'safety' in kwargs and kwargs['safety'] == "env_safe_action":
-        #     env_safe_action = True
-        #
-        # # rollout(env, model, safe_region=safe_region, num_episodes=1, callback=callback, env_safe_action=env_safe_action, render=render, sleep=.05)
-        # rollout(env, model, safe_region=safe_region, num_episodes=kwargs['iterations'], callback=callback,
-        #         env_safe_action=env_safe_action,
-        #         render=render, sleep=.1)
+        env = DummyVecEnv([lambda: env])
+
+        model = None
+        callback = None
+
+        if name != "DEBUG":
+            if "MASK" in name:
+                model = load_model(name[:-1] + '.zip', MaskablePPO)
+            else:
+                model = load_model(name[:-1] + '.zip', base_algorithm)
+            model.set_env(env)
+
+            callback = CallbackList([PendulumRolloutCallback(safe_region=safe_region)])
+
+            # TODO: Not needed for training(?)
+            _logger = configure_logger(verbose=0, tb_log_name=name,
+                                       tensorboard_log=os.getcwd() + '/tensorboard/')
+            model.set_logger(logger=_logger)
+
+            callback.init_callback(model=model)
+
+        render = False
+        if 'render' in kwargs and kwargs['render']:
+            render = True
+
+        env_safe_action = False
+        if 'safety' in kwargs and kwargs['safety'] == "env_safe_action":
+            env_safe_action = True
+
+        # rollout(env, model, safe_region=safe_region, num_episodes=1, callback=callback, env_safe_action=env_safe_action, render=render, sleep=.05)
+        rollout(env, model, safe_region=safe_region, num_episodes=kwargs['iterations'], callback=callback,
+                env_safe_action=env_safe_action,
+                render=render, sleep=.1)
 
     if 'env' in locals(): env.close()
 
@@ -463,94 +466,101 @@ def main(**kwargs):
         rename_tf_events(kwargs["group"])
 
 
-# def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, env_safe_action=False, render=False,
-#             rgb_array=False, sleep=0.1):
-#     is_vec_env = isinstance(env, VecEnv)
-#     if is_vec_env:
-#         if env.num_envs != 1:
-#             logger.warning(f"You must pass only one environment when using this function")
-#         is_monitor_wrapped = env.env_is_wrapped(Monitor)[0]
-#     else:
-#         is_monitor_wrapped = is_wrapped(env, Monitor)
-#
-#     if not is_monitor_wrapped:
-#         logger.warning(f"Evaluation environment is not wrapped with a ``Monitor`` wrapper.")
-#
-#     frames = []
-#     reset = True
-#     for episode in range(num_episodes):
-#
-#         done, state = False, None
-#
-#         # Avoid double reset, as VecEnv are reset automatically.
-#         if not isinstance(env, VecEnv) or reset:
-#             obs = env.reset()
-#             reset = False
-#
-#         # Give access to local variables
-#         if callback:
-#             callback.update_locals(locals())
-#             callback.on_rollout_start()
-#
-#         while not done:
-#
-#             if render:
-#                 # Does not render last step
-#                 if rgb_array:
-#                     frame = env.render(mode='rgb_array')
-#                     frames.append(frame)
-#                 else:
-#                     env.render()
-#
-#             time.sleep(sleep)
-#
-#             if model is not None:
-#
-#                 action, state = model.predict(obs, state=state)  # deterministic=deterministic
-#                 action = action[0]  # Action is dict
-#                 print(action)
-#
-#                 # TODO: Check if masking used - also rollout masking without model!
-#                 # if use_masking:
-#                 #    action_masks = get_action_masks(env)
-#                 #    actions, state = model.predict(obs,state=state, action_masks=action_masks)
-#
-#
-#             elif env_safe_action:
-#                 # TODO: Fix/Easier? / Could check for callable etc.
-#                 action = env.get_attr('safe_action')[0](env, safe_region, None)
-#
-#             else:
-#                 # TODO: Sample is [] for box and otherwise not?
-#                 #action = env.action_space.sample()
-#                 action = -30
-#                 if isinstance(action, np.ndarray):
-#                     action = action.item()
-#
-#                 if is_masking_supported(env):
-#                     mask = get_action_masks(env)[0]
-#                     action = random.choice(np.argwhere(mask == True))[0]
-#
-#             obs, reward, done, info = env.step([action])
-#             # print(reward)
-#
-#             if render:
-#                 # Prevent render after reset
-#                 if not is_vec_env or is_vec_env and not done:
-#                     env.render()
-#
-#             # Do not plot reset for last episode
-#             if callback and not (done and episode == num_episodes - 1):
-#                 # Give access to local variables
-#                 callback.update_locals(locals())
-#                 if callback.on_step() is False:
-#                     return False
-#
-#     time.sleep(sleep)
-#     env.close()
-#
-#     if rgb_array:
-#         return frames
+def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, env_safe_action=False, render=False,
+            rgb_array=False, sleep=0.1):
+    is_vec_env = isinstance(env, VecEnv)
+    if is_vec_env:
+        if env.num_envs != 1:
+            logger.warning(f"You must pass only one environment when using this function")
+        is_monitor_wrapped = env.env_is_wrapped(Monitor)[0]
+    else:
+        is_monitor_wrapped = is_wrapped(env, Monitor)
+
+    if not is_monitor_wrapped:
+        logger.warning(f"Evaluation environment is not wrapped with a ``Monitor`` wrapper.")
+
+    frames = []
+    reset = True
+
+    # To check rollout w.o. mask but training with mask
+    mask = np.ones(22)
+    mask[-1] = 0
+    for episode in range(num_episodes):
+
+        done, state = False, None
+
+        # Avoid double reset, as VecEnv are reset automatically.
+        if not isinstance(env, VecEnv) or reset:
+            obs = env.reset()
+            reset = False
+
+        # Give access to local variables
+        if callback:
+            callback.update_locals(locals())
+            callback.on_rollout_start()
+
+        while not done:
+
+            if render:
+                # Does not render last step
+                if rgb_array:
+                    frame = env.render(mode='rgb_array')
+                    frames.append(frame)
+                else:
+                    env.render()
+
+            time.sleep(sleep)
+
+            if model is not None:
+
+                #Masking
+                #action, state = model.predict(obs, state=state, action_masks=mask)
+                action, state = model.predict(obs, state=state)  # deterministic=deterministic
+                action = action[0]  # Action is dict
+                # action = 0
+                # print(action)
+
+                # TODO: Check if masking used - also rollout masking without model!
+                # if use_masking:
+                #    action_masks = get_action_masks(env)
+                #    actions, state = model.predict(obs,state=state, action_masks=action_masks)
+
+
+            elif env_safe_action:
+                # TODO: Fix/Easier? / Could check for callable etc.
+                action = env.get_attr('safe_action')[0](env, safe_region, None)
+
+            else:
+                # TODO: Sample is [] for box and otherwise not?
+                action = env.action_space.sample()
+                #action = -30
+                if isinstance(action, np.ndarray):
+                    action = action.item()
+
+                if is_masking_supported(env):
+                    mask = get_action_masks(env)[0]
+                    action = random.choice(np.argwhere(mask == True))[0]
+
+            obs, reward, done, info = env.step([action])
+            # print(reward)
+
+            if render:
+                # Prevent render after reset
+                if not is_vec_env or is_vec_env and not done:
+                    env.render()
+
+            # Do not plot reset for last episode
+            if callback and not (done and episode == num_episodes - 1):
+                # Give access to local variables
+                callback.update_locals(locals())
+                if callback.on_step() is False:
+                    return False
+
+    time.sleep(sleep)
+    env.close()
+
+    if rgb_array:
+        return frames
 
 
 def parse_arguments():
@@ -582,12 +592,123 @@ if __name__ == '__main__':
         entry_point='sb3_contrib.common.envs.pendulum.math_pendulum_env:MathPendulumEnv',
     )
 
-
-    args["train"] = True
-    args["name"] = "run"
-    args['iterations'] = 5
-    args['total_timesteps'] = 8e4 #8e4
     args["algorithm"] = "PPO"
+    args["rollout"] = True
+
+    if args["flag"] == 0:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"CBF/{model}{it}"
+                main(**args)
+    if args["flag"] == 1:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"CBF_SAS/{model}{it}"
+                args["action_space"] = "small"
+                main(**args)
+    if args["flag"] == 2:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"CBF_INIT/{model}{it}"
+                args["init"] = "zero"
+                main(**args)
+    if args["flag"] == 3:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"CBF_PUN/{model}{it}"
+                main(**args)
+    if args["flag"] == 4:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"CBF_INIT_PUN/{model}{it}"
+                args["init"] = "zero"
+                main(**args)
+    if args["flag"] == 5:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"CBF_SAS_PUN/{model}{it}"
+                args["action_space"] = "small"
+                main(**args)
+    if args["flag"] == 6:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"SHIELD/{model}{it}"
+                main(**args)
+    if args["flag"] == 7:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"SHIELD_SAS/{model}{it}"
+                args["action_space"] = "small"
+                main(**args)
+    if args["flag"] == 8:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"SHIELD_INIT/{model}{it}"
+                args["init"] = "zero"
+                main(**args)
+    if args["flag"] == 9:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"SHIELD_PUN/{model}{it}"
+                main(**args)
+    if args["flag"] == 10:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"SHIELD_INIT_PUN/{model}{it}"
+                args["init"] = "zero"
+                main(**args)
+    if args["flag"] == 11:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"SHIELD_SAS_PUN/{model}{it}"
+                args["action_space"] = "small"
+                main(**args)
+
+
+    # for model in range(1,6):
+    #     for it in range(1,6): #6
+    #         args["name"] = f"SHIELD_INIT/{model}{it}"
+    #         args["rollout"] = True
+    #         args["algorithm"] = "PPO"
+    #         main(**args)
+    #
+    # for model in range(1,6):
+    #     for it in range(1,6): #6
+    #         args["name"] = f"CBF_INIT/{model}{it}"
+    #         args["rollout"] = True
+    #         args["algorithm"] = "PPO"
+    #         main(**args)
+    #
+    # for model in range(1,6):
+    #     for it in range(1,6): #6
+    #         args["name"] = f"CBF_SAS/{model}{it}"
+    #         args["rollout"] = True
+    #         args["algorithm"] = "PPO"
+    #         main(**args)
+    #
+    # for model in range(1,6):
+    #     for it in range(1,6): #6
+    #         args["name"] = f"CBF_SAS_PUN/{model}{it}"
+    #         args["rollout"] = True
+    #         args["algorithm"] = "PPO"
+    #         main(**args)
+    #
+    # for model in range(1,6):
+    #     for it in range(1,6): #6
+    #         args["name"] = f"CBF_INIT_PUN/{model}{it}"
+    #         args["rollout"] = True
+    #         args["algorithm"] = "PPO"
+    #         main(**args)
+
+    #args["train"] = True
+    #args["render"] = True
+    #args["safety"] = "shield"
+    #args["safety"] = "env_safe_action"
+    #args["init"] = "zero"
+    #args["action_space"] = "small"
+    #args['iterations'] = 2
+    #args['total_timesteps'] = 8e4
+    #args['name'] = 'maskTest'
 
     #
     # if args["flag"] == 0:
@@ -713,7 +834,7 @@ if __name__ == '__main__':
         args["init"] = "zero"
         args["punishment"] = "punish"
 
-    main(**args)
+    #main(**args)
 
     # if args["flag"] == 0:
     #     args['group'] = "CBF_5"
@@ -789,7 +910,8 @@ if __name__ == '__main__':
          #"main/no_violation",  #
         # "main/rel_abs_safety_correction",
         # "main/avg_step_punishment",  #
-        "main/avg_step_reward_rl"  # ???
+        #"main/avg_step_reward_rl"  # ???
+        "main/reward"
     ]
 
     # PRELIMINARY
@@ -821,6 +943,8 @@ if __name__ == '__main__':
             y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
         elif tag == "main/avg_step_reward_rl":
             y_label = "Reward per step" #%$\overline{r}
+        elif tag == "main/reward":
+            y_label = "Reward"  # %$\overline{r}
         elif tag == "main/episode_reward":
             y_label = "Episode return" #${r_{\mathrm{Episode}}}$
         elif tag == "main/max_safety_measure":
@@ -840,7 +964,7 @@ if __name__ == '__main__':
         #["A2C_SAS", "A2C", "A2C_INIT"],
         #["PPO_UNTUNED_SAS", "PPO_UNTUNED", "PPO_UNTUNED_INIT"],
         #["PPO_SAS", "PPO", "PPO_INIT"],
-        ["MASK_SAS", "MASK", "MASK_INIT"],
+        #["MASK_SAS", "MASK", "MASK_INIT"],
         #["SHIELD_SAS", "SHIELD", "SHIELD_INIT"],
         #["MASK", "SHIELD"] #SAME FOR CBF NO VIOLATION PLOT
         #["CBF_SAS", "CBF", "CBF_INIT"],
@@ -851,17 +975,27 @@ if __name__ == '__main__':
         #["CBF_SAS_05", "CBF_05", "CBF_INIT_05"],
         #["CBF_SAS_5", "CBF_5", "CBF_INIT_5"],
         #["CBF_SAS_95", "CBF_95", "CBF_INIT_95"],
+        #["MASK_SAS", "MASK", "MASK_INIT"],
+            #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
+            #["MASK", "MASK_INIT"],
+            #["MASK_PUN", "MASK_INIT_PUN"],
+            #["SHIELD_SAS"]#, "SHIELD", "SHIELD_INIT"],
+            #["SHIELD_SAS_PUN"]#, "SHIELD_PUN", "SHIELD_INIT_PUN"],
+            #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
+            #["MASK_SAS", "MASK", "MASK_INIT"],
+            #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
         ]
-        # for i, dirss in enumerate(dirsss):
-        #     tf_events_to_plot(dirss=dirss, #"standard"
-        #                       tags=[tag],
-        #                       x_label='Episode',
-        #                       y_label=y_label,
-        #                       width=2.5, #5
-        #                       height=2.5, #2.5
-        #                       episode_length=100,
-        #                       window_size=11, #41
-        #                       save_as=f"pdfs/{i}{tag.split('/')[1]}")
+        for i, dirss in enumerate(dirsss):
+            tf_events_to_plot(dirss=dirss, #"standard"
+                              tags=[tag],
+                              x_label='Step',
+                              #x_label='Episode',
+                              y_label=y_label,
+                              width=2.5, #5
+                              height=2.5, #2.5
+                              episode_length=100,
+                              window_size=11, #41
+                              save_as=f"pdfs/{i}{tag.split('/')[1]}")
 
     # labels = []
     # for label in dirss:

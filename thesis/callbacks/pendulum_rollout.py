@@ -82,6 +82,51 @@ class PendulumRolloutCallback(BaseCallback):
         self.logger.record('main/theta', state[0])
         self.logger.record('main/omega', state[1])
 
+        if "mask" in info.keys():
+            action_rl = info['mask']["action"]
+            reward = info['mask']["reward"]
+            mask = info['mask']["last_mask"][:-1]
+            self.logger.record("main/masked",np.count_nonzero(mask == 0))
+            if info['mask']["action_mask"] is not None:
+                self.logger.record("main/lqr",abs(info['mask']["action_mask"]))
+            if info['mask']["punishment"] is not None:
+                self.logger.record("main/punish",info['mask']["punishment"])
+        elif "shield" in info.keys():
+            action_rl = info['shield']["action"]
+            reward = info['shield']["reward"]
+            if info['shield']["action_shield"] is not None:
+                self.logger.record("main/correction", abs(action_rl - info['shield']["action_shield"]))
+            if info['shield']["punishment"] is not None:
+                self.logger.record("main/punish", info['shield']["punishment"])
+
+        elif "cbf" in info.keys():
+            action_rl = info['cbf']["action"]
+            reward  = info['cbf']["reward"]
+            self.logger.record("main/correction",info['cbf']["action_bar"])
+            if info['cbf']["punishment"] is not None:
+                self.logger.record("main/punish", info['cbf']["punishment"])
+
+        else:
+            action_rl = info['standard']["action"]
+            reward = info['standard']["reward"]
+
+        self.logger.record('main/actionrl', action_rl)
+        self.logger.record('main/reward', reward)
+
+        if state not in self._safe_region:
+            self.logger.record('main/violation', True)
+            if "shield" in info.keys() and info['shield']["action_shield"] is not None:
+                self.logger.record('main/realviolation', False)
+            elif "mask" in info.keys() and info['mask']["action_mask"] is not None:
+                self.logger.record('main/realviolation', False)
+            elif "cbf" in info.keys() and info['cbf']["epsilon"] <= 1e-10:
+                self.logger.record('main/realviolation', False)
+            else:
+                self.logger.record('main/realviolation', True)
+        else:
+            self.logger.record('main/realviolation', False)
+            self.logger.record('main/violation', False)
+
         self.logger.dump(step=self.num_steps)
 
         return True
