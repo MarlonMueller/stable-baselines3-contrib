@@ -596,10 +596,10 @@ if __name__ == '__main__':
     args["rollout"] = True
 
     if args["flag"] == 0:
-    for model in range(1, 6):
-            for it in range(1,6): #6
-                args["name"] = f"MASK/{model}{it}"
-                main(**args)
+        for model in range(1, 6):
+                for it in range(1,6): #6
+                    args["name"] = f"MASK/{model}{it}"
+                    main(**args)
     if args["flag"] == 1:
         for model in range(1, 6):
             for it in range(1,6): #6
