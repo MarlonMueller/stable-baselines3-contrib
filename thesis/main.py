@@ -113,7 +113,7 @@ def main(**kwargs):
     # if "action_space" in kwargs and kwargs["action_space"] == "large":
     #     transform_action_space_fn = lambda a: 5 * (a - 10) if a <= 9 else 5 * (a - 9)
     #     alter_action_space = gym.spaces.Discrete(20)
-    alter_action_space = gym.spaces.Discrete(21) #21! TODO
+    alter_action_space = gym.spaces.Discrete(22) #21! TODO
     if "action_space" in kwargs and kwargs["action_space"] == "small":
         transform_action_space_fn = lambda a: 0.65 * (a - 10)
     else:
@@ -514,8 +514,8 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
             if model is not None:
 
                 #Masking
-                #action, state = model.predict(obs, state=state, action_masks=mask)
-                action, state = model.predict(obs, state=state)  # deterministic=deterministic
+                action, state = model.predict(obs, state=state, action_masks=mask)
+                #action, state = model.predict(obs, state=state)  # deterministic=deterministic
                 action = action[0]  # Action is dict
                 # action = 0
                 # print(action)
@@ -596,73 +596,108 @@ if __name__ == '__main__':
     args["rollout"] = True
 
     if args["flag"] == 0:
-        for model in range(1, 6):
+    for model in range(1, 6):
             for it in range(1,6): #6
-                args["name"] = f"CBF/{model}{it}"
+                args["name"] = f"MASK/{model}{it}"
                 main(**args)
     if args["flag"] == 1:
         for model in range(1, 6):
             for it in range(1,6): #6
-                args["name"] = f"CBF_SAS/{model}{it}"
+                args["name"] = f"MASK_SAS/{model}{it}"
                 args["action_space"] = "small"
                 main(**args)
     if args["flag"] == 2:
         for model in range(1, 6):
             for it in range(1,6): #6
-                args["name"] = f"CBF_INIT/{model}{it}"
+                args["name"] = f"MASK_INIT/{model}{it}"
                 args["init"] = "zero"
                 main(**args)
     if args["flag"] == 3:
         for model in range(1, 6):
             for it in range(1,6): #6
-                args["name"] = f"CBF_PUN/{model}{it}"
+                args["name"] = f"MASK_PUN/{model}{it}"
                 main(**args)
     if args["flag"] == 4:
         for model in range(1, 6):
             for it in range(1,6): #6
-                args["name"] = f"CBF_INIT_PUN/{model}{it}"
+                args["name"] = f"MASK_INIT_PUN/{model}{it}"
                 args["init"] = "zero"
                 main(**args)
     if args["flag"] == 5:
         for model in range(1, 6):
             for it in range(1,6): #6
-                args["name"] = f"CBF_SAS_PUN/{model}{it}"
+                args["name"] = f"MASK_SAS_PUN/{model}{it}"
                 args["action_space"] = "small"
                 main(**args)
-    if args["flag"] == 6:
-        for model in range(1, 6):
-            for it in range(1,6): #6
-                args["name"] = f"SHIELD/{model}{it}"
-                main(**args)
-    if args["flag"] == 7:
-        for model in range(1, 6):
-            for it in range(1,6): #6
-                args["name"] = f"SHIELD_SAS/{model}{it}"
-                args["action_space"] = "small"
-                main(**args)
-    if args["flag"] == 8:
-        for model in range(1, 6):
-            for it in range(1,6): #6
-                args["name"] = f"SHIELD_INIT/{model}{it}"
-                args["init"] = "zero"
-                main(**args)
-    if args["flag"] == 9:
-        for model in range(1, 6):
-            for it in range(1,6): #6
-                args["name"] = f"SHIELD_PUN/{model}{it}"
-                main(**args)
-    if args["flag"] == 10:
-        for model in range(1, 6):
-            for it in range(1,6): #6
-                args["name"] = f"SHIELD_INIT_PUN/{model}{it}"
-                args["init"] = "zero"
-                main(**args)
-    if args["flag"] == 11:
-        for model in range(1, 6):
-            for it in range(1,6): #6
-                args["name"] = f"SHIELD_SAS_PUN/{model}{it}"
-                args["action_space"] = "small"
-                main(**args)
+
+    # if args["flag"] == 0:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"CBF/{model}{it}"
+    #             main(**args)
+    # if args["flag"] == 1:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"CBF_SAS/{model}{it}"
+    #             args["action_space"] = "small"
+    #             main(**args)
+    # if args["flag"] == 2:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"CBF_INIT/{model}{it}"
+    #             args["init"] = "zero"
+    #             main(**args)
+    # if args["flag"] == 3:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"CBF_PUN/{model}{it}"
+    #             main(**args)
+    # if args["flag"] == 4:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"CBF_INIT_PUN/{model}{it}"
+    #             args["init"] = "zero"
+    #             main(**args)
+    # if args["flag"] == 5:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"CBF_SAS_PUN/{model}{it}"
+    #             args["action_space"] = "small"
+    #             main(**args)
+    # if args["flag"] == 6:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"SHIELD/{model}{it}"
+    #             main(**args)
+    # if args["flag"] == 7:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"SHIELD_SAS/{model}{it}"
+    #             args["action_space"] = "small"
+    #             main(**args)
+    # if args["flag"] == 8:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"SHIELD_INIT/{model}{it}"
+    #             args["init"] = "zero"
+    #             main(**args)
+    # if args["flag"] == 9:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"SHIELD_PUN/{model}{it}"
+    #             main(**args)
+    # if args["flag"] == 10:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"SHIELD_INIT_PUN/{model}{it}"
+    #             args["init"] = "zero"
+    #             main(**args)
+    # if args["flag"] == 11:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"SHIELD_SAS_PUN/{model}{it}"
+    #             args["action_space"] = "small"
+    #             main(**args)
 
 
     # for model in range(1,6):
