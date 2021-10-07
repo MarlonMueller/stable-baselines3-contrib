@@ -43,12 +43,12 @@ class SafetyCBF(gym.Wrapper):
             raise ValueError("Either dynamics_fn or unactuated_dynamics have to be specified.")
 
         self._A, self._b = safe_region.halfspaces
-        print(self._A)
-        print(self._b)
-        #self._P = matrix([[1.]],tc='d')
-        #self._q = matrix([0.], tc='d')
-        self._P = matrix([[1., 0], [0, 1e55]], tc='d')
-        self._q = matrix([0, 0], tc='d')
+        #print(self._A)
+        #print(self._b)
+        self._P = matrix([[1.]],tc='d')
+        self._q = matrix([0.], tc='d')
+        #self._P = matrix([[1., 0], [0, 1e55]], tc='d')
+        #self._q = matrix([0, 0], tc='d')
 
         self._gamma = gamma
         self._safe_region = safe_region
@@ -114,23 +114,8 @@ class SafetyCBF(gym.Wrapper):
         # If discrete, needs safety backup
         # Could also try only constraint
 
-        G = matrix(np.asarray([[np.dot(p, self._actuated_dynamics_fn(self.env)), -1] for p in self._A], dtype=np.double), tc='d')
-
-        if self._unactuated_dynamics_fn is not None:
-            h = matrix(np.asarray([-np.dot(self._A[i], self._unactuated_dynamics_fn(self.env))
-                                   - np.dot(self._A[i], self._actuated_dynamics_fn(self.env)) * action
-                                   + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
-                                   self._gamma * self._b[i] for i in range(len(self._A))],
-                                  dtype=np.double), tc='d')
-        else:
-            h = matrix(np.asarray([- np.dot(self._A[i], self._dynamics_fn(self.env, action))
-                                   + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
-                                   self._gamma * self._b[i] for i in range(len(self._A))],
-                                  dtype=np.double), tc='d')
-
-        # G = matrix(
-        #     np.asarray([[np.dot(p, self._actuated_dynamics_fn(self.env))] for p in self._A], dtype=np.double),
-        #     tc='d')
+        # G = matrix(np.asarray([[np.dot(p, self._actuated_dynamics_fn(self.env)), -1] for p in self._A], dtype=np.double), tc='d')
+        #
         # if self._unactuated_dynamics_fn is not None:
         #     h = matrix(np.asarray([-np.dot(self._A[i], self._unactuated_dynamics_fn(self.env))
         #                            - np.dot(self._A[i], self._actuated_dynamics_fn(self.env)) * action
@@ -143,13 +128,28 @@ class SafetyCBF(gym.Wrapper):
         #                            self._gamma * self._b[i] for i in range(len(self._A))],
         #                           dtype=np.double), tc='d')
 
+        G = matrix(
+            np.asarray([[np.dot(p, self._actuated_dynamics_fn(self.env))] for p in self._A], dtype=np.double),
+            tc='d')
+        if self._unactuated_dynamics_fn is not None:
+            h = matrix(np.asarray([-np.dot(self._A[i], self._unactuated_dynamics_fn(self.env))
+                                   - np.dot(self._A[i], self._actuated_dynamics_fn(self.env)) * action
+                                   + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
+                                   self._gamma * self._b[i] for i in range(len(self._A))],
+                                  dtype=np.double), tc='d')
+        else:
+            h = matrix(np.asarray([- np.dot(self._A[i], self._dynamics_fn(self.env, action))
+                                   + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
+                                   self._gamma * self._b[i] for i in range(len(self._A))],
+                                  dtype=np.double), tc='d')
+
         # print("##########")
         #
         # print("G")
         # print(G)
         # print("h")
         # print(h)
-        # print("State")
+        # # print("State")
         # print(self.env.state)
         # print("Dyn")
         # print(self._dynamics_fn(self.env, action))
@@ -170,14 +170,14 @@ class SafetyCBF(gym.Wrapper):
             info["cbf"] = {"action": action,
                            "action_bar": action_bar,
                            "reward": reward,
-                           "punishment": punishment,
-                           "epsilon": sol['x'][1]}
+                           "punishment": punishment}
+                           #"epsilon": sol['x'][1]}
             reward += punishment
         else:
             info["cbf"] = {"action": action,
                            "action_bar": action_bar,
                            "reward": reward,
-                           "punishment": None,
-                           "epsilon": sol['x'][1]}
+                           "punishment": None}
+                           #"epsilon": sol['x'][1]}
 
         return obs, reward, done, info

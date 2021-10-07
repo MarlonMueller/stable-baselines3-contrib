@@ -639,25 +639,30 @@ if __name__ == '__main__':
         entry_point='sb3_contrib.common.envs.pendulum.math_pendulum_env:MathPendulumEnv',
     )
 
+    args["algorithm"] = "PPO"
+    args['iterations'] = 1
+    args["render"] = False
+    args["rollout"] = True
+
     # for i in range(1):
     #     args["algorithm"] = "PPO"
     #     args['flag'] = 10 #0 und 6 -> PPO
-    #     args["train"] = True
-    #     #args["safety"] = "cbf"
+    #     #args["train"] = True
+    #     args["safety"] = "cbf"
     #     # args["safety"] = "env_safe_action"
     #     #args["punishment"] = "punish"
     #     args['total_timesteps'] = 8e4
-    #     #args["init"] = "zero"
-    #     #args["render"] = True
+    #     args["init"] = "zero"
+    #     args["render"] = True
     #     #args["action_space"] = "small"
     #     args['iterations'] = 1
-    #     #args["gamma"] = 0.001
+    #     args["gamma"] = 0.00001
     #     #args['group'] = 'Test'
     #     #args['group'] += "'"
     #     args['group'] = "TEST"
-    #     args['name'] = args['group']
-    #     #args["rollout"] = True
-    #     main(**args)
+    #     #args['name'] = args['group']
+    #     args["rollout"] = True
+        #main(**args)
 
 
 
@@ -714,74 +719,74 @@ if __name__ == '__main__':
     #             args["action_space"] = "small"
     #             main(**args)
 
-    # if args["flag"] == 0:
-    #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"CBF/{model}{it}"
-    #             main(**args)
-    # if args["flag"] == 1:
-    #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"CBF_SAS/{model}{it}"
-    #             args["action_space"] = "small"
-    #             main(**args)
-    # if args["flag"] == 2:
-    #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"CBF_INIT/{model}{it}"
-    #             args["init"] = "zero"
-    #             main(**args)
-    # if args["flag"] == 3:
-    #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"CBF_PUN/{model}{it}"
-    #             main(**args)
-    # if args["flag"] == 4:
-    #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"CBF_INIT_PUN/{model}{it}"
-    #             args["init"] = "zero"
-    #             main(**args)
-    # if args["flag"] == 5:
-    #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"CBF_SAS_PUN/{model}{it}"
-    #             args["action_space"] = "small"
-    #             main(**args)
-    # if args["flag"] == 6:
-    #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"SHIELD/{model}{it}"
-    #             main(**args)
-    # if args["flag"] == 7:
-    #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"SHIELD_SAS/{model}{it}"
-    #             args["action_space"] = "small"
-    #             main(**args)
-    # if args["flag"] == 8:
-    #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"SHIELD_INIT/{model}{it}"
-    #             args["init"] = "zero"
-    #             main(**args)
-    # if args["flag"] == 9:
-    #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"SHIELD_PUN/{model}{it}"
-    #             main(**args)
-    # if args["flag"] == 10:
-    #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"SHIELD_INIT_PUN/{model}{it}"
-    #             args["init"] = "zero"
-    #             main(**args)
-    # if args["flag"] == 11:
-    #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"SHIELD_SAS_PUN/{model}{it}"
-    #             args["action_space"] = "small"
-    #             main(**args)
+    if args["flag"] == 0:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"CBF/{model}{it}"
+                main(**args)
+    if args["flag"] == 1:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"CBF_SAS/{model}{it}"
+                args["action_space"] = "small"
+                main(**args)
+    if args["flag"] == 2:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"CBF_INIT/{model}{it}"
+                args["init"] = "zero"
+                main(**args)
+    if args["flag"] == 3:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"CBF_PUN/{model}{it}"
+                main(**args)
+    if args["flag"] == 4:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"CBF_INIT_PUN/{model}{it}"
+                args["init"] = "zero"
+                main(**args)
+    if args["flag"] == 5:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"CBF_SAS_PUN/{model}{it}"
+                args["action_space"] = "small"
+                main(**args)
+    if args["flag"] == 6:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"SHIELD/{model}{it}"
+                main(**args)
+    if args["flag"] == 7:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"SHIELD_SAS/{model}{it}"
+                args["action_space"] = "small"
+                main(**args)
+    if args["flag"] == 8:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"SHIELD_INIT/{model}{it}"
+                args["init"] = "zero"
+                main(**args)
+    if args["flag"] == 9:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"SHIELD_PUN/{model}{it}"
+                main(**args)
+    if args["flag"] == 10:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"SHIELD_INIT_PUN/{model}{it}"
+                args["init"] = "zero"
+                main(**args)
+    if args["flag"] == 11:
+        for model in range(1, 6):
+            for it in range(1,6): #6
+                args["name"] = f"SHIELD_SAS_PUN/{model}{it}"
+                args["action_space"] = "small"
+                main(**args)
 
 
     # for model in range(1,6):
@@ -819,7 +824,7 @@ if __name__ == '__main__':
     #         args["algorithm"] = "PPO"
     #         main(**args)
 
-    args["train"] = True
+    #args["train"] = True
 
     #args["rollout"] = True
     #args["render"] = True
@@ -988,7 +993,7 @@ if __name__ == '__main__':
         args["safety"] = "cbf"
         args["init"] = "zero"
 
-    main(**args)
+    #main(**args)
 
 
 
@@ -1060,18 +1065,21 @@ if __name__ == '__main__':
             y_label = "Safety correction"
 
         dirsss = [
-        #["A2C_UNTUNED", "PPO_UNTUNED"]
+        #["A2C_UNTUNED", "PPO_UNTUNED"],
+        #["PPO_UNTUNED", "PPO"]
+        #["A2C", "A2C_UNTUNED"],
+        #["A2C", "PPO"]
         #["PPO", "PPO_UNTUNED"],#Log/NotLog
         #["PPO_SAS", "PPO", "PPO_INIT"],
         #["A2C_UNTUNED_SAS", "A2C_UNTUNED", "A2C_UNTUNED_INIT"],
         #["A2C_SAS", "A2C", "A2C_INIT"],
         #["PPO_UNTUNED_SAS", "PPO_UNTUNED", "PPO_UNTUNED_INIT"],
         #["PPO_SAS", "PPO", "PPO_INIT"],
-        ["MASK_SAS", "MASK", "MASK_INIT"],
+        #["MASK_SAS", "MASK", "MASK_INIT"],
         #["SHIELD_SAS", "SHIELD", "SHIELD_INIT"],
         #["MASK", "SHIELD"] #SAME FOR CBF NO VIOLATION PLOT
         #["CBF_SAS", "CBF", "CBF_INIT"],
-        ["MASK_SAS_NEWPUN", "MASK_NEWPUN", "MASK_INIT_NEWPUN"],
+       # ["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
         #["SHIELD_SAS_PUN", "SHIELD_PUN", "SHIELD_INIT_PUN"],
         #["CBF_SAS_PUN", "CBF_PUN", "CBF_INIT_PUN"],
         #["MASK_SAS_PUNH", "MASK_PUNH", "MASK_INIT_PUNH"],
@@ -1095,6 +1103,7 @@ if __name__ == '__main__':
             #["MASK_SAS", "MASK", "MASK_INIT"],
             #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
         ]
+
         # for i, dirss in enumerate(dirsss):
         #     tf_events_to_plot(dirss=dirss, #"standard"
         #                       tags=[tag],
