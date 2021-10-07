@@ -113,7 +113,7 @@ def main(**kwargs):
     # if "action_space" in kwargs and kwargs["action_space"] == "large":
     #     transform_action_space_fn = lambda a: 5 * (a - 10) if a <= 9 else 5 * (a - 9)
     #     alter_action_space = gym.spaces.Discrete(20)
-    alter_action_space = gym.spaces.Discrete(22) #21! TODO
+    alter_action_space = gym.spaces.Discrete(21) #21! TODO
     if "action_space" in kwargs and kwargs["action_space"] == "small":
         transform_action_space_fn = lambda a: 0.65 * (a - 10)
     else:
@@ -122,6 +122,7 @@ def main(**kwargs):
     if 'safety' in kwargs and kwargs['safety'] is not None:
 
         if kwargs['safety'] == "shield":
+            print("Shield")
             from sb3_contrib.common.wrappers import SafetyShield
 
             def dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
@@ -162,10 +163,12 @@ def main(**kwargs):
 
 
         elif kwargs['safety'] == "cbf":
+            print("CBF")
             from sb3_contrib.common.wrappers import SafetyCBF
 
             def actuated_dynamics_fn(env: gym.Env) -> np.ndarray:
-                return np.array([0, env.dt])
+                return np.array([env.dt ** 2, env.dt])
+                #return np.array([0, env.dt])
                 #return np.array([0, (env.dt / (env.m * env.l ** 2))])
                 # return np.array([(env.dt ** 2 / (env.m * env.l ** 2)), (env.dt / (env.m * env.l ** 2))])
 
@@ -217,7 +220,7 @@ def main(**kwargs):
 
         elif kwargs['safety'] == "mask":
             from sb3_contrib.common.wrappers import SafetyMask
-
+            print("mask")
             def dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
                 theta, thdot = env.state
                 return env.dynamics(theta, thdot, action)
@@ -358,6 +361,26 @@ def main(**kwargs):
                             tensorboard_log=tensorboard_log)
 
                     else:
+                        #print("TUNED")
+                        # model = base_algorithm(MlpPolicy,
+                        #                        env,
+                        #                        verbose=0,
+                        #                        tensorboard_log=tensorboard_log,
+                        #                        batch_size=2,
+                        #                        n_steps=4,
+                        #                        gamma=0.9,
+                        #                        learning_rate=0.00015,
+                        #                        ent_coef=0,
+                        #                        clip_range=0.3,
+                        #                        n_epochs=2,
+                        #                        gae_lambda=1.0,
+                        #                        max_grad_norm=0.3,
+                        #                        vf_coef=0.7,
+                        #                        policy_kwargs=dict(
+                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                        #                            activation_fn=nn.Tanh,
+                        #                            ortho_init=True)
+                        #                        )
                         model = base_algorithm(MlpPolicy,
                                                env,
                                                verbose=0,
@@ -393,11 +416,11 @@ def main(**kwargs):
                                                normalize_advantage=True,
                                                tensorboard_log=tensorboard_log,
                                                ent_coef=0.1,
-                                               max_grad_norm=0.5,
-                                               n_steps=2,
+                                               max_grad_norm=0.3,
+                                               n_steps=8,
                                                gae_lambda=1.0,
-                                               vf_coef=0.5,
-                                               gamma=0.98,
+                                               vf_coef=0.6,
+                                               gamma=0.9,
                                                learning_rate=0.0015,
                                                use_sde=False,
                                                policy_kwargs=dict(
@@ -405,6 +428,26 @@ def main(**kwargs):
                                                    activation_fn=nn.ReLU,
                                                    ortho_init=True)
                                                )
+
+                        # model = base_algorithm(MlpPolicy,
+                        #                        env,
+                        #                        verbose=0,
+                        #                        use_rms_prop=False,
+                        #                        normalize_advantage=True,
+                        #                        tensorboard_log=tensorboard_log,
+                        #                        ent_coef=0.1,
+                        #                        max_grad_norm=0.5,
+                        #                        n_steps=2,
+                        #                        gae_lambda=1.0,
+                        #                        vf_coef=0.5,
+                        #                        gamma=0.98,
+                        #                        learning_rate=0.0015,
+                        #                        use_sde=False,
+                        #                        policy_kwargs=dict(
+                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                        #                            activation_fn=nn.ReLU,
+                        #                            ortho_init=True)
+                        #                        )
 
                 #else:
                 #    from stable_baselines3 import DQN
@@ -423,6 +466,7 @@ def main(**kwargs):
 
 
             # TODO: Overrides / maybe combine?
+            #save_model(kwargs["group"], model)
             save_model(kwargs["group"]+"/"+str(iteration+1), model)
 
     elif 'rollout' in kwargs and kwargs['rollout']:
@@ -436,6 +480,7 @@ def main(**kwargs):
                 model = load_model(name[:-1] + '.zip', MaskablePPO)
             else:
                 model = load_model(name[:-1] + '.zip', base_algorithm)
+                print(model)
             model.set_env(env)
 
             callback = CallbackList([PendulumRolloutCallback(safe_region=safe_region)])
@@ -511,12 +556,14 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
 
             time.sleep(sleep)
 
+
             if model is not None:
 
                 #Masking
-                action, state = model.predict(obs, state=state, action_masks=mask)
-                #action, state = model.predict(obs, state=state)  # deterministic=deterministic
+                #action, state = model.predict(obs, state=state, action_masks=mask)
+                action, state = model.predict(obs, state=state)  # deterministic=deterministic
                 action = action[0]  # Action is dict
+                #action = 20
                 # action = 0
                 # print(action)
 
@@ -592,43 +639,80 @@ if __name__ == '__main__':
         entry_point='sb3_contrib.common.envs.pendulum.math_pendulum_env:MathPendulumEnv',
     )
 
-    args["algorithm"] = "PPO"
-    args["rollout"] = True
+    # for i in range(1):
+    #     args["algorithm"] = "PPO"
+    #     args['flag'] = 10 #0 und 6 -> PPO
+    #     args["train"] = True
+    #     #args["safety"] = "cbf"
+    #     # args["safety"] = "env_safe_action"
+    #     #args["punishment"] = "punish"
+    #     args['total_timesteps'] = 8e4
+    #     #args["init"] = "zero"
+    #     #args["render"] = True
+    #     #args["action_space"] = "small"
+    #     args['iterations'] = 1
+    #     #args["gamma"] = 0.001
+    #     #args['group'] = 'Test'
+    #     #args['group'] += "'"
+    #     args['group'] = "TEST"
+    #     args['name'] = args['group']
+    #     #args["rollout"] = True
+    #     main(**args)
 
-    if args["flag"] == 0:
-        for model in range(1, 6):
-                for it in range(1,6): #6
-                    args["name"] = f"MASK/{model}{it}"
-                    main(**args)
-    if args["flag"] == 1:
-        for model in range(1, 6):
-            for it in range(1,6): #6
-                args["name"] = f"MASK_SAS/{model}{it}"
-                args["action_space"] = "small"
-                main(**args)
-    if args["flag"] == 2:
-        for model in range(1, 6):
-            for it in range(1,6): #6
-                args["name"] = f"MASK_INIT/{model}{it}"
-                args["init"] = "zero"
-                main(**args)
-    if args["flag"] == 3:
-        for model in range(1, 6):
-            for it in range(1,6): #6
-                args["name"] = f"MASK_PUN/{model}{it}"
-                main(**args)
-    if args["flag"] == 4:
-        for model in range(1, 6):
-            for it in range(1,6): #6
-                args["name"] = f"MASK_INIT_PUN/{model}{it}"
-                args["init"] = "zero"
-                main(**args)
-    if args["flag"] == 5:
-        for model in range(1, 6):
-            for it in range(1,6): #6
-                args["name"] = f"MASK_SAS_PUN/{model}{it}"
-                args["action_space"] = "small"
-                main(**args)
+
+
+    # if args["flag"] == 0:
+    #     for model in range(1, 6):
+    #             for it in range(1,6): #6
+    #                 args["name"] = f"PPO/{model}{it}"
+    #                 main(**args)
+    # if args["flag"] == 1:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"PPO_SAS/{model}{it}"
+    #             args["action_space"] = "small"
+    #             main(**args)
+    # if args["flag"] == 2:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"PPO_INIT/{model}{it}"
+    #             args["init"] = "zero"
+    #             main(**args)
+
+    #if args["flag"] == 0:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"MASK/{model}{it}"
+    #             main(**args)
+    # if args["flag"] == 1:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"MASK_SAS/{model}{it}"
+    #             args["action_space"] = "small"
+    #             main(**args)
+    # if args["flag"] == 2:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"MASK_INIT/{model}{it}"
+    #             args["init"] = "zero"
+    #             main(**args)
+    # if args["flag"] == 3:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"MASK_PUN/{model}{it}"
+    #             main(**args)
+    # if args["flag"] == 4:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"MASK_INIT_PUN/{model}{it}"
+    #             args["init"] = "zero"
+    #             main(**args)
+    # if args["flag"] == 5:
+    #     for model in range(1, 6):
+    #         for it in range(1,6): #6
+    #             args["name"] = f"MASK_SAS_PUN/{model}{it}"
+    #             args["action_space"] = "small"
+    #             main(**args)
 
     # if args["flag"] == 0:
     #     for model in range(1, 6):
@@ -735,203 +819,187 @@ if __name__ == '__main__':
     #         args["algorithm"] = "PPO"
     #         main(**args)
 
-    #args["train"] = True
+    args["train"] = True
+
+    #args["rollout"] = True
     #args["render"] = True
+
     #args["safety"] = "shield"
     #args["safety"] = "env_safe_action"
     #args["init"] = "zero"
     #args["action_space"] = "small"
-    #args['iterations'] = 2
-    #args['total_timesteps'] = 8e4
+
+    args["name"] = "train"
+    args['iterations'] = 5
+    args['total_timesteps'] = 8e4
+
     #args['name'] = 'maskTest'
 
     #
-    # if args["flag"] == 0:
-    #     args["algorithm"] = "A2C"
-    #     args['group'] = "A2C_UNTUNED"
-    # if args["flag"] == 1:
-    #     args["algorithm"] = "A2C"
-    #     args['group'] = "A2C_UNTUNED_SAS"
-    #     args["action_space"] = "small"
-    # if args["flag"] == 2:
-    #     args["algorithm"] = "A2C"
-    #     args['group'] = "A2C_UNTUNED_INIT"
-    #     args["init"] = "zero"
-    #
-    # if args["flag"] == 3:
-    #     args["algorithm"] = "A2C"
-    #     args['group'] = "A2C"
-    # if args["flag"] == 4:
-    #     args["algorithm"] = "A2C"
-    #     args['group'] = "A2C_SAS"
-    #     args["action_space"] = "small"
-    # if args["flag"] == 5:
-    #     args["algorithm"] = "A2C"
-    #     args['group'] = "A2C_INIT"
-    #     args["init"] = "zero"
-    #
-    # if args["flag"] == 6:
-    #     args['group'] = "PPO_UNTUNED"
-    # if args["flag"] == 7:
-    #     args['group'] = "PPO_UNTUNED_SAS"
-    #     args["action_space"] = "small"
-    # if args["flag"] == 8:
-    #     args['group'] = "PPO_UNTUNED_INIT"
-    #     args["init"] = "zero"
-    #
-    if args["flag"] == 9:
+    if args["flag"] == 0:
+        args["algorithm"] = "A2C"
+        args['group'] = "A2C_UNTUNED"
+    elif args["flag"] == 1:
+        args["algorithm"] = "A2C"
+        args['group'] = "A2C_UNTUNED_SAS"
+        args["action_space"] = "small"
+    elif args["flag"] == 2:
+        args["algorithm"] = "A2C"
+        args['group'] = "A2C_UNTUNED_INIT"
+        args["init"] = "zero"
+
+    elif args["flag"] == 3:
+        args["algorithm"] = "A2C"
+        args['group'] = "A2C"
+    elif args["flag"] == 4:
+        args["algorithm"] = "A2C"
+        args['group'] = "A2C_SAS"
+        args["action_space"] = "small"
+    elif args["flag"] == 5:
+        args["algorithm"] = "A2C"
+        args['group'] = "A2C_INIT"
+        args["init"] = "zero"
+
+    elif args["flag"] == 6:
+        args['group'] = "PPO_UNTUNED"
+    elif args["flag"] == 7:
+        args['group'] = "PPO_UNTUNED_SAS"
+        args["action_space"] = "small"
+    elif args["flag"] == 8:
+        args['group'] = "PPO_UNTUNED_INIT"
+        args["init"] = "zero"
+
+    elif args["flag"] == 9:
         args['group'] = "PPO"
-    if args["flag"] == 10:
+    elif args["flag"] == 10:
         args['group'] = "PPO_SAS"
         args["action_space"] = "small"
-    if args["flag"] == 11:
+    elif args["flag"] == 11:
         args['group'] = "PPO_INIT"
         args["init"] = "zero"
     #
-    if args["flag"] == 12:
+    elif args["flag"] == 12:
         args['group'] = "MASK"
         args["safety"] = "mask"
-    if args["flag"] == 13:
+    elif args["flag"] == 13:
         args['group'] = "MASK_SAS"
         args["safety"] = "mask"
         args["action_space"] = "small"
-    if args["flag"] == 14:
+    elif args["flag"] == 14:
         args['group'] = "MASK_INIT"
         args["safety"] = "mask"
         args["init"] = "zero"
 
-    if args["flag"] == 15:
+    elif args["flag"] == 15:
         args['group'] = "MASK_PUN"
         args["safety"] = "mask"
         args["punishment"] = "punish"
-    if args["flag"] == 16:
+    elif args["flag"] == 16:
         args['group'] = "MASK_SAS_PUN"
         args["safety"] = "mask"
         args["action_space"] = "small"
         args["punishment"] = "punish"
-    if args["flag"] == 17:
+    elif args["flag"] == 17:
         args['group'] = "MASK_INIT_PUN"
         args["safety"] = "mask"
         args["init"] = "zero"
         args["punishment"] = "punish"
 
-    if args["flag"] == 18:
+    elif args["flag"] == 18:
         args['group'] = "CBF"
         args["safety"] = "cbf"
-    if args["flag"] == 19:
+    elif args["flag"] == 19:
         args['group'] = "CBF_SAS"
         args["safety"] = "cbf"
         args["action_space"] = "small"
-    if args["flag"] == 20:
+    elif args["flag"] == 20:
         args['group'] = "CBF_INIT"
         args["safety"] = "cbf"
         args["init"] = "zero"
 
-    if args["flag"] == 21:
+    elif args["flag"] == 21:
         args['group'] = "CBF_PUN"
         args["safety"] = "cbf"
         args["punishment"] = "punish"
-    if args["flag"] == 22:
+    elif args["flag"] == 22:
         args['group'] = "CBF_SAS_PUN"
         args["safety"] = "cbf"
         args["action_space"] = "small"
         args["punishment"] = "punish"
-    if args["flag"] == 23:
+    elif args["flag"] == 23:
         args['group'] = "CBF_INIT_PUN"
         args["safety"] = "cbf"
         args["init"] = "zero"
         args["punishment"] = "punish"
 
-    if args["flag"] == 24:
+    elif args["flag"] == 24:
         args['group'] = "SHIELD"
         args["safety"] = "shield"
-    if args["flag"] == 25:
+    elif args["flag"] == 25:
         args['group'] = "SHIELD_SAS"
         args["safety"] = "shield"
         args["action_space"] = "small"
-    if args["flag"] == 26:
+    elif args["flag"] == 26:
         args['group'] = "SHIELD_INIT"
         args["safety"] = "shield"
         args["init"] = "zero"
 
-    if args["flag"] == 27:
+    elif args["flag"] == 27:
         args['group'] = "SHIELD_PUN"
         args["safety"] = "shield"
         args["punishment"] = "punish"
-    if args["flag"] == 28:
+    elif args["flag"] == 28:
         args['group'] = "SHIELD_SAS_PUN"
         args["safety"] = "shield"
         args["action_space"] = "small"
         args["punishment"] = "punish"
-    if args["flag"] == 29:
+    elif args["flag"] == 29:
         args['group'] = "SHIELD_INIT_PUN"
         args["safety"] = "shield"
         args["init"] = "zero"
         args["punishment"] = "punish"
 
-    #main(**args)
+    elif args["flag"] == 30:
+        args['group'] = "CBF_95"
+        args["safety"] = "cbf"
+        args["gamma"] = 0.95
+    elif args["flag"] == 31:
+        args['group'] = "CBF_SAS_95"
+        args["safety"] = "cbf"
+        args["action_space"] = "small"
+        args["gamma"] = 0.95
+    elif args["flag"] == 32:
+        args['group'] = "CBF_INIT_95"
+        args["gamma"] = 0.95
+        args["safety"] = "cbf"
+        args["init"] = "zero"
+    elif args["flag"] == 33:
+        args['group'] = "CBF_05"
+        args["safety"] = "cbf"
+        args["gamma"] = 0.05
+    elif args["flag"] == 34:
+        args['group'] = "CBF_SAS_05"
+        args["safety"] = "cbf"
+        args["action_space"] = "small"
+        args["gamma"] = 0.05
+    elif args["flag"] == 35:
+        args['group'] = "CBF_INIT_05"
+        args["gamma"] = 0.05
+        args["safety"] = "cbf"
+        args["init"] = "zero"
 
-    # if args["flag"] == 0:
-    #     args['group'] = "CBF_5"
-    #     args["safety"] = "cbf"
-    # if args["flag"] == 1:
-    #     args['group'] = "CBF_SAS_5"
-    #     args["safety"] = "cbf"
-    #     args["action_space"] = "small"
-    # if args["flag"] == 2:
-    #     args['group'] = "CBF_INIT_5"
-    #     args["safety"] = "cbf"
-    #     args["init"] = "zero"
-    # if args["flag"] == 3:
-    #     args['group'] = "CBF_95"
-    #     args["safety"] = "cbf"
-    #     args["gamma"] = 0.95
-    # if args["flag"] == 4:
-    #     args['group'] = "CBF_SAS_95"
-    #     args["safety"] = "cbf"
-    #     args["action_space"] = "small"
-    #     args["gamma"] = 0.95
-    # if args["flag"] == 5:
-    #     args['group'] = "CBF_INIT_95"
-    #     args["gamma"] = 0.95
-    #     args["safety"] = "cbf"
-    #     args["init"] = "zero"
-    # if args["flag"] == 6:
-    #     args['group'] = "CBF_05"
-    #     args["safety"] = "cbf"
-    #     args["gamma"] = 0.05
-    # if args["flag"] == 7:
-    #     args['group'] = "CBF_SAS_05"
-    #     args["safety"] = "cbf"
-    #     args["action_space"] = "small"
-    #     args["gamma"] = 0.05
-    # if args["flag"] == 8:
-    #     args['group'] = "CBF_INIT_05"
-    #     args["gamma"] = 0.05
-    #     args["safety"] = "cbf"
-    #     args["init"] = "zero"
-    # if args["flag"] == 9:
-    #     args['group'] = "MASK_PUNH"
-    #     args["safety"] = "mask"
-    #     args["punishment"] = "punish"
-    # if args["flag"] == 10:
-    #     args['group'] = "MASK_SAS_PUNH"
-    #     args["safety"] = "mask"
-    #     args["action_space"] = "small"
-    #     args["punishment"] = "punish"
-    # if args["flag"] == 11:
-    #     args['group'] = "MASK_INIT_PUNH"
-    #     args["safety"] = "mask"
-    #     args["init"] = "zero"
-    #     args["punishment"] = "punish"
-    # main(**args)
+    main(**args)
+
+
+
+
 
 
 
     tags = [
         # "main/avg_abs_action_rl",  # ?
         #"main/avg_abs_safety_correction",  #
-        #"main/avg_abs_masklqr_correction",
+        "main/avg_abs_masklqr_correction",
         # "main/avg_abs_thdot",  # ?
         # "main/avg_abs_theta",  # ?
         # "main/avg_safety_measure",  #
@@ -946,7 +1014,7 @@ if __name__ == '__main__':
         # "main/rel_abs_safety_correction",
         # "main/avg_step_punishment",  #
         #"main/avg_step_reward_rl"  # ???
-        "main/reward"
+        #"main/reward"
     ]
 
     # PRELIMINARY
@@ -987,9 +1055,9 @@ if __name__ == '__main__':
         elif tag == "main/no_violation":
             y_label = "Safety violation"
         elif tag == "main/avg_abs_safety_correction":
-            y_label = "Safety correction per step"
+            y_label = "Safety correction"
         else:
-            y_label = "Safety correction per step"
+            y_label = "Safety correction"
 
         dirsss = [
         #["A2C_UNTUNED", "PPO_UNTUNED"]
@@ -999,11 +1067,11 @@ if __name__ == '__main__':
         #["A2C_SAS", "A2C", "A2C_INIT"],
         #["PPO_UNTUNED_SAS", "PPO_UNTUNED", "PPO_UNTUNED_INIT"],
         #["PPO_SAS", "PPO", "PPO_INIT"],
-        #["MASK_SAS", "MASK", "MASK_INIT"],
+        ["MASK_SAS", "MASK", "MASK_INIT"],
         #["SHIELD_SAS", "SHIELD", "SHIELD_INIT"],
         #["MASK", "SHIELD"] #SAME FOR CBF NO VIOLATION PLOT
         #["CBF_SAS", "CBF", "CBF_INIT"],
-        #["MASK_SAS_NEWPUN", "MASK_NEWPUN", "MASK_INIT_NEWPUN"],
+        ["MASK_SAS_NEWPUN", "MASK_NEWPUN", "MASK_INIT_NEWPUN"],
         #["SHIELD_SAS_PUN", "SHIELD_PUN", "SHIELD_INIT_PUN"],
         #["CBF_SAS_PUN", "CBF_PUN", "CBF_INIT_PUN"],
         #["MASK_SAS_PUNH", "MASK_PUNH", "MASK_INIT_PUNH"],
@@ -1017,20 +1085,27 @@ if __name__ == '__main__':
             #["SHIELD_SAS"]#, "SHIELD", "SHIELD_INIT"],
             #["SHIELD_SAS_PUN"]#, "SHIELD_PUN", "SHIELD_INIT_PUN"],
             #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
+            #["PPO_SAS", "PPO", "PPO_INIT"],
+            #["MASK_SAS", "MASK", "MASK_INIT"],
+            #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
+            #["SHIELD_SAS", "SHIELD", "SHIELD_INIT"],
+            #["SHIELD_SAS_PUN", "SHIELD_PUN", "SHIELD_INIT_PUN"],
+            #["CBF_SAS", "CBF", "CBF_INIT"],
+            #["CBF_SAS_PUN", "CBF_PUN", "CBF_INIT_PUN"]
             #["MASK_SAS", "MASK", "MASK_INIT"],
             #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
         ]
-        for i, dirss in enumerate(dirsss):
-            tf_events_to_plot(dirss=dirss, #"standard"
-                              tags=[tag],
-                              x_label='Step',
-                              #x_label='Episode',
-                              y_label=y_label,
-                              width=2.5, #5
-                              height=2.5, #2.5
-                              episode_length=100,
-                              window_size=11, #41
-                              save_as=f"pdfs/{i}{tag.split('/')[1]}")
+        # for i, dirss in enumerate(dirsss):
+        #     tf_events_to_plot(dirss=dirss, #"standard"
+        #                       tags=[tag],
+        #                       #x_label='Step',
+        #                       x_label='Episode',
+        #                       y_label=y_label,
+        #                       width=2.5, #5   #2.5 -> 2
+        #                       height=2.5, #2.5
+        #                       episode_length=100,
+        #                       window_size=11, #41
+        #                       save_as=f"pdfs/{i}{tag.split('/')[1]}")
 
     # labels = []
     # for label in dirss:

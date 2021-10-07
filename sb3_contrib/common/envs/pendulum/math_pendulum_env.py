@@ -106,9 +106,14 @@ class MathPendulumEnv(Env):
         #print(self._get_obs(theta, thdot))
         return self._get_obs(theta, thdot), self._get_reward(theta, thdot, action), False, {}
 
+    # def dynamics(self, theta: float, thdot: float, torque: float) -> Tuple[float, float]:
+    #     new_theta = theta + self.dt * thdot
+    #     new_thdot = thdot + self.dt * ((self.g / self.l) * sin(theta) + 1. / (self.m * self.l ** 2) * torque)
+    #     return [new_theta, new_thdot]
+
     def dynamics(self, theta: float, thdot: float, torque: float) -> Tuple[float, float]:
-        new_theta = theta + self.dt * thdot
-        new_thdot = thdot + self.dt * ((self.g / self.l) * sin(theta) + 1. / (self.m * self.l ** 2) * torque)
+        new_thdot = thdot + self.dt * ((self.g / self.l) * sin(theta) + 1. / (self.m * self.l ** 2) * torque) #VECENV
+        new_theta = theta + self.dt * new_thdot #TODO: VECENV
         return [new_theta, new_thdot]
 
     def _get_obs(self, theta, thdot) -> GymObs:

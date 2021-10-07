@@ -43,7 +43,9 @@ class SafetyCBF(gym.Wrapper):
             raise ValueError("Either dynamics_fn or unactuated_dynamics have to be specified.")
 
         self._A, self._b = safe_region.halfspaces
-        #self._P = matrix([[0.]],tc='d')
+        print(self._A)
+        print(self._b)
+        #self._P = matrix([[1.]],tc='d')
         #self._q = matrix([0.], tc='d')
         self._P = matrix([[1., 0], [0, 1e55]], tc='d')
         self._q = matrix([0, 0], tc='d')
@@ -141,12 +143,23 @@ class SafetyCBF(gym.Wrapper):
         #                            self._gamma * self._b[i] for i in range(len(self._A))],
         #                           dtype=np.double), tc='d')
 
-
+        # print("##########")
+        #
+        # print("G")
+        # print(G)
+        # print("h")
+        # print(h)
+        # print("State")
+        # print(self.env.state)
+        # print("Dyn")
+        # print(self._dynamics_fn(self.env, action))
+        #print(self._P, self._q, G, h)
         sol = solvers.qp(self._P, self._q, G, h)
 
         #TODO: actions if not just one action
         #action_bar = sol['x'][:-1]
         action_bar = sol['x'][0]
+        #print(action, sol['x'][0])
         #print(action, sol['x'][0], sol['x'][1])
 
 

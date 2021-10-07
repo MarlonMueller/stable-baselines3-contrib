@@ -646,6 +646,18 @@ def remove_tf_logs(*dirs):
         shutil.rmtree(cwd + dir, ignore_errors=True)
 
 
+def reward_at(theta: float, thdot: float) -> float:
+    # if self.reward is not None: #TODO: Clean
+    #     # #Opposing -
+    #     return -(.5 * abs(action) + abs(self._norm_theta(theta)) + abs(.1 * thdot))
+    #else: #Safety
+    det_12 = 10.62620981660255
+    max_theta = 3.092505268377452
+    return -max(
+        abs((theta * 3.436116964863835) / det_12),
+        abs((theta * 9.326603190344699 + thdot * max_theta) / det_12) #Try: **2/Action
+    )
+
 def rename_tf_events(group):
     """ Renames the tf events within ./tensorboard/*dirs to tfevents.event.
     """
@@ -742,6 +754,9 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
 
                     #values = (-(np.array(values) - 0.5)) + 0.5
                     values = np.array(values)
+                    # if "SAS" in label:
+                    #     values = np.array([v for v in values if v[-1] <= -10])
+                    #     print(values.shape)
                     #values = -np.array(values)
                     mean = np.mean(values, axis=0)
                     std_dev = np.std(values, axis=0)
@@ -804,16 +819,36 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     # plt.gca().axhline(-0.75, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
                     #                   zorder=1)
 
-                    #Safety Measure
+                    # Rollout
                     # plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75, zorder=1)
-                    # plt.gca().axhline(10, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                    # plt.gca().axhline(-0.5, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                    #                    zorder=1)
+                    # plt.gca().axhline(-1, linestyle='dotted', color='magenta', linewidth=.75, zorder=1)
+                    # plt.gca().axhline(-10, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
                     #                   zorder=1)
-                    # plt.gca().axhline(1, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                    # plt.gca().axhline(-100, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
                     #                   zorder=1)
-                    # plt.gca().axhline(5, linestyle='dotted',  color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                    #
+                    # plt.gca().axhline(-5.514739229024946, linestyle='dotted', color="magenta", linewidth=.5,
                     #                   zorder=1)
-                    # plt.gca().axhline(0.5, linestyle='dotted',  color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                    #
+                    # plt.gca().axhline(-11.029478458049892, linestyle='dotted', color="magenta", linewidth=.5,
                     #                   zorder=1)
+
+                    #5.514739229024946
+                    #-11.029478458049892
+                    #-16.544217687074838
+
+                    #Safety Measure
+                    plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75, zorder=1)
+                    plt.gca().axhline(10, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                                      zorder=1)
+                    plt.gca().axhline(1, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                                      zorder=1)
+                    plt.gca().axhline(5, linestyle='dotted',  color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                                      zorder=1)
+                    plt.gca().axhline(0.5, linestyle='dotted',  color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                                      zorder=1)
 
                     # plt.gca().axhline(-1, linestyle='dotted', color='magenta', linewidth=.75, zorder=1)
                     # plt.gca().axhline(-0.5, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5, zorder=1)
@@ -860,43 +895,47 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     # plt.gca().set_yticks([0, -0.5, -1], minor=False)
                     # plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$'])
 
-                    #plt.gca().set_yscale("symlog", linthresh=1)
-                    #plt.gca().set_ylim(top=.25)
-
-                    #plt.gca().set_yticks([0, -0.5, -1, -5, -10, -20], minor=False)
-                    #plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$', "$-5$",'$-10$', "$-20$"])
-                    #plt.gca().set_yticks([-0.25, -0.75, -2 ,-3 ,-4 ,-6, -7, -8, -9, -11, -12,-13,-14,-15,-16,-17,-18,-19], minor=True)
-                    #plt.gca().set_xlim(right=800)
-                    #plt.gca().set_yticks([1, 0, -1, -2, -3, -4, -5], minor=False)
-                    plt.gca().set_xlim(right=100)
-                    #plt.gca().set_xticks([0, 200, 400, 600, 800], minor=False)
-                    #plt.gca().set_xticks([0, 250, 500, 750], minor=False)
-                    #minor_ticks = [100, 300, 500, 700]
-                    #minor_ticks = [62.5, 125, 187.5, 312.5, 375, 437.5]
-                    #plt.gca().set_xticks(minor_ticks, minor=True)
-                    #plt.gca().yaxis.set_label_position("right")
-                    #plt.gca().yaxis.tick_right()
+                    # plt.gca().set_yscale("symlog", linthresh=1)
+                    # plt.gca().set_ylim(top=.25)
+                    # plt.gca().set_ylim(bottom=-100)
+                    #
+                    # plt.gca().set_yticks([0, -0.5, -1, -10, -100], minor=False)
+                    # plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$', "$-10$", "$-100$"])
+                    # plt.gca().set_yticks([-0.25, -0.75], minor=True)
+                    # #plt.gca().set_xlim(right=800)
+                    # #plt.gca().set_yticks([1, 0, -1, -2, -3, -4, -5], minor=False)
+                    #
+                    # plt.gca().set_xlim(right=100)
+                    # plt.gca().set_xticks([1,50,100], minor=False)
+                    # plt.gca().set_xticks([25,75], minor=True)
+                    # #plt.gca().set_xticks([0, 200, 400, 600, 800], minor=False)
+                    # #plt.gca().set_xticks([0, 250, 500, 750], minor=False)
+                    # #minor_ticks = [100, 300, 500, 700]
+                    # #minor_ticks = [62.5, 125, 187.5, 312.5, 375, 437.5]
+                    # #plt.gca().set_xticks(minor_ticks, minor=True)
+                    # #plt.gca().yaxis.set_label_position("right")
+                    # #plt.gca().yaxis.tick_right()
 
                     #plt.gca().set_xlim(right=200)
                     #plt.xticks([0,1250,2500])
                     #plt.xticks([0, 1000, 2000], minor=True)
 
-                    #plt.gca().set_yscale("symlog", linthresh=1)
-                    # plt.gca().set_xlim(right=800)
-                    # plt.gca().set_ylim(top=1.1)
-                    # plt.gca().set_yticks([0, 0.5, 1], minor=False)
-                    # plt.gca().set_yticks([0.25, 0.75], minor=True)
-                    # #plt.gca().set_yticks([0.5], minor=True)
-                    # plt.gca().set_ylim(bottom=-0.1)
-                    # #plt.gca().set_yticklabels(['$0\%$', '$50\%$', '$100\%$'])
-                    # plt.gca().set_xticks([0, 200, 400, 600, 800], minor=False)
-                    # #plt.gca().set_yticks([10, 5, 1,0.5, 0], minor=False)
-                    # #plt.gca().set_yticklabels(['$10$',"$5$", '$1$', '$0.5$','$0$'])
-                    # #plt.gca().set_yticks([9,8,7,6,4,3,2], minor=True)
-                    # minor_ticks = [100, 300, 500, 700]
-                    # plt.gca().set_xticks(minor_ticks, minor=True)
-                    #plt.gca().yaxis.set_label_position("right")
-                    #plt.gca().yaxis.tick_right()
+                    plt.gca().set_yscale("symlog", linthresh=1)
+                    plt.gca().set_xlim(right=800)
+                    #plt.gca().set_ylim(top=1.1)
+                    #plt.gca().set_yticks([0, 0.5, 1], minor=False)
+                    #plt.gca().set_yticks([0.25, 0.75], minor=True)
+                    #plt.gca().set_yticks([0.5], minor=True)
+                    plt.gca().set_ylim(bottom=-0.1)
+                    #plt.gca().set_yticklabels(['$0\%$', '$50\%$', '$100\%$'])
+                    plt.gca().set_xticks([0, 200, 400, 600, 800], minor=False)
+                    plt.gca().set_yticks([10, 5, 1,0.5, 0], minor=False)
+                    plt.gca().set_yticklabels(['$10$',"$5$", '$1$', '$0.5$','$0$'])
+                    plt.gca().set_yticks([9,8,7,6,4,3,2], minor=True)
+                    minor_ticks = [100, 300, 500, 700]
+                    plt.gca().set_xticks(minor_ticks, minor=True)
+                    plt.gca().yaxis.set_label_position("right")
+                    plt.gca().yaxis.tick_right()
 
 
                     # plt.gca().axhline(20, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
@@ -963,7 +1002,8 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
             #print(int(summary_df['episode'].max()))
             #plt.xticks([200 * i for i in range(int(episodes / (200)) + 1)])
 
-        plt.gca().set_xlim(left=0)
+        #plt.gca().set_xlim(left=0)
+        #plt.gca().set_xlim(left=1) #TODO:REMOVE
 
         #plt.gca().set_ylim(bottom=-10)
         #plt.gca().set_ylim(top=-1)
@@ -1105,14 +1145,21 @@ if __name__ == '__main__':
 
     v1 = np.array([0, 3.436116964863835])
     v2 = np.array([-3.092505268377452, 9.326603190344699])
-    safety_measure_plot(v1, v2, save_as="pdfs/safetyMeasure", vertices=vertices)
-    print("Test")
+    #safety_measure_plot(v1, v2, save_as="pdfs/safetyMeasure", vertices=vertices)
+    #print("Test")
+
+    #print(reward_at(theta=2*pi,thdot=0))
+    #print(reward_at(theta=4* pi, thdot=0))
+    #print(reward_at(theta=6* pi, thdot=0))
 
     # gain_matrix = None
     # Gain matrix for current configuration
+    #from thesis.matlab.ma
     #from pendulum.mathematical_pendulum.envs.mathematical_pendulum import MathematicalPendulumEnv
     #print(MathematicalPendulumEnv.gain_matrix())
-    gain_matrix = [19.670836678497427,6.351509533724627]
+    #gain_matrix = [19.670836678497427,6.351509533724627]
+
+
 
     max_theta = np.pi
 
