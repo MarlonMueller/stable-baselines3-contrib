@@ -61,3 +61,10 @@ class SafeRegion():
 
     def sample(self):
         raise NotImplementedError
+
+if __name__ == '__main__':
+    H = np.array([[1, 0.01], [1, -0.01], [-1, 0.01], [-1, -0.01]])
+
+    F = 1
+    roa = SafeRegion(A = H, b = np.array([1,1,1,1]))
+    print(roa.vertices)

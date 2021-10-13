@@ -145,21 +145,32 @@ class SafetyCBF(gym.Wrapper):
 
         # print("##########")
         #
-        # print("G")
-        # print(G)
-        # print("h")
-        # print(h)
-        # # print("State")
-        # print(self.env.state)
+
+        # print("###")
+        # print("State", self.env.state)
+        # print(h[0]," >= a*",(np.dot(self._A[0], self._actuated_dynamics_fn(self.env))), "==>", h[0] / G[0])
+        # print(h[1]," >= a*",(np.dot(self._A[1], self._actuated_dynamics_fn(self.env))), "==>", h[1] / G[1])
+        # print(h[2]," >= a*",(np.dot(self._A[2], self._actuated_dynamics_fn(self.env))), "==>", h[2] / G[2])
+        # print(h[3]," >= a*",(np.dot(self._A[3], self._actuated_dynamics_fn(self.env))), "==>", h[3] / G[3])
+        # #print(- np.dot(self._A[3], self._dynamics_fn(self.env, action)),
+        #                           (1 - self._gamma) * np.dot(self._A[3], self.env.state),  # TODO
+        #                           self._gamma * self._b[3])
+        sol = solvers.qp(self._P, self._q, G, h)
+        # print(action, sol['x'][0])
+        # print("###")
+        #print("G")
+        #print(G)
+        #print("h")
+        #print(h)
+        # print("State")
+        #print(self.env.state)
         # print("Dyn")
         # print(self._dynamics_fn(self.env, action))
-        #print(self._P, self._q, G, h)
-        sol = solvers.qp(self._P, self._q, G, h)
+        # print(self._P, self._q, G, h)
 
         #TODO: actions if not just one action
         #action_bar = sol['x'][:-1]
         action_bar = sol['x'][0]
-        #print(action, sol['x'][0])
         #print(action, sol['x'][0], sol['x'][1])
 
 

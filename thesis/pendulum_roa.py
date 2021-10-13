@@ -127,5 +127,5 @@ if __name__ == '__main__':
     #    print(i)
     #    print(dynamics(2.96832, -12.17228, i) in safe_region)
 
-    print(dynamics(2.96832, -12.17228, 18.923017468258237))
-    print(dynamics(2.96832, -12.17228, 18.923017468258237) in safe_region)
+    #print(dynamics(2.96832, -12.17228, 18.923017468258237))
+    print([-1.6864531 ,  7.42285352] in safe_region)

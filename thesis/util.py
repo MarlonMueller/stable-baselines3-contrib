@@ -178,8 +178,8 @@ def safety_measure_plot(v1, v2, width=2.5, height=2.5, l=1, m=1, g=9.81, K=None,
     # rect = patches.Rectangle((0.55 * v2[0]-.3, 0.55 * v2[1]-1.5), .6, 3, linewidth=.75, edgecolor='blue', facecolor='none', zorder=3)
     # plt.gca().add_patch(rect)
 
-    plt.gca().scatter(.35*v2[0], .35*v2[1], s=8, c='black', zorder=7)
-    plt.gca().scatter(-.25, 5.25, s=8, c='red', zorder=4)
+    #plt.gca().scatter(.35*v2[0], .35*v2[1], s=8, c='black', zorder=7)
+    #plt.gca().scatter(-.25, 5.25, s=8, c='red', zorder=4)
     #plt.gca().scatter(.2 * v2[0] +.3, .2 * v2[1] + 3 -1.5 -.2, s=4, c='green', zorder=4)
     #plt.gca().scatter(.2 * v2[0] +.3, .2 * v2[1] + 3 +1.5 -.2, s=4, c='red', zorder=4)
     #plt.gca().scatter(.2 * v2[0] -.3, .2 * v2[1] + 3 -1.5 -.2, s=4, c='green', zorder=4)
@@ -187,94 +187,94 @@ def safety_measure_plot(v1, v2, width=2.5, height=2.5, l=1, m=1, g=9.81, K=None,
     #rect = patches.Rectangle((.2*v2[0] -.3, .2*v2[1] + 3 -1.5 -.2), .6, 3, linewidth=.75, edgecolor='blue',
     #                         facecolor='none', zorder=3)
     #plt.gca().add_patch(rect)
-    plt.gca().scatter(.15*v2[0] - .2, -1.25 + .15*v2[1], s=6, c='green', zorder=5)
-    plt.gca().scatter(.15*v2[0] - .2, +1.25 + .15*v2[1] , s=6, c='green', zorder=5)
-    plt.gca().scatter(.15*v2[0] +.2, +1.25 + .15*v2[1] , s=6, c='green', zorder=5)
-    plt.gca().scatter(.15*v2[0] +.2, -1.25 + .15*v2[1] , s=6, c='green', zorder=5)
-
-
-
-    plt.gca().annotate("", color="red", xy=(-.25, 5.25),
-                       xytext=(.35*v2[0], .35*v2[1]),
-                       arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="red"), annotation_clip=True,
-                       zorder=6)
-    plt.gca().annotate("", color="green", xy=(.15*v2[0], .15*v2[1]),
-                       xytext=(.35*v2[0], .35*v2[1]),
-                       arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="green"), annotation_clip=True,
-                       zorder=5)
+    # plt.gca().scatter(.15*v2[0] - .2, -1.25 + .15*v2[1], s=6, c='green', zorder=5)
+    # plt.gca().scatter(.15*v2[0] - .2, +1.25 + .15*v2[1] , s=6, c='green', zorder=5)
+    # plt.gca().scatter(.15*v2[0] +.2, +1.25 + .15*v2[1] , s=6, c='green', zorder=5)
+    # plt.gca().scatter(.15*v2[0] +.2, -1.25 + .15*v2[1] , s=6, c='green', zorder=5)
     #
     #
-
-    rect = patches.Rectangle((-.2 + .15*v2[0], -1.25 + .15*v2[1]), .4, 2.5, linewidth=1,
-                             edgecolor='blue',
-                             facecolor='none', zorder=4)
-    plt.gca().add_patch(rect)
-    plt.gca().scatter(.15*v2[0], .15*v2[1], s=8, c='black', zorder=4)
+    #
+    # plt.gca().annotate("", color="red", xy=(-.25, 5.25),
+    #                    xytext=(.35*v2[0], .35*v2[1]),
+    #                    arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="red"), annotation_clip=True,
+    #                    zorder=6)
+    # plt.gca().annotate("", color="green", xy=(.15*v2[0], .15*v2[1]),
+    #                    xytext=(.35*v2[0], .35*v2[1]),
+    #                    arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="green"), annotation_clip=True,
+    #                    zorder=5)
+    # #
+    # #
+    #
+    # rect = patches.Rectangle((-.2 + .15*v2[0], -1.25 + .15*v2[1]), .4, 2.5, linewidth=1,
+    #                          edgecolor='blue',
+    #                          facecolor='none', zorder=4)
+    # plt.gca().add_patch(rect)
+    # plt.gca().scatter(.15*v2[0], .15*v2[1], s=8, c='black', zorder=4)
     # plt.gca().scatter(- .3, - 1.5, s=4, c='green', zorder=6)
     # plt.gca().scatter(- .3,+1.5, s=4, c='green', zorder=6)
     # plt.gca().scatter(.3, -1.5, s=4, c='green', zorder=6)
     # plt.gca().scatter(.3, +1.5, s=4, c='green', zorder=6)
 
-    plt.gca().scatter(pi/2 +.25*v2[0], -2.25*pi -.3 +.25*v2[1], s=8, c='black', zorder=8)
-    #plt.gca().scatter(pi / 2 - .2*v2[0] +.2*v2[0], -2.25 * pi - .2*v2[1] + .5 -.3 +.2*v2[1], s=8, c='red', zorder=4)
-
-    plt.gca().scatter(pi / 2 - .2*v2[0] -.3, -2.25 * pi - .2*v2[1] + .5 -.3 -1.5, s=4, c='red', zorder=4)
-    plt.gca().scatter(pi / 2 - .2 * v2[0] -.3, -2.25 * pi - .2 * v2[1] + .5 - .3 +1.5, s=4, c='green', zorder=4)
-    plt.gca().scatter(pi / 2 - .2 * v2[0] +.3, -2.25 * pi - .2 * v2[1] + .5 - .3 -1.5, s=4, c='green', zorder=4)
-    plt.gca().scatter(pi / 2 - .2 * v2[0] +.3, -2.25 * pi - .2 * v2[1] + .5 - .3 +1.5, s=4, c='green', zorder=4)
-
-    plt.gca().annotate("", color="red", xy=(pi / 2 + .27 * v2[0] + .2 +.27*v2[0], -2.15 * pi + .27 * v2[1] - 1.2 +.27*v2[1]),
-                       xytext=(pi/2 +.25*v2[0], -2.25*pi -.3 +.25*v2[1]),
-                       arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="green"), annotation_clip=True,
-                       zorder=5)
-
-    plt.gca().annotate("", color="orange", xy=(pi / 2 + .27 * v2[0] +.04 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 +.25*v2[1]),
-                       xytext=(pi/2 +.25*v2[0], -2.25*pi -.3 +.25*v2[1]),
-                       arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="orange"), annotation_clip=True,
-                       zorder=6)
-
-    plt.gca().annotate("", color="red",
-                       xy=(1.45, 0),
-                       xytext=(pi/2 +.25*v2[0], -2.25*pi -.3 +.25*v2[1]),
-                       arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="red"), annotation_clip=True,
-                       zorder=6)
+    # plt.gca().scatter(pi/2 +.25*v2[0], -2.25*pi -.3 +.25*v2[1], s=8, c='black', zorder=8)
+    # #plt.gca().scatter(pi / 2 - .2*v2[0] +.2*v2[0], -2.25 * pi - .2*v2[1] + .5 -.3 +.2*v2[1], s=8, c='red', zorder=4)
+    #
+    # plt.gca().scatter(pi / 2 - .2*v2[0] -.3, -2.25 * pi - .2*v2[1] + .5 -.3 -1.5, s=4, c='red', zorder=4)
+    # plt.gca().scatter(pi / 2 - .2 * v2[0] -.3, -2.25 * pi - .2 * v2[1] + .5 - .3 +1.5, s=4, c='green', zorder=4)
+    # plt.gca().scatter(pi / 2 - .2 * v2[0] +.3, -2.25 * pi - .2 * v2[1] + .5 - .3 -1.5, s=4, c='green', zorder=4)
+    # plt.gca().scatter(pi / 2 - .2 * v2[0] +.3, -2.25 * pi - .2 * v2[1] + .5 - .3 +1.5, s=4, c='green', zorder=4)
+    #
+    # plt.gca().annotate("", color="red", xy=(pi / 2 + .27 * v2[0] + .2 +.27*v2[0], -2.15 * pi + .27 * v2[1] - 1.2 +.27*v2[1]),
+    #                    xytext=(pi/2 +.25*v2[0], -2.25*pi -.3 +.25*v2[1]),
+    #                    arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="green"), annotation_clip=True,
+    #                    zorder=5)
+    #
+    # plt.gca().annotate("", color="orange", xy=(pi / 2 + .27 * v2[0] +.04 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 +.25*v2[1]),
+    #                    xytext=(pi/2 +.25*v2[0], -2.25*pi -.3 +.25*v2[1]),
+    #                    arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="orange"), annotation_clip=True,
+    #                    zorder=6)
+    #
+    # plt.gca().annotate("", color="red",
+    #                    xy=(1.45, 0),
+    #                    xytext=(pi/2 +.25*v2[0], -2.25*pi -.3 +.25*v2[1]),
+    #                    arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="red"), annotation_clip=True,
+    #                    zorder=6)
 
 
     # rect = patches.Rectangle((pi / 2 - .2*v2[0] -.3, -2.25 * pi - .2*v2[1] + .5 -1.5 -.3), .6, 3, linewidth=.75, edgecolor='blue',
     #                         facecolor='none', zorder=3)
     # plt.gca().add_patch(rect)
 
-    plt.gca().scatter(1.45, 0, s=8,
-                      c='red', zorder=4)
+    # plt.gca().scatter(1.45, 0, s=8,
+    #                   c='red', zorder=4)
+    #
+    #
+    # plt.gca().scatter(pi / 2 + .27 * v2[0] +.04 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 +.25*v2[1], s=8, c='orange', zorder=4)
+    # plt.gca().scatter(pi / 2 + .27 * v2[0] + .2 +.27*v2[0], -2.15 * pi + .27 * v2[1] - 1.2 +.27*v2[1], s=8, c='black', zorder=4)
+    # #plt.gca().scatter(pi / 2 + .2*v2[0] + .05, -2.25 * pi + .2*v2[1] -.15, s=8, c='black', zorder=4)
+    #
+    # plt.gca().scatter(pi / 2 + .27 * v2[0] +.04 -.3 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 -2 +.25*v2[1], s=6, c='red', zorder=4)
+    # plt.gca().scatter(pi / 2 + .27 * v2[0] +.04 +.3 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 -2 +.25*v2[1], s=6, c='red', zorder=4)
+    # plt.gca().scatter(pi / 2 + .27 * v2[0] +.04 -.3 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 +2 +.25*v2[1], s=6, c='green', zorder=4)
+    # plt.gca().scatter(pi / 2 + .27 * v2[0] +.04 +.3 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 +2 +.25*v2[1], s=6, c='green', zorder=4)
+    #
+    # rect = patches.Rectangle((pi / 2 + .27 * v2[0] +.04 -.3 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 -2 +.25*v2[1]), .6, 4, linewidth=1,
+    #                          edgecolor='blue',
+    #                          facecolor='none', zorder=3)
+    # plt.gca().add_patch(rect)
 
 
-    plt.gca().scatter(pi / 2 + .27 * v2[0] +.04 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 +.25*v2[1], s=8, c='orange', zorder=4)
-    plt.gca().scatter(pi / 2 + .27 * v2[0] + .2 +.27*v2[0], -2.15 * pi + .27 * v2[1] - 1.2 +.27*v2[1], s=8, c='black', zorder=4)
-    #plt.gca().scatter(pi / 2 + .2*v2[0] + .05, -2.25 * pi + .2*v2[1] -.15, s=8, c='black', zorder=4)
-
-    plt.gca().scatter(pi / 2 + .27 * v2[0] +.04 -.3 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 -2 +.25*v2[1], s=6, c='red', zorder=4)
-    plt.gca().scatter(pi / 2 + .27 * v2[0] +.04 +.3 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 -2 +.25*v2[1], s=6, c='red', zorder=4)
-    plt.gca().scatter(pi / 2 + .27 * v2[0] +.04 -.3 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 +2 +.25*v2[1], s=6, c='green', zorder=4)
-    plt.gca().scatter(pi / 2 + .27 * v2[0] +.04 +.3 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 +2 +.25*v2[1], s=6, c='green', zorder=4)
-
-    rect = patches.Rectangle((pi / 2 + .27 * v2[0] +.04 -.3 +.25*v2[0], -2.25 * pi + .27 * v2[1] -1.85 -2 +.25*v2[1]), .6, 4, linewidth=1,
-                             edgecolor='blue',
-                             facecolor='none', zorder=3)
-    plt.gca().add_patch(rect)
 
 
-
-
-    plt.gca().annotate("$s_{\mathrm{t}}^{1}$", xytext=(.35*v2[0] -.28, .35*v2[1] -.2), xy=(0, 0))
-    plt.gca().annotate("$s_{\mathrm{t}}^{2}$", xytext=(pi/2 +.25*v2[0] + .1, -2.25*pi -.3 +.25*v2[1] -.6), xy=(0, 0))
-    plt.gca().annotate("$a_{\mathrm{t}}$", xytext=(pi / 2 + .25 * v2[0] + .1 -.1*v2[0], -2 -.1*v2[1]),
-                       xy=(0, 0))
-    plt.gca().annotate("$a_{\mathrm{t}}$", xytext=(.3*v2[0]-.05, .3*v2[1]+1.7),
-                       xy=(0, 0))
-    plt.gca().annotate("$a_{\mathrm{t}}^{\mathrm{VER}}$", xytext=(pi / 2 + .25 * v2[0] + .1 -.5, -3.5),
-                       xy=(0, 0))
-    plt.gca().annotate("$a_{\mathrm{t}}^{\mathrm{VER}}$", xytext=(.3*v2[0] -.28 -.07, .3*v2[1] -.2 -1.55),
-                       xy=(0, 0))
+    # plt.gca().annotate("$s_{\mathrm{t}}^{1}$", xytext=(.35*v2[0] -.28, .35*v2[1] -.2), xy=(0, 0))
+    # plt.gca().annotate("$s_{\mathrm{t}}^{2}$", xytext=(pi/2 +.25*v2[0] + .1, -2.25*pi -.3 +.25*v2[1] -.6), xy=(0, 0))
+    # plt.gca().annotate("$a_{\mathrm{t}}$", xytext=(pi / 2 + .25 * v2[0] + .1 -.1*v2[0], -2 -.1*v2[1]),
+    #                    xy=(0, 0))
+    # plt.gca().annotate("$a_{\mathrm{t}}$", xytext=(.3*v2[0]-.05, .3*v2[1]+1.7),
+    #                    xy=(0, 0))
+    # plt.gca().annotate("$a_{\mathrm{t}}^{\mathrm{VER}}$", xytext=(pi / 2 + .25 * v2[0] + .1 -1.01, -5.65),
+    #                    xy=(0, 0), zorder=10)
+    # plt.gca().annotate("$a_{\mathrm{t}}^{\mathrm{VER}}$", xytext=(.3*v2[0] -.28 -.07, .3*v2[1] -.2 -1.55),
+    #                    xy=(0, 0))
 
     #plt.gca().annotate("$s_{\mathrm{t}}^{1}$", xytext=(.8*v2[0] -.17,.8*v2[1]-1.5 + 1.1), xy=(0, 0))
     #plt.gca().annotate("$s_{\mathrm{t}+1}^{1}$", xytext=(0.35 * v2[0] + .4, 0.35 * v2[1] - .9), xy=(0, 0))
@@ -283,72 +283,72 @@ def safety_measure_plot(v1, v2, width=2.5, height=2.5, l=1, m=1, g=9.81, K=None,
     #plt.gca().annotate("$s_{\mathrm{t}}^{3}$", xytext=(pi/2 - .2, -2*pi + .075), xy=(0, 0))
     #plt.gca().annotate("$s_{\mathrm{t}+1}^{2}$", xytext=(-0.45 * v2[0] - 0.3 + .1, -0.25 * v2[1] + 2.5), xy=(0, 0))
 
-    # vertices = [
-    #     [0.4 * (v1[0] + v2[0]), 0.4 * (v1[1] + v2[1])],
-    #     [0.4 * (v1[0] - v2[0]), 0.4 * (v1[1] - v2[1])],
-    #     [0.4 * (-v1[0] - v2[0]), 0.4 * (-v1[1] - v2[1])],
-    #     [0.4 * (-v1[0] + v2[0]), 0.4 * (-v1[1] + v2[1])]
-    # ]
-    #
-    # if vertices is not None:
-    #     codes = [Path.MOVETO]
-    #     for _ in range(len(vertices) - 1):
-    #         codes.append(Path.LINETO)
-    #     codes.append(Path.CLOSEPOLY)
-    #     vertices = np.vstack((vertices, [0., 0.]))
-    #     path = Path(vertices, codes)
-    #     polytope = patches.PathPatch(path,
-    #                                  facecolor='none',
-    #                                  edgecolor='green',
-    #                                  linewidth=linewidth,
-    #                                  linestyle='-',  # {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
-    #                                  alpha=1.0,
-    #                                  zorder=3)
-    #     plt.gca().add_patch(polytope)
-    #
-    #
-    # vertices = [
-    #     [1.6 * (v1[0] + v2[0]), 1.6 * (v1[1] + v2[1])],
-    #     [1.6 * (v1[0] - v2[0]), 1.6 * (v1[1] - v2[1])],
-    #     [1.6 * (-v1[0] - v2[0]), 1.6 * (-v1[1] - v2[1])],
-    #     [1.6 * (-v1[0] + v2[0]), 1.6 * (-v1[1] + v2[1])]
-    # ]
-    #
-    # if vertices is not None:
-    #     codes = [Path.MOVETO]
-    #     for _ in range(len(vertices) - 1):
-    #         codes.append(Path.LINETO)
-    #     codes.append(Path.CLOSEPOLY)
-    #     vertices = np.vstack((vertices, [0., 0.]))
-    #     path = Path(vertices, codes)
-    #     polytope = patches.PathPatch(path,
-    #                                  facecolor='none',
-    #                                  edgecolor='red',
-    #                                  linewidth=linewidth,
-    #                                  linestyle='-',  # {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
-    #                                  alpha=1.0,
-    #                                  zorder=3)
-    #     plt.gca().add_patch(polytope)
-    #
+    vertices = [
+        [0.4 * (v1[0] + v2[0]), 0.4 * (v1[1] + v2[1])],
+        [0.4 * (v1[0] - v2[0]), 0.4 * (v1[1] - v2[1])],
+        [0.4 * (-v1[0] - v2[0]), 0.4 * (-v1[1] - v2[1])],
+        [0.4 * (-v1[0] + v2[0]), 0.4 * (-v1[1] + v2[1])]
+    ]
+
+    if vertices is not None:
+        codes = [Path.MOVETO]
+        for _ in range(len(vertices) - 1):
+            codes.append(Path.LINETO)
+        codes.append(Path.CLOSEPOLY)
+        vertices = np.vstack((vertices, [0., 0.]))
+        path = Path(vertices, codes)
+        polytope = patches.PathPatch(path,
+                                     facecolor='none',
+                                     edgecolor='green',
+                                     linewidth=linewidth,
+                                     linestyle='-',  # {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
+                                     alpha=1.0,
+                                     zorder=3)
+        plt.gca().add_patch(polytope)
+
+
+    vertices = [
+        [1.6 * (v1[0] + v2[0]), 1.6 * (v1[1] + v2[1])],
+        [1.6 * (v1[0] - v2[0]), 1.6 * (v1[1] - v2[1])],
+        [1.6 * (-v1[0] - v2[0]), 1.6 * (-v1[1] - v2[1])],
+        [1.6 * (-v1[0] + v2[0]), 1.6 * (-v1[1] + v2[1])]
+    ]
+
+    if vertices is not None:
+        codes = [Path.MOVETO]
+        for _ in range(len(vertices) - 1):
+            codes.append(Path.LINETO)
+        codes.append(Path.CLOSEPOLY)
+        vertices = np.vstack((vertices, [0., 0.]))
+        path = Path(vertices, codes)
+        polytope = patches.PathPatch(path,
+                                     facecolor='none',
+                                     edgecolor='red',
+                                     linewidth=linewidth,
+                                     linestyle='-',  # {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
+                                     alpha=1.0,
+                                     zorder=3)
+        plt.gca().add_patch(polytope)
+
     # plt.arrow(0, 0, 0.25*v2[0], 0.25*v2[1], zorder=2, length_includes_head=True)
     # plt.arrow(0,0, -1, -0.6*v1[1], zorder=2, length_includes_head=True)
     #
     # plt.gca().annotate("", xy=(-0.3*v2[0], -0.3*v2[1]), xytext=(0, 0), arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="black"), zorder=3)
     # plt.gca().annotate("", xy=(-0.5 * v1[0], -0.5 * v1[1]), xytext=(0, 0),
     #                   arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="black"), zorder=3)
-    #
+
     # plt.gca().annotate("", xy=(-1.2*v2[0], -1.2*v2[1]), xytext=(0, 0),
     #                   arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="black"), zorder=3)
     # plt.gca().annotate("", xy=(1.4*v1[0] -1.2*v2[0], 1.4*v1[1] -1.2*v2[1]),
     #                   xytext=(-1.2*v2[0], -1.2*v2[1]),
     #                   arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="black"), zorder=3)
 
-    # plt.gca().annotate("$v$", xytext=(-.03*v2[0], -.03*v2[1]-1.2),xy=(0, 0))
-    # plt.gca().annotate("$w$", xytext=(-1.7+.15*v2[0], 5.5+.15*v2[1]-.15), xy=(0, 0))
-    # plt.gca().annotate("", color="magenta", xy=(v1[0], v1[1]), xytext=(0, 0),
-    #                      arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="black"), annotation_clip=True, zorder=4)
-    # plt.gca().annotate("", color="magenta", xy=(v2[0],v2[1]), xytext=(0, 0), arrowprops = dict(arrowstyle="-|>",
-    #                                                                  mutation_scale=5, color="black"), zorder=4)
+    plt.gca().annotate("$v$", xytext=(-.03*v2[0], -.03*v2[1]-1.2),xy=(0, 0))
+    plt.gca().annotate("$w$", xytext=(-1.7+.15*v2[0], 5.5+.15*v2[1]-.15), xy=(0, 0))
+    plt.gca().annotate("", color="magenta", xy=(v1[0], v1[1]), xytext=(0, 0),
+                         arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="black"), annotation_clip=True, zorder=4)
+    plt.gca().annotate("", color="magenta", xy=(v2[0],v2[1]), xytext=(0, 0), arrowprops = dict(arrowstyle="-|>",
+                                                                     mutation_scale=5, color="black"), zorder=4)
 
     #safe = Line2D([0], [0], color="green", label='$\mathrm{Safe}$')
     #unsafe = Line2D([0], [0], color="red", label='$$\mathrm{Unsafe}$$')
@@ -366,19 +366,19 @@ def safety_measure_plot(v1, v2, width=2.5, height=2.5, l=1, m=1, g=9.81, K=None,
     safe = Line2D([0], [0], color="green", label='$0.4$')
     boundary = Line2D([0], [0], color="magenta", label='$1.0$')
     unsafe = Line2D([0], [0], color="red", label='$1.6$')
-    #plt.legend(loc="lower left", handles=[safe, boundary, unsafe], handlelength=1.5)
-    #plt.gca().add_artist(leg)
+    plt.legend(loc="lower left", handles=[safe, boundary, unsafe], handlelength=1.5)
+    plt.gca().add_artist(leg)
 
     #arrow = plt.arrow(0, 0, 0.5, 0.6, 'dummy', label='$a_{t}^{\mathrm{VER}}$', color="orange")
     #plt.legend([arrow, ], ['My label', ])
 
-    euler = Line2D([0], [0], color="blue", label='$\pm$LTE')
+    #euler = Line2D([0], [0], color="blue", label='$\pm$LTE')
     #unsafe = Line2D([0], [0], color="red", label='Unsafe')
     #rlver = Line2D([0], [0], color="orange", label='$a_{\mathrm{t}}^{\mathrm{VER}}$')
     #rl = Line2D([0], [0], color="black", label='$s_{\mathrm{t}(+1)}^{\mathrm{i}}$, $a_{\mathrm{t}}^{\mathrm{i}}$')
     #leg = plt.legend(loc="lower left", handles=[rlver, rl], handlelength=.8)
     #plt.legend(loc="upper right", handles=[euler, unsafe], handlelength=.8)
-    plt.legend(loc="upper right", handles=[euler], handlelength=.8)
+    #plt.legend(loc="upper right", handles=[euler], handlelength=.8)
     #plt.gca().add_artist(leg)
 
 
@@ -410,10 +410,10 @@ def safety_measure_plot(v1, v2, width=2.5, height=2.5, l=1, m=1, g=9.81, K=None,
     plt.gca().set_yticklabels(["$-4\pi$", "$-2\pi$", "0", "$2\pi$", "$4\pi$"])
     plt.xticks([-np.pi, 0, np.pi])
     plt.xticks([-np.pi, -np.pi / 2, 0, np.pi / 2, np.pi])
-    plt.xlim([-pi/2, pi/2])
-    #plt.xlim([-1.5 * pi, 1.5 * pi])
-    plt.ylim([-2.25 * pi, 2.25 * pi])
-    #plt.ylim([-5 * pi, 5 * pi])
+   # plt.xlim([-pi/2, pi/2])
+    plt.xlim([-1.5 * pi, 1.5 * pi])
+    #plt.ylim([-2.25 * pi, 2.25 * pi])
+    plt.ylim([-5 * pi, 5 * pi])
     plt.gca().set_xticklabels(
         ["$-\pi$", "$-\\frac{\pi}{2}$", "0", "$\\frac{\pi}{2}$", "$\pi$"])
 
@@ -818,20 +818,20 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     # plt.gca().axhline(-1, linestyle='dotted', color='magenta', linewidth=.75,zorder=1)
                     # plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75,zorder=1)
                     # plt.gca().axhline(-.5, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,zorder=1)
-                    # plt.gca().axhline(-0.25, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
-                    #                   zorder=1)
-                    # plt.gca().axhline(-0.75, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
-                    #                   zorder=1)
+                    plt.gca().axhline(-0.25, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
+                                      zorder=1)
+                    plt.gca().axhline(-0.75, linestyle='dotted', color=(169 / 255, 169 / 255, 169 / 255), linewidth=.5,
+                                      zorder=1)
 
                     # Rollout
-                    # plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75, zorder=1)
-                    # plt.gca().axhline(-0.5, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
-                    #                    zorder=1)
-                    # plt.gca().axhline(-1, linestyle='dotted', color='magenta', linewidth=.75, zorder=1)
-                    # plt.gca().axhline(-10, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
-                    #                   zorder=1)
-                    # plt.gca().axhline(-100, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
-                    #                   zorder=1)
+                    plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75, zorder=1)
+                    plt.gca().axhline(-0.5, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                                       zorder=1)
+                    plt.gca().axhline(-1, linestyle='dotted', color='magenta', linewidth=.75, zorder=1)
+                    plt.gca().axhline(-10, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                                      zorder=1)
+                    plt.gca().axhline(-100, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                                      zorder=1)
                     #
                     # plt.gca().axhline(-5.514739229024946, linestyle='dotted', color="magenta", linewidth=.5,
                     #                   zorder=1)
@@ -844,15 +844,15 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     #-16.544217687074838
 
                     #Safety Measure
-                    plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75, zorder=1)
-                    plt.gca().axhline(10, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
-                                      zorder=1)
-                    plt.gca().axhline(1, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
-                                      zorder=1)
-                    plt.gca().axhline(5, linestyle='dotted',  color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
-                                      zorder=1)
-                    plt.gca().axhline(0.5, linestyle='dotted',  color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
-                                      zorder=1)
+                    # plt.gca().axhline(0, linestyle='dotted', color='black', linewidth=.75, zorder=1)
+                    # plt.gca().axhline(10, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                    #                   zorder=1)
+                    # plt.gca().axhline(1, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                    #                   zorder=1)
+                    # plt.gca().axhline(5, linestyle='dotted',  color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                    #                   zorder=1)
+                    # plt.gca().axhline(0.5, linestyle='dotted',  color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
+                    #                   zorder=1)
 
                     # plt.gca().axhline(-1, linestyle='dotted', color='magenta', linewidth=.75, zorder=1)
                     # plt.gca().axhline(-0.5, linestyle='dotted', color=(102/255,102/255,102/255), linewidth=.5, zorder=1)
@@ -899,35 +899,36 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     # plt.gca().set_yticks([0, -0.25,-0.5,-0.75, -1], minor=False)
                     # plt.gca().set_yticklabels(['$0$', '$-0.25$','$-0.5$', '$-0.75$','$-1$'])
 
-                    # plt.gca().set_yscale("symlog", linthresh=1)
-                    # plt.gca().set_ylim(top=.25)
-                    # plt.gca().set_ylim(bottom=-100)
-                    #
-                    # plt.gca().set_yticks([0, -0.5, -1, -10, -100], minor=False)
-                    # plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$', "$-10$", "$-100$"])
-                    # plt.gca().set_yticks([-0.25, -0.75], minor=True)
-                    # #plt.gca().set_xlim(right=800)
+                    plt.gca().set_yscale("symlog", linthresh=1)
+                    plt.gca().set_ylim(top=.25)
+                    plt.gca().set_ylim(bottom=-100)
+
+                    plt.gca().set_yticks([0, -0.5, -1, -10, -100], minor=False)
+                    plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$', "$-10$", "$-100$"])
+                    plt.gca().set_yticks([-0.25, -0.75], minor=True)
+                    #plt.gca().set_xlim(right=800)
                     # #plt.gca().set_yticks([1, 0, -1, -2, -3, -4, -5], minor=False)
 
                     # plt.gca().set_yscale("symlog", linthresh=1)
                     # plt.gca().set_ylim(top=.25)
-                    # #plt.gca().set_ylim(bottom=-100)
-                    #
-                    # plt.gca().set_yticks([0, -0.5, -1, -5, -10, -20], minor=False)
-                    # plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$', "$-5$", "$-10$", "$-20$"])
-                    # plt.gca().set_yticks([-0.25, -0.75, -2, -3, -4, -6, -7, -8, -9, -11, -12, -13, -14, -15, -16, -17, -18, -19], minor=True)
+                    # plt.gca().set_ylim(bottom=-100)
+
+                    #plt.gca().set_yticks([0, -0.5, -1, -5, -10, -20], minor=False)
+                    #plt.gca().set_yticklabels(['$0$', '$-0.5$', '$-1$', "$-5$", "$-10$", "$-20$"])
+                    #plt.gca().set_yticks([-0.25, -0.75, -2, -3, -4, -6, -7, -8, -9, -11, -12, -13, -14, -15, -16, -17, -18, -19], minor=True)
                     #plt.gca().set_xlim(right=800)
-                    # # plt.gca().set_yticks([1, 0, -1, -2, -3, -4, -5], minor=False)
+                    # plt.gca().set_yticks([1, 0, -1, -2, -3, -4, -5], minor=False)
+
                     #
-                    # #
-                    # # plt.gca().set_xlim(right=100)
-                    # # plt.gca().set_xticks([1,50,100], minor=False)
-                    # # plt.gca().set_xticks([25,75], minor=True)
+                    plt.gca().set_xlim(right=100)
+                    plt.gca().set_xticks([1,25, 50, 75, 100], minor=False)
+                    # plt.gca().set_xticks([25,75], minor=True)
                     #plt.gca().set_xticks([0, 200, 400, 600, 800], minor=False)
-                    # #plt.gca().set_xticks([0, 250, 500, 750], minor=False)
+                    #plt.gca().set_xticks([0, 250, 500, 750], minor=False)
                     #minor_ticks = [100, 300, 500, 700]
                     #minor_ticks = [62.5, 125, 187.5, 312.5, 375, 437.5]
                     #plt.gca().set_xticks(minor_ticks, minor=True)
+
                     #plt.gca().yaxis.set_label_position("right")
                     #plt.gca().yaxis.tick_right()
 
@@ -935,22 +936,22 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
                     #plt.xticks([0,1250,2500])
                     #plt.xticks([0, 1000, 2000], minor=True)
 
-                    plt.gca().set_yscale("symlog", linthresh=1)
-                    plt.gca().set_xlim(right=800)
-                    #plt.gca().set_ylim(top=1.1)
-                    #plt.gca().set_yticks([0, 0.5, 1], minor=False)
-                    #plt.gca().set_yticks([0.25, 0.75], minor=True)
-                    #plt.gca().set_yticks([0.5], minor=True)
-                    plt.gca().set_ylim(bottom=-0.1)
-                    #plt.gca().set_yticklabels(['$0\%$', '$50\%$', '$100\%$'])
-                    plt.gca().set_xticks([0, 200, 400, 600, 800], minor=False)
-                    plt.gca().set_yticks([10, 5, 1,0.5, 0], minor=False)
-                    plt.gca().set_yticklabels(['$10$',"$5$", '$1$', '$0.5$','$0$'])
-                    plt.gca().set_yticks([9,8,7,6,4,3,2], minor=True)
-                    minor_ticks = [100, 300, 500, 700]
-                    plt.gca().set_xticks(minor_ticks, minor=True)
-                    plt.gca().yaxis.set_label_position("right")
-                    plt.gca().yaxis.tick_right()
+                    # plt.gca().set_yscale("symlog", linthresh=1)
+                    # plt.gca().set_xlim(right=800)
+                    # #plt.gca().set_ylim(top=1.1)
+                    # #plt.gca().set_yticks([0, 0.5, 1], minor=False)
+                    # #plt.gca().set_yticks([0.25, 0.75], minor=True)
+                    # #plt.gca().set_yticks([0.5], minor=True)
+                    # plt.gca().set_ylim(bottom=-0.1)
+                    # #plt.gca().set_yticklabels(['$0\%$', '$50\%$', '$100\%$'])
+                    # plt.gca().set_xticks([0, 200, 400, 600, 800], minor=False)
+                    # plt.gca().set_yticks([10, 5, 1,0.5, 0], minor=False)
+                    # plt.gca().set_yticklabels(['$10$',"$5$", '$1$', '$0.5$','$0$'])
+                    # plt.gca().set_yticks([9,8,7,6,4,3,2], minor=True)
+                    # minor_ticks = [100, 300, 500, 700]
+                    # plt.gca().set_xticks(minor_ticks, minor=True)
+                    # plt.gca().yaxis.set_label_position("right")
+                    # plt.gca().yaxis.tick_right()
 
 
                     # plt.gca().axhline(20, linestyle='dotted', color=(102 / 255, 102 / 255, 102 / 255), linewidth=.5,
@@ -1021,8 +1022,8 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
             #print(int(summary_df['episode'].max()))
             #plt.xticks([200 * i for i in range(int(episodes / (200)) + 1)])
 
-        plt.gca().set_xlim(left=0)
-        #plt.gca().set_xlim(left=1) #TODO:REMOVE
+        #plt.gca().set_xlim(left=0)
+        plt.gca().set_xlim(left=1) #TODO:REMOVE
 
         #plt.gca().set_ylim(bottom=-10)
         #plt.gca().set_ylim(top=-1)
@@ -1047,8 +1048,12 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
         #ppo = Line2D([0], [0], color="tab:blue", label='$\mathrm{PPO}_{\mathrm{tuned}}$')
         #roa = Line2D([0], [0], color="magenta", label='ROA')
 
+        sas = Line2D([0], [0], color="tab:orange", label='$\mathcal{A}_{\downarrow}$') #$s_0=[0\,0]^{\mathsf{T}}$", "$\mathrm{Default}$", "$\mathcal{A}_{\downarrow}$"
+        de = Line2D([0], [0], color="tab:blue", label='$\mathrm{Default}$')
+        ini = Line2D([0], [0], color="tab:green", label='$s_0=[0\,0]^{\mathsf{T}}$')
+
         #plt.legend(loc="lower right", handles=[roa])
-        #plt.legend(loc="lower right", handles=[a2c,ppo])
+        plt.legend(loc="lower right", handles=[ini,de,sas])
         #plt.legend(loc="upper left", fontsize=7, bbox_to_anchor=(1.05, 1))
         #plt.suptitle(tags[0].replace("_",'-'))
 
@@ -1164,7 +1169,7 @@ if __name__ == '__main__':
 
     v1 = np.array([0, 3.436116964863835])
     v2 = np.array([-3.092505268377452, 9.326603190344699])
-    #safety_measure_plot(v1, v2, save_as="pdfs/safetyMeasure", vertices=vertices)
+    safety_measure_plot(v1, v2, save_as="pdfs/safetyMeasure", vertices=vertices)
     #print("Test")
 
     #print(reward_at(theta=2*pi,thdot=0))
@@ -1209,8 +1214,8 @@ if __name__ == '__main__':
     #external_legend_res(["$s_0=[0\,0]^{\mathsf{T}}$", "$\mathrm{Default}$", "$\mathcal{A}_{\downarrow}$"], colors=["tab:green", "tab:blue", "tab:orange"],
     #                    save_as="pdfs/tmp", ncols=3, equi=False)
     #external_legend_res(["$\mathrm{PPO}_{\mathrm{untuned}}$", "$\mathrm{PPO}_{\mathrm{tuned}}$"], colors=["tab:olive", "tab:blue"], save_as="pdfs/tmp", ncols=2, equi = False)
-    #external_legend_res(["A2C", "PPO"],
-    #                    colors=["tab:cyan", "tab:olive"], save_as="pdfs/tmp", ncols=2, equi=False)
+   # external_legend_res(["$\mathrm{A2C}_{\mathrm{untuned}}$", "$\mathrm{PPO}_{\mathrm{untuned}}$"],
+   #                     colors=["tab:purple", "tab:cyan"], save_as="pdfs/tmp", ncols=2, equi=False)
     #external_legend_res(["Safe", "Unsafe", "ROA"], colors=["green","red", 'magenta'], save_as="pdfs/tmp", ncols=2, equi=False)
 
     #from thesis.pendulum_roa import PendulumRegionOfAttraction
