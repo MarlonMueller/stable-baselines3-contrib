@@ -1012,7 +1012,7 @@ if __name__ == '__main__':
         args["safety"] = "cbf"
         args["init"] = "zero"
 
-    main(**args)
+    #main(**args)
 
 
 
@@ -1038,7 +1038,7 @@ if __name__ == '__main__':
         # "main/rel_abs_safety_correction",
         # "main/avg_step_punishment",  #
         #"main/avg_step_reward_rl"  # ???
-        "main/reward"
+        "main/theta"
     ]
 
     # PRELIMINARY
@@ -1069,7 +1069,7 @@ if __name__ == '__main__':
         elif tag == "main/avg_abs_theta":
             y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
         elif tag == "main/avg_step_reward_rl":
-            y_label = "Reward per step" #%$\overline{r}
+            y_label = "Reward per step excl. $r_{\mathrm{t}}^{\mathrm{PUN}}$" #%$\overline{r}
         elif tag == "main/reward":
             y_label = "Reward"  # %$\overline{r}
         elif tag == "main/episode_reward":
@@ -1078,12 +1078,17 @@ if __name__ == '__main__':
             y_label = "Maximal reward $r_{\mathrm{max}}$"
         elif tag == "main/no_violation":
             y_label = "Safety violation"
-        elif tag == "main/avg_abs_safety_correction":
-            y_label = "Safety correction"
+        #elif tag == "main/avg_abs_safety_correction":
+        #    y_label = "Safety correction $|a_{\mathrm{t}}^{\mathrm{CBF}}|$"
         else:
-            y_label = "Safety correction"
+            y_label = "Angular displacement $\\theta$"
+            #y_label = "$|\min(0,m_{\mathrm{t}}^0-m_{\mathrm{t}+1}^0,-|a_{\mathrm{t}}^{\mathrm{VER}}|)|$"
 
         dirsss = [
+            ["PPO_SAS"],
+            #["CBF_SAS_PUN"]
+
+        #["SHIELD_SAS_PUN"]
         #["A2C_UNTUNED", "PPO_UNTUNED"],
         #["PPO_UNTUNED", "PPO"]
         #["A2C", "A2C_UNTUNED"],
@@ -1093,7 +1098,7 @@ if __name__ == '__main__':
         #["A2C_UNTUNED_SAS", "A2C_UNTUNED", "A2C_UNTUNED_INIT"],
         #["A2C_SAS", "A2C", "A2C_INIT"],
         #["PPO_UNTUNED_SAS", "PPO_UNTUNED", "PPO_UNTUNED_INIT"],
-        ["PPO_SAS", "PPO", "PPO_INIT"],
+        #["PPO_SAS", "PPO", "PPO_INIT"],
         #["MASK_SAS", "MASK", "MASK_INIT"],
         #["SHIELD_SAS", "SHIELD", "SHIELD_INIT"],
         #["MASK", "SHIELD"] #SAME FOR CBF NO VIOLATION PLOT
@@ -1105,6 +1110,7 @@ if __name__ == '__main__':
         #["CBF_SAS_05", "CBF_05", "CBF_INIT_05"],
         #["CBF_SAS_5", "CBF_5", "CBF_INIT_5"],
         #["CBF_SAS_95", "CBF_95", "CBF_INIT_95"],
+        #["CBF_SAS_95", "CBF_SAS", "CBF_SAS_01"],
         #["MASK_SAS", "MASK", "MASK_INIT"],
             #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
             #["MASK", "MASK_INIT"],
@@ -1123,17 +1129,17 @@ if __name__ == '__main__':
             #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
         ]
 
-        # for i, dirss in enumerate(dirsss):
-        #     tf_events_to_plot(dirss=dirss, #"standard"
-        #                       tags=[tag],
-        #                       x_label='Step',
-        #                       #x_label='Episode',
-        #                       y_label=y_label,
-        #                       width=2.5, #5   #2.5 -> 2
-        #                       height=2.5, #2.5
-        #                       episode_length=100,
-        #                       window_size=0, #41
-        #                       save_as=f"pdfs/{i}{tag.split('/')[1]}")
+        for i, dirss in enumerate(dirsss):
+            tf_events_to_plot(dirss=dirss, #"standard"
+                              tags=[tag],
+                              x_label='Step',
+                              #x_label='Episode',
+                              y_label=y_label,
+                              width=2.5, #5   #2.5 -> 2
+                              height=2.5, #2.5
+                              episode_length=100,
+                              window_size=11, #41
+                              save_as=f"pdfs/{i}{tag.split('/')[1]}")
 
     # labels = []
     # for label in dirss:
