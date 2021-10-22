@@ -37,6 +37,8 @@ Stable Baselines3 Contrib/
 │   ├── gainMatrix.m
 │   ├── mathematicalPendulum.m
 │   └── regionOfAttraction.m
+├── .gitignore
+├── README.md
 ├── main.py
 ├── notebook.ipynb
 ├── pendulum_roa.py
