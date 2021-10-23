@@ -1,19 +1,19 @@
-# Debug
-tensorboard/DEBUG_1
-tensorboard/DEBUG_E_1
-
-# Models
-models/
-
-tensorboard/
-gifs/
 pdfs/
+models/
+tensorboard/
 
 # CORA/AROC/MPT
 matlab/AROC_2020
 matlab/CORA_2020
 matlab/tbxmanager
 matlab/install_mpt3.m
+
+# PyCharm
+.idea/
+
+# Debug
+tensorboard/DEBUG_1
+tensorboard/DEBUG_E_1
 
 #Notebooks
 .ipynb_checkpoints/
