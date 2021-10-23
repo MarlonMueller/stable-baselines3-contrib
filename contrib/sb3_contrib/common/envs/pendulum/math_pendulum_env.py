@@ -1,36 +1,32 @@
-from typing import Union, Optional, Tuple
+from typing import Union, Tuple
 
-from os import path
 import numpy as np
+from os import path
 from gym import Env
-from stable_baselines3.common.type_aliases import GymObs, GymStepReturn
 from gym.spaces import Box
+from numpy import sin, cos, pi
+from stable_baselines3.common.type_aliases import GymObs, GymStepReturn
 from stable_baselines3.common.vec_env import DummyVecEnv
-
 from sb3_contrib.common.safety.safe_region import SafeRegion
 
-import numpy as np
-from numpy import sin, cos, pi
 
 class MathPendulumEnv(Env):
 
-    metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 30}
+    """ Inverted pendulum task modeled with a mathematical pendulum
 
-    @staticmethod
-    def safe_action(env: Env, safe_region: SafeRegion, action: float):
-        # LQR controller
-        # TODO: Maybe restrict torque here? Visuals.
+    Wrap with alternative action space necessary
+    Observations consist of the angular displacement and the angular velocity
+    Reward function specific to bachelor's thesis
 
-        gain_matrix = [19.670836678497427,6.351509533724627] #TODO
+    @param init:
+        Pass 'equilibrium' to initialize the state at the equilibrium
+        By default, the state is initialized randomly within the safe region
+    @param safe_region:
+        Safe region instance. Once the pendulum leaves the safe region, the mass turns orange
 
+    """
 
-        #TODO: GETATTR NOT IMPLEMENTED IN VECENVS
-        if isinstance(env, DummyVecEnv):
-            return -np.dot(gain_matrix, env.get_attr("state")[0])
-        else:
-            return -np.dot(gain_matrix, env.state)
-
-    def __init__(self, init=None):
+    def __init__(self, init=None, safe_region=None):
 
         # Length
         self.l = 1.
@@ -41,25 +37,21 @@ class MathPendulumEnv(Env):
         # Timestep
         self.dt = .05
 
-        self.init = init #TODO
+        self._init = init
+        self._safe_region = safe_region
 
         self.rng = np.random.default_rng()
 
-        #TODO: Remove
-        from gym.spaces import Discrete
-        #self.action_space = Discrete(15)
-
-        max_torque = 60.898877999566082
-        #max_torque = 30.898877999566082
-        self.action_space = Box(
-            low=-max_torque,
-            high=max_torque,
-            shape=(1,),
-            dtype=np.float32
-        )
+        # Keep for gym.make
+        # max_torque = 1
+        # self.action_space = Box(
+        #     low=-max_torque,
+        #     high=max_torque,
+        #     shape=(1,),
+        #     dtype=np.float32
+        # )
 
         obs_high = np.array([np.inf, np.inf], dtype=np.float32)
-        #obs_high = np.array([1., 1., np.inf], dtype=np.float32)
         self.observation_space = Box(
             low=-obs_high,
             high=obs_high,
@@ -68,63 +60,39 @@ class MathPendulumEnv(Env):
 
         self.last_action = None
         self.viewer = None
-
-        #TODO: Remove
-        from thesis.pendulum_roa import PendulumRegionOfAttraction
-        theta_roa = 3.092505268377452
-        vertices = np.array([
-            [-theta_roa, 12.762720155208534],  # LeftUp
-            [theta_roa, -5.890486225480862],  # RightUp
-            [theta_roa, -12.762720155208534],  # RightLow
-            [-theta_roa, 5.890486225480862]  # LeftLow
-        ])
-
-        self._safe_region = PendulumRegionOfAttraction(vertices=vertices)
-
         self.reset()
 
 
     def reset(self, **kwargs) -> GymObs:
-
-        # Start at theta=0; thdot=0
-        if self.init is not None and self.init == "zero":
+        if self.init is not None and self.init == "equilibrium":
            self.state = np.array([0, 0])
         else:
             self.state = np.asarray(self._safe_region.sample())
-
         self.last_action = None
         return self._get_obs(*self.state)
 
     def step(self, action: Union[float, np.ndarray]) -> GymStepReturn:
         theta, thdot = self.state
-
-        #self.state[:] = self.dynamics(theta, thdot, action)
         theta, thdot =  self.dynamics(theta, thdot, action)
         self.state = np.array([theta, thdot])
-
         self.last_action = action
-        #print(self._get_obs(theta, thdot))
         return self._get_obs(theta, thdot), self._get_reward(theta, thdot, action), False, {}
 
+    # Euler Steps
     # def dynamics(self, theta: float, thdot: float, torque: float) -> Tuple[float, float]:
     #     new_theta = theta + self.dt * thdot
     #     new_thdot = thdot + self.dt * ((self.g / self.l) * sin(theta) + 1. / (self.m * self.l ** 2) * torque)
     #     return [new_theta, new_thdot]
 
     def dynamics(self, theta: float, thdot: float, torque: float) -> Tuple[float, float]:
-        new_thdot = thdot + self.dt * ((self.g / self.l) * sin(theta) + 1. / (self.m * self.l ** 2) * torque) #VECENV
-        new_theta = theta + self.dt * new_thdot #TODO: VECENV
+        new_thdot = thdot + self.dt * ((self.g / self.l) * sin(theta) + 1. / (self.m * self.l ** 2) * torque)
+        new_theta = theta + self.dt * new_thdot
         return [new_theta, new_thdot]
 
     def _get_obs(self, theta, thdot) -> GymObs:
         return np.array([theta, thdot])
-        #return np.array([cos(theta), sin(theta), thdot])
 
     def _get_reward(self, theta: float, thdot: float, action: Union[int, np.ndarray]) -> float:
-        # if self.reward is not None: #TODO: Clean
-        #     # #Opposing -
-        #     return -(.5 * abs(action) + abs(self._norm_theta(theta)) + abs(.1 * thdot))
-        #else: #Safety
         det_12 = 10.62620981660255
         max_theta = 3.092505268377452
         return -max(
@@ -132,20 +100,15 @@ class MathPendulumEnv(Env):
             abs((theta * 9.326603190344699 + thdot * max_theta) / det_12) #Try: **2/Action
         )
 
-
     def _norm_theta(self, theta: float) -> float:
         return ((theta + pi) % (2 * pi)) - pi
 
     def close(self):
-        #TODO: Pot. remove
-        #if self.eng in locals():
-         #   self.eng.quit()
-
         if self.viewer:
             self.viewer.close()
             self.viewer = None
 
-    def render(self, mode: str = "human", safe_region: SafeRegion = None): #-> TODO:
+    def render(self, mode: str = "human", safe_region: SafeRegion = None):
 
         if self.viewer is None:
 

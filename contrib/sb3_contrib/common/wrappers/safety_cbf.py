@@ -1,28 +1,26 @@
 from typing import Union, Callable, Optional
-
 import gym, warnings
 import numpy as np
 from cvxopt import matrix, solvers
 from sb3_contrib.common.safety.safe_region import SafeRegion
 from stable_baselines3.common.type_aliases import GymStepReturn
 
-
-# State from Observation
-# State requiered?
-# Safe function not needed?
-
 class SafetyCBF(gym.Wrapper):
-    """
 
-    :param env: Gym environment to be wrapped
-    :param safe_region: Safe region object
-    :param unactuated_dynamics: ...
-    :param actuated_dynamics: ...
-    (:param dynamics_fn: Unbounded function ...)
-    :param punishment_fn: Unbounded function ...
-    :param alter_action_space: ...
-    :param transform_action_space_fn ...
-    :param gamma: ...
+    """
+    Safety wrapper that uses discrete-time control barrier functions to stay inside a safe region
+    Pass either the unactuated dynamics or the dynamics
+    Based on https://arxiv.org/pdf/1903.08792.pdf
+
+    @param env: Gym environment to be wrapped
+    @param safe_region: c
+    @param actuated_dynamics_fn: Actuated dynamics function of the variables that need to be rendered safe
+    @param unactuated_dynamics_fn: Unactuated dynamics function of the variables that need to be rendered safe
+    @param dynamics_fn: Dynamics function of the variables that need to be rendered safe
+    @param punishment_fn: Optional reward punishment function
+    @param alter_action_space: Alternative gym action space
+    @param transform_action_space_fn: Action space transformation function
+    @param gamma
     """
 
     def __init__(self,
@@ -37,27 +35,39 @@ class SafetyCBF(gym.Wrapper):
                  transform_action_space_fn: Optional[Union[Callable, str]] = None,
                  gamma: float = .5):
 
+
         super().__init__(env)
 
         if unactuated_dynamics_fn is None and dynamics_fn is None:
-            raise ValueError("Either dynamics_fn or unactuated_dynamics have to be specified.")
-
-        self._A, self._b = safe_region.halfspaces
-        #print(self._A)
-        #print(self._b)
-        self._P = matrix([[1.]],tc='d')
-        self._q = matrix([0.], tc='d')
-        #self._P = matrix([[1., 0], [0, 1e55]], tc='d')
-        #self._q = matrix([0, 0], tc='d')
+            raise ValueError("Either dynamics_fn or unactuated_dynamics have to be specified")
 
         self._gamma = gamma
         self._safe_region = safe_region
 
         if not hasattr(self.env, "action_space"):
             warnings.warn("Environment does not have attribute ``action_space``")
+        if not hasattr(self.env, "state"):
+            warnings.warn("Environment does not have attribute ``state``")
+
+        if isinstance(self.action_space, gym.spaces.Discrete):
+            _num_actions = self.action_space.N
+        elif isinstance(self.action_space, gym.spaces.Box):
+            _num_actions = sum(self.action_space.shape)
+        else:
+            raise RuntimeError(f"Action space {self.action_space} not supported")
+
+        # Alter action space if necessary
         if alter_action_space is not None:
             self.action_space = alter_action_space
 
+        # Half-space representation of safe region
+        self._A, self._b = safe_region.halfspaces
+
+        # Setup quadratic program (objective) https://cvxopt.org/userguide/coneprog.html
+        self._P = matrix(np.diag(_num_actions), tc='d')
+        self._q = matrix(np.zeros(_num_actions), tc='d')
+
+        # Fetch unbounded functions
         if isinstance(actuated_dynamics_fn, str):
             fn = getattr(self.env, actuated_dynamics_fn)
             if not callable(fn):
@@ -106,89 +116,52 @@ class SafetyCBF(gym.Wrapper):
         else:
             self._transform_action_space_fn = None
 
+        if alter_action_space is not None:
+            if self._transform_action_space_fn is None:
+                raise ValueError("transform_action_space_fn is None")
+
     def step(self, action) -> GymStepReturn:
 
+        # Transform action if necessary
         if self._transform_action_space_fn is not None:
             action = self._transform_action_space_fn(action)
 
-        # If discrete, needs safety backup
-        # Could also try only constraint
+        # Setup quadratic program (CBF constraint) https://cvxopt.org/userguide/coneprog.html
+        G = matrix(np.asarray([[np.dot(p, self._actuated_dynamics_fn(self.env))] for p in self._A],
+                              dtype=np.double),tc='d')
 
-        # G = matrix(np.asarray([[np.dot(p, self._actuated_dynamics_fn(self.env)), -1] for p in self._A], dtype=np.double), tc='d')
-        #
-        # if self._unactuated_dynamics_fn is not None:
-        #     h = matrix(np.asarray([-np.dot(self._A[i], self._unactuated_dynamics_fn(self.env))
-        #                            - np.dot(self._A[i], self._actuated_dynamics_fn(self.env)) * action
-        #                            + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
-        #                            self._gamma * self._b[i] for i in range(len(self._A))],
-        #                           dtype=np.double), tc='d')
-        # else:
-        #     h = matrix(np.asarray([- np.dot(self._A[i], self._dynamics_fn(self.env, action))
-        #                            + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
-        #                            self._gamma * self._b[i] for i in range(len(self._A))],
-        #                           dtype=np.double), tc='d')
-
-        G = matrix(
-            np.asarray([[np.dot(p, self._actuated_dynamics_fn(self.env))] for p in self._A], dtype=np.double),
-            tc='d')
+        # Check whether the unactuated_dynamics_fn or the dynamics_fn have been provided
         if self._unactuated_dynamics_fn is not None:
             h = matrix(np.asarray([-np.dot(self._A[i], self._unactuated_dynamics_fn(self.env))
-                                   - np.dot(self._A[i], self._actuated_dynamics_fn(self.env)) * action
-                                   + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
+                                   - np.dot(self._A[i], self._actuated_dynamics_fn(self.env, action))
+                                   + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +
                                    self._gamma * self._b[i] for i in range(len(self._A))],
                                   dtype=np.double), tc='d')
         else:
             h = matrix(np.asarray([- np.dot(self._A[i], self._dynamics_fn(self.env, action))
-                                   + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +  # TODO
+                                   + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +
                                    self._gamma * self._b[i] for i in range(len(self._A))],
                                   dtype=np.double), tc='d')
 
-        # print("##########")
-        #
-
-        # print("###")
-        # print("State", self.env.state)
-        # print(h[0]," >= a*",(np.dot(self._A[0], self._actuated_dynamics_fn(self.env))), "==>", h[0] / G[0])
-        # print(h[1]," >= a*",(np.dot(self._A[1], self._actuated_dynamics_fn(self.env))), "==>", h[1] / G[1])
-        # print(h[2]," >= a*",(np.dot(self._A[2], self._actuated_dynamics_fn(self.env))), "==>", h[2] / G[2])
-        # print(h[3]," >= a*",(np.dot(self._A[3], self._actuated_dynamics_fn(self.env))), "==>", h[3] / G[3])
-        # #print(- np.dot(self._A[3], self._dynamics_fn(self.env, action)),
-        #                           (1 - self._gamma) * np.dot(self._A[3], self.env.state),  # TODO
-        #                           self._gamma * self._b[3])
+        # Solve QP
         sol = solvers.qp(self._P, self._q, G, h)
-        # print(action, sol['x'][0])
-        # print("###")
-        #print("G")
-        #print(G)
-        #print("h")
-        #print(h)
-        # print("State")
-        #print(self.env.state)
-        # print("Dyn")
-        # print(self._dynamics_fn(self.env, action))
-        # print(self._P, self._q, G, h)
+        compensation = sol['x']
 
-        #TODO: actions if not just one action
-        #action_bar = sol['x'][:-1]
-        action_bar = sol['x'][0]
-        #print(action, sol['x'][0], sol['x'][1])
+        # Forward safe action action + action_cbf
+        obs, reward, done, info = self.env.step(action + compensation)
 
-
-        obs, reward, done, info = self.env.step(action + action_bar)
-
+        # Optional reward punishment
         if self._punishment_fn is not None:
-            punishment = self._punishment_fn(self.env, self._safe_region, action, action_bar)
-            info["cbf"] = {"action": action,
-                           "action_bar": action_bar,
+            punishment = self._punishment_fn(self.env, self._safe_region, action, compensation)
+            info["cbf"] = {"action_rl": action,
+                           "compensation": compensation,
                            "reward": reward,
                            "punishment": punishment}
-                           #"epsilon": sol['x'][1]}
             reward += punishment
         else:
-            info["cbf"] = {"action": action,
-                           "action_bar": action_bar,
+            info["cbf"] = {"action_rl": action,
+                           "action_cbf": compensation,
                            "reward": reward,
                            "punishment": None}
-                           #"epsilon": sol['x'][1]}
 
         return obs, reward, done, info

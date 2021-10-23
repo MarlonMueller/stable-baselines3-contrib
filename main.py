@@ -1,47 +1,49 @@
-import os, argparse, logging, importlib, time, random
+import os, sys
+
 from typing import Union, Callable
-
-from gym.wrappers import TimeLimit
 from stable_baselines3.common.type_aliases import GymStepReturn
+
+import argparse, logging, importlib, time, random
+from gym.wrappers import TimeLimit
+
+from callbacks.pendulum_train import PendulumTrainCallback
+from callbacks.pendulum_rollout import PendulumRolloutCallback
+
 from stable_baselines3.common.utils import configure_logger
-
-from thesis.callbacks.pendulum_train import PendulumTrainCallback
-from thesis.callbacks.pendulum_rollout import PendulumRolloutCallback
-
-from stable_baselines3.common.base_class import BaseAlgorithm
+from stable_baselines3.ppo.policies import MlpPolicy
 from stable_baselines3.common.callbacks import CallbackList
 from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.env_util import is_wrapped
-from stable_baselines3.ppo.policies import MlpPolicy
 from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv
-from stable_baselines3.common.policies import ActorCriticPolicy
+from stable_baselines3.common.env_util import is_wrapped
 
-from sb3_contrib.common.wrappers import SafetyMask
 from sb3_contrib.common.maskable.utils import is_masking_supported
-from thesis.util import remove_tf_logs, rename_tf_events, load_model, save_model, tf_events_to_plot
 from sb3_contrib.common.maskable.utils import get_action_masks
-from stable_baselines3.a2c import A2C
-from stable_baselines3 import HER, A2C, PPO, DQN
-
-from sb3_contrib.ppo_mask import MaskablePPO
-from sb3_contrib.a2c_mask import MaskableA2C
-from torch import nn as nn
+from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
 
 import gym
 import numpy as np
-from numpy import pi
+from torch import nn as nn
+from util import remove_tf_logs, rename_tf_events, load_model, save_model, tf_events_to_plot
+
+from sb3_contrib import SafeRegion
+from sb3_contrib import MaskableA2C, MaskablePPO
+from sb3_contrib import SafetyMask, SafetyCBF, SafetyShield
 
 logger = logging.getLogger(__name__)
 
-
-# Try different optimizers
+#TODO: State
+#TODO: New typing, state, more support
 
 def main(**kwargs):
     logger.info(f"kargs {kwargs}")
-
     module = importlib.import_module('stable_baselines3')
 
+    # Use SB3's mlp policy by default
+    policy = MlpPolicy
+
+    # Masking is only supported for A2C and PPO
     if 'safety' in kwargs and kwargs['safety'] == "mask":
+        policy = MaskableActorCriticPolicy
         if kwargs['algorithm'] == "A2C":
             base_algorithm = MaskableA2C
         elif kwargs['algorithm'] == "PPO":
@@ -51,56 +53,34 @@ def main(**kwargs):
     else:
         base_algorithm = getattr(module, kwargs['algorithm'])
 
-    if kwargs['name'] == 'DEBUG':
-        name = 'DEBUG'
-        kwargs['total_timesteps'] = 1e3
-        remove_tf_logs(name + '_1', name + '_E_1')
-    elif "rollout" in kwargs and kwargs['rollout']:
-        name = f"{kwargs['name']}"
-    else:
-        name = f"{kwargs['name']}_{kwargs['algorithm']}"
+    # Uncomment and configure for debug settings
+    # if kwargs['name'] == 'DEBUG':
+    #     name = 'DEBUG'
+    #     kwargs['total_timesteps'] = 1e3
+    #     remove_tf_logs(name + '_1', name + '_E_1')
+
+    name = f"{kwargs['name']}_{kwargs['algorithm']}"
 
     # Initialize environment
-    if kwargs['env_id'] not in [env_spec.id for env_spec in gym.envs.registry.all()]:
-        KeyError(f"Environment {kwargs['env_id']} is not registered")
+    if 'env' not in kwargs:
+        raise ValueError(f"env not in kwargs")
+    elif kwargs['env'] not in [env_spec.id for env_spec in gym.envs.registry.all()]:
+        raise KeyError(f"Environment {kwargs['env']} is not registered")
 
-    # obs = None
-    # if "obs" in kwargs and kwargs["obs"]:
-    #     obs = True
-
-    if "init" in kwargs and kwargs["init"] == "zero":
-        env = gym.make(kwargs['env_id'], init="zero")
+    if "init" in kwargs and kwargs["init"] == "equilibrium":
+        env = gym.make(kwargs['env'], init="equilibrium")
     else:
-        env = gym.make(kwargs['env_id'])
+        env = gym.make(kwargs['env'], init="random")
 
-    # if "init" in kwargs and kwargs["init"] == "random":
-    #     if "reward" in kwargs and kwargs["reward"] == "opposing":
-    #         env = gym.make(kwargs['env_id'], init="random", reward="opposing")
-    #     else:
-    #         env = gym.make(kwargs['env_id'], init="random")
-    # else:
-    #     if "reward" in kwargs and kwargs["reward"] == "opposing":
-    #         env = gym.make(kwargs['env_id'], reward="opposing")
-    #     else:
-    #         env = gym.make(kwargs['env_id'])
-
-    # TODO
-    # if 'safety' not in kwargs:
-    #    env.action_space = gym.Discrete(15)
-
-    # If not wrapped in VecEnv (__getattr__ set)
     env_spec = env.spec
-    # TODO: Not in Notebook currently
+    # Care VecEnv does not specify __getattr__
     if 'rollout' in kwargs and kwargs['rollout']:
         # SB3 uses VecEnvs which reset the environment directly after done is set to true.
         # As a result, logging each state results in env_spec.max_episode_steps -1 entries.
         # To log env_spec.max_episode_steps this simple modification is used.
         env = TimeLimit(env.unwrapped, max_episode_steps=env_spec.max_episode_steps + 1)
 
-    # Define safe regions
-    from sb3_contrib.common.safety.safe_region import SafeRegion
-    # TODO: PendulumSafeRegion
-
+    # Define the precomputed safe region
     theta_roa = 3.092505268377452
     vertices = np.array([
         [-theta_roa, 12.762720155208534],  # LeftUp
@@ -110,10 +90,8 @@ def main(**kwargs):
     ])
     safe_region = SafeRegion(vertices=vertices)
 
-    # if "action_space" in kwargs and kwargs["action_space"] == "large":
-    #     transform_action_space_fn = lambda a: 5 * (a - 10) if a <= 9 else 5 * (a - 9)
-    #     alter_action_space = gym.spaces.Discrete(20)
-    alter_action_space = gym.spaces.Discrete(21) #21! TODO
+    # Adjust action space
+    alter_action_space = gym.spaces.Discrete(21)
     if "action_space" in kwargs and kwargs["action_space"] == "small":
         transform_action_space_fn = lambda a: 0.65 * (a - 10)
     else:
@@ -121,86 +99,58 @@ def main(**kwargs):
 
     if 'safety' in kwargs and kwargs['safety'] is not None:
 
+        # Shield wrapper
         if kwargs['safety'] == "shield":
-            print("Shield")
-            from sb3_contrib.common.wrappers import SafetyShield
+
+            def safe_action_fn(env: gym.Env, safe_region: SafeRegion, action: float) -> float:
+                # Precomputed LQR gain matrix
+                gain_matrix = [19.670836678497427, 6.351509533724627]
+                # Note that __getattr__ is not implemented in VecEnvs
+                return -np.dot(gain_matrix, env.get_attr("state")[0])
 
             def dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
                 theta, thdot = env.state
                 return env.dynamics(theta, thdot, action)
 
-            # return -abs(action - action_shield) 1:1
-            if "punishment" in kwargs:
-                if kwargs["punishment"] == "punish":
-                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                                      action: Union[int, float, np.ndarray],
-                                      action_shield: Union[int, float, np.ndarray]) -> float:
-                        return -abs(action - action_shield)
-                # elif kwargs["punishment"] == "lightpunish":
-                #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                #                       action: Union[int, float, np.ndarray],
-                #                       action_shield: Union[int, float, np.ndarray]) -> float:
-                #         return -abs(action - action_shield) * 0.5
-                # elif kwargs["punishment"] == "heavypunish":
-                #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                #                       action: Union[int, float, np.ndarray],
-                #                       action_shield: Union[int, float, np.ndarray]) -> float:
-                #         return -abs(action - action_shield) * 4
-                else:
-                    punishment_fn = None
+            if "punishment" in kwargs and kwargs["punishment"] == "default":
+                def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                                  action_rl: Union[int, float, np.ndarray],
+                                  safety_correction: Union[int, float, np.ndarray]) -> float:
+                    return -abs(action_rl - safety_correction)
             else:
                 punishment_fn = None
 
-            # Wrap with SafetyShield
             env = SafetyShield(
                 env=env,
                 safe_region=safe_region,
                 dynamics_fn=dynamics_fn,
-                safe_action_fn="safe_action",  # Method already in env (LQR controller)
+                safe_action_fn=safe_action_fn,
                 punishment_fn=punishment_fn,
                 transform_action_space_fn=transform_action_space_fn,
                 alter_action_space=alter_action_space)
 
 
+        # CBF wrapper
         elif kwargs['safety'] == "cbf":
-            print("CBF")
-            from sb3_contrib.common.wrappers import SafetyCBF
 
-            def actuated_dynamics_fn(env: gym.Env) -> np.ndarray:
-                return np.array([env.dt ** 2, env.dt])
-                #return np.array([0, env.dt])
-                #return np.array([0, (env.dt / (env.m * env.l ** 2))])
-                # return np.array([(env.dt ** 2 / (env.m * env.l ** 2)), (env.dt / (env.m * env.l ** 2))])
+            def actuated_dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
+                return np.array([action * env.dt ** 2, action * env.dt])
 
             def dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
                 theta, thdot = env.state
                 return env.dynamics(theta, thdot, action)
 
-            if "punishment" in kwargs:
-                if kwargs["punishment"] == "punish":
-                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                                      action: Union[int, float, np.ndarray],
-                                      action_cbf: Union[int, float, np.ndarray]) -> float:
-                        return -abs(action_cbf)
-                # elif kwargs["punishment"] == "lightpunish":
-                #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                #                       action: Union[int, float, np.ndarray],
-                #                       action_cbf: Union[int, float, np.ndarray]) -> float:
-                #         return -abs(action_cbf) * 0.5
-                # elif kwargs["punishment"] == "heavypunish":
-                #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                #                       action: Union[int, float, np.ndarray],
-                #                       action_cbf: Union[int, float, np.ndarray]) -> float:
-                #         return -abs(action_cbf) * 4
-                else:
-                    punishment_fn = None
+            if "punishment" in kwargs and kwargs["punishment"] == "default":
+                def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                                  action_rl: Union[int, float, np.ndarray],
+                                  safety_correction: Union[int, float, np.ndarray]) -> float:
+                    return -abs(safety_correction)
             else:
                 punishment_fn = None
 
             if "gamma" not in kwargs:
                 kwargs["gamma"] = .5
 
-            # Wrap with SafetyCBF
             env = SafetyCBF(
                 env=env,
                 safe_region=safe_region,
@@ -212,81 +162,51 @@ def main(**kwargs):
                 alter_action_space=alter_action_space,
                 gamma=kwargs["gamma"])
 
-            # TODO, f und g as other methods in env?
-            # TODO Erklärung Problem
-            # TODO Liste Thesis
-
-
-
+        # Mask wrapper
         elif kwargs['safety'] == "mask":
-            from sb3_contrib.common.wrappers import SafetyMask
-            print("mask")
+
+            def safe_action_fn(env: gym.Env, safe_region: SafeRegion, action: float) -> float:
+                # Precomputed LQR gain matrix
+                gain_matrix = [19.670836678497427, 6.351509533724627]
+                # Note that __getattr__ is not implemented in VecEnvs
+                return -np.dot(gain_matrix, env.get_attr("state")[0])
+
             def dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
                 theta, thdot = env.state
                 return env.dynamics(theta, thdot, action)
 
-            # We only care about the mask, fail-safe controller is not in use
-            if "punishment" in kwargs:
-                if kwargs["punishment"] == "punish":
-                    def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                                      action: Union[int, float, np.ndarray],
-                                      mask: Union[int, float, np.ndarray],
-                                      next_mask: Union[int, float, np.ndarray]) -> float:
-                        if mask[-1] == 1:
-                            #print(mask)
-                            return min(0, np.sum(next_mask[:-1]) - np.sum(mask[:-1]), -abs(action))
-                        else:
-                            return min(0, np.sum(next_mask[:-1]) - np.sum(mask[:-1]))
-                # elif kwargs["punishment"] == "lightpunish":
-                #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                #                       action: Union[int, float, np.ndarray],
-                #                       mask: Union[int, float, np.ndarray]) -> float:
-                #         return -(1 - (np.sum(mask)-1) / (len(mask)-1)) * 5
-                # elif kwargs["punishment"] == "heavypunish":
-                #     def punishment_fn(env: gym.Env, safe_region: SafeRegion,
-                #                       action: Union[int, float, np.ndarray],
-                #                       mask: Union[int, float, np.ndarray]) -> float:
-                #         return -(1 - (np.sum(mask)-1) / (len(mask)-1)) * 40
-                else:
-                    punishment_fn = None
+            if "punishment" in kwargs and kwargs["punishment"] == "default":
+                def punishment_fn(env: gym.Env, safe_region: SafeRegion,
+                                  action_rl: Union[int, float, np.ndarray],
+                                  mask: Union[int, float, np.ndarray],
+                                  next_mask: Union[int, float, np.ndarray]) -> float:
+                    if mask[-1] == 1:
+                        return min(0, np.sum(next_mask[:-1]) - np.sum(mask[:-1]), -abs(action_rl))
+                    else:
+                        return min(0, np.sum(next_mask[:-1]) - np.sum(mask[:-1]))
             else:
                 punishment_fn = None
 
-            # Wrap with SafetyMask
             env = SafetyMask(
                 env=env,
                 safe_region=safe_region,
                 dynamics_fn=dynamics_fn,
-                safe_action_fn="safe_action",  # Method already in env (LQR controller)
+                safe_action_fn=safe_action_fn,
                 punishment_fn=punishment_fn,
                 transform_action_space_fn=transform_action_space_fn,
                 alter_action_space=alter_action_space)
 
     else:
+        # Adjust the action space and log infos even if no wrapper is applied
         class ActionInfoWrapper(gym.Wrapper):
             def __init__(self, env, alter_action_space=None,
                          transform_action_space_fn=None):
                 super().__init__(env)
-
-                #if alter_action_space is not None:
                 self.action_space = alter_action_space
-
-                #if transform_action_space_fn is not None:
-                # if isinstance(transform_action_space_fn, str):
-                #     fn = getattr(self.env, transform_action_space_fn)
-                #     if not callable(fn):
-                #         raise ValueError(f"Attribute {fn} is not a method")
-                #     self._transform_action_space_fn = fn
-                # else:
                 self._transform_action_space_fn = transform_action_space_fn
-                #else:
-                #    self._transform_action_space_fn = None
 
             def step(self, action) -> GymStepReturn:
-
-                #if self._transform_action_space_fn is not None:
                 action = self._transform_action_space_fn(action)
-
                 obs, reward, done, info = self.env.step(action)
                 info["standard"] = {"action": action, "reward": reward}
                 return obs, reward, done, info
@@ -295,201 +215,119 @@ def main(**kwargs):
                                 transform_action_space_fn=transform_action_space_fn,
                                 alter_action_space=alter_action_space)
 
+    # Wrap with Monitor
     if not is_wrapped(env, Monitor):
         env = Monitor(env)
 
     if 'train' in kwargs and kwargs['train']:
 
+        # VecEnvs not supported
         env = DummyVecEnv([lambda: env])
 
-        for iteration in range(kwargs['iterations']):
+        if 'iterations' not in kwargs:
+            iters = 1
+        else:
+            iters = kwargs['iterations']
+
+        for iteration in range(iters):
 
             tensorboard_log = os.getcwd() + '/tensorboard/'
             if "group" in kwargs:
                 tensorboard_log += args["group"]
 
-            if 'safety' in kwargs and kwargs['safety'] == "mask":
-                from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
-                model = base_algorithm(MaskableActorCriticPolicy,
-                                       env,
-                                       verbose=0,
-                                       tensorboard_log=tensorboard_log,
-                                       batch_size=64,
-                                       n_steps=2048,
-                                       gamma=0.9,
-                                       learning_rate=0.0003,
-                                       ent_coef=0,
-                                       clip_range=0.4,
-                                       n_epochs=5,
-                                       gae_lambda=0.8,
-                                       max_grad_norm=0.3,
-                                       vf_coef=0.5,
-                                       policy_kwargs=dict(
-                                           net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                                           activation_fn=nn.Tanh,
-                                           ortho_init=True)
-                                       )
-            else:
+            # Linear learning rate schedule
+            # def linear_schedule(initial_value: Union[float, str]) -> Callable[[float], float]:
+            #     if isinstance(initial_value, str):
+            #         initial_value = float(initial_value)
+            #     def func(progress_remaining: float) -> float:
+            #         """
+            #         Progress will decrease from 1 (beginning) to 0
+            #         :param progress_remaining: (float)
+            #         :return: (float)
+            #         """
+            #         return progress_remaining * initial_value
+            #     return func
 
-                # def linear_schedule(initial_value: Union[float, str]) -> Callable[[float], float]:
-                #     """
-                #     Linear learning rate schedule.
-                #
-                #     :param initial_value: (float or str)
-                #     :return: (function)
-                #     """
-                #     if isinstance(initial_value, str):
-                #         initial_value = float(initial_value)
-                #
-                #     def func(progress_remaining: float) -> float:
-                #         """
-                #         Progress will decrease from 1 (beginning) to 0
-                #         :param progress_remaining: (float)
-                #         :return: (float)
-                #         """
-                #         return progress_remaining * initial_value
-                #
-                #     return func
+            if kwargs['algorithm'] == "PPO":
+                if 'flag' in kwargs and (kwargs['flag'] == 6 or kwargs['flag'] == 7 or kwargs['flag'] == 8):
+                    model = base_algorithm(policy=policy, env=env, verbose=0, tensorboard_log=tensorboard_log)
+
+                else:
+                    # Tuned parameters
+                    model = base_algorithm(policy=policy,
+                                           env=env,
+                                           verbose=0,
+                                           tensorboard_log=tensorboard_log,
+                                           batch_size=64,
+                                           n_steps=2048,
+                                           gamma=0.9,
+                                           learning_rate=0.0003,
+                                           ent_coef=0,
+                                           clip_range=0.4,
+                                           n_epochs=5,
+                                           gae_lambda=0.8,
+                                           max_grad_norm=0.3,
+                                           vf_coef=0.5,
+                                           policy_kwargs=dict(
+                                               net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                                               activation_fn=nn.Tanh,
+                                               ortho_init=True)
+                                           )
 
 
-                if kwargs['algorithm'] == "PPO":
-                    if 'flag' in kwargs and (kwargs['flag'] == 6 or kwargs['flag'] == 7 or kwargs['flag'] == 8):
-                        model = base_algorithm(
-                            MlpPolicy,
-                            env,
-                            verbose=0,
-                            tensorboard_log=tensorboard_log)
-
-                    else:
-                        #print("TUNED")
-                        # model = base_algorithm(MlpPolicy,
-                        #                        env,
-                        #                        verbose=0,
-                        #                        tensorboard_log=tensorboard_log,
-                        #                        batch_size=2,
-                        #                        n_steps=4,
-                        #                        gamma=0.9,
-                        #                        learning_rate=0.00015,
-                        #                        ent_coef=0,
-                        #                        clip_range=0.3,
-                        #                        n_epochs=2,
-                        #                        gae_lambda=1.0,
-                        #                        max_grad_norm=0.3,
-                        #                        vf_coef=0.7,
-                        #                        policy_kwargs=dict(
-                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                        #                            activation_fn=nn.Tanh,
-                        #                            ortho_init=True)
-                        #                        )
-                        model = base_algorithm(MlpPolicy,
-                                               env,
-                                               verbose=0,
-                                               tensorboard_log=tensorboard_log,
-                                               batch_size=64,
-                                               n_steps=2048,
-                                               gamma=0.9,
-                                               learning_rate=0.0003,
-                                               ent_coef=0,
-                                               clip_range=0.4,
-                                               n_epochs=5,
-                                               gae_lambda=0.8,
-                                               max_grad_norm=0.3,
-                                               vf_coef=0.5,
-                                               policy_kwargs=dict(
-                                                   net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                                                   activation_fn=nn.Tanh,
-                                                   ortho_init=True)
-                                               )
-
-
-                elif kwargs['algorithm'] == "A2C":
-                    if 'flag' in kwargs and kwargs['flag'] <= 2:
-                        model = base_algorithm(MlpPolicy,
-                                               env,
-                                               verbose=0,
-                                               tensorboard_log=tensorboard_log)
-                    else:
-                        model = base_algorithm(MlpPolicy,
-                                               env,
-                                               verbose=0,
-                                               use_rms_prop=False,
-                                               normalize_advantage=True,
-                                               tensorboard_log=tensorboard_log,
-                                               ent_coef=0.1,
-                                               max_grad_norm=0.3,
-                                               n_steps=8,
-                                               gae_lambda=1.0,
-                                               vf_coef=0.6,
-                                               gamma=0.9,
-                                               learning_rate=0.0015,
-                                               use_sde=False,
-                                               policy_kwargs=dict(
-                                                   net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                                                   activation_fn=nn.ReLU,
-                                                   ortho_init=True)
-                                               )
-
-                        # model = base_algorithm(MlpPolicy,
-                        #                        env,
-                        #                        verbose=0,
-                        #                        use_rms_prop=False,
-                        #                        normalize_advantage=True,
-                        #                        tensorboard_log=tensorboard_log,
-                        #                        ent_coef=0.1,
-                        #                        max_grad_norm=0.5,
-                        #                        n_steps=2,
-                        #                        gae_lambda=1.0,
-                        #                        vf_coef=0.5,
-                        #                        gamma=0.98,
-                        #                        learning_rate=0.0015,
-                        #                        use_sde=False,
-                        #                        policy_kwargs=dict(
-                        #                            net_arch=[dict(pi=[64, 64], vf=[64, 64])],
-                        #                            activation_fn=nn.ReLU,
-                        #                            ortho_init=True)
-                        #                        )
-
-                #else:
-                #    from stable_baselines3 import DQN
-                #    model = DQN('MlpPolicy', env, verbose=0, tensorboard_log=tensorboard_log)
-
-            # TODO: Remove
-            # from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
-            # model = base_algorithm(MaskableActorCriticPolicy, env, verbose=0, tensorboard_log=os.getcwd() + '/tensorboard/')
+            elif kwargs['algorithm'] == "A2C":
+                if 'flag' in kwargs and kwargs['flag'] <= 2:
+                    model = base_algorithm(policy=policy,
+                                           env=env,
+                                           verbose=0,
+                                           tensorboard_log=tensorboard_log)
+                else:
+                    # Tuned parameters
+                    model = base_algorithm(policy=policy,
+                                           env=env,
+                                           verbose=0,
+                                           use_rms_prop=False,
+                                           normalize_advantage=True,
+                                           tensorboard_log=tensorboard_log,
+                                           ent_coef=0.1,
+                                           max_grad_norm=0.3,
+                                           n_steps=8,
+                                           gae_lambda=1.0,
+                                           vf_coef=0.6,
+                                           gamma=0.9,
+                                           learning_rate=0.0015,
+                                           use_sde=False,
+                                           policy_kwargs=dict(
+                                               net_arch=[dict(pi=[64, 64], vf=[64, 64])],
+                                               activation_fn=nn.ReLU,
+                                               ortho_init=True)
+                                           )
 
             callback = CallbackList([PendulumTrainCallback(safe_region=safe_region)])
-            #print(kwargs["group"]+"_"+str(iteration+1))
             model.learn(total_timesteps=kwargs['total_timesteps'],
                         tb_log_name=name,
                         callback=callback)
             # log_interval=log_interval)
 
-
-            # TODO: Overrides / maybe combine?
-            #save_model(kwargs["group"], model)
-            save_model(kwargs["group"]+"/"+str(iteration+1), model)
+            if 'save_model' in kwargs and kwargs['save_model']:
+                save_model(kwargs["group"] + "/" + str(iteration + 1), model)
 
     elif 'rollout' in kwargs and kwargs['rollout']:
+
+        # VecEnvs not supported
         env = DummyVecEnv([lambda: env])
 
         model = None
         callback = None
 
-        if name != "DEBUG":
-            if "MASK" in name:
-                model = load_model(name[:-1] + '.zip', MaskablePPO)
-            else:
-                model = load_model(name[:-1] + '.zip', base_algorithm)
-                print(model)
+        if 'model' in kwargs:
+            mode = load_model(kwargs['model'], policy)
             model.set_env(env)
 
             callback = CallbackList([PendulumRolloutCallback(safe_region=safe_region)])
-
-            # TODO: Not needed for training(?)
             _logger = configure_logger(verbose=0, tb_log_name=name,
                                        tensorboard_log=os.getcwd() + '/tensorboard/')
             model.set_logger(logger=_logger)
-
             callback.init_callback(model=model)
 
         render = False
@@ -500,10 +338,13 @@ def main(**kwargs):
         if 'safety' in kwargs and kwargs['safety'] == "env_safe_action":
             env_safe_action = True
 
-        # rollout(env, model, safe_region=safe_region, num_episodes=1, callback=callback, env_safe_action=env_safe_action, render=render, sleep=.05)
-        rollout(env, model, safe_region=safe_region, num_episodes=kwargs['iterations'], callback=callback,
+        rollout(env, model,
+                safe_region=safe_region,
+                num_episodes=kwargs['iterations'],
+                callback=callback,
                 env_safe_action=env_safe_action,
-                render=render, sleep=.1)
+                render=render,
+                sleep=kwargs['sleep'])
 
     if 'env' in locals(): env.close()
 
@@ -527,9 +368,10 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
     frames = []
     reset = True
 
-    # To check rollout w.o. mask but training with mask
+    # Rollout of Maskable model needs auxiliary mask
     mask = np.ones(22)
     mask[-1] = 0
+
     for episode in range(num_episodes):
 
         done, state = False, None
@@ -547,7 +389,6 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
         while not done:
 
             if render:
-                # Does not render last step
                 if rgb_array:
                     frame = env.render(mode='rgb_array')
                     frames.append(frame)
@@ -556,32 +397,19 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
 
             time.sleep(sleep)
 
-
+            # Use trained model if provided
             if model is not None:
 
-                #Masking
-                #action, state = model.predict(obs, state=state, action_masks=mask)
-                action, state = model.predict(obs, state=state)  # deterministic=deterministic
-                action = action[0]  # Action is dict
-                #action = 20
-                # action = 0
-                # print(action)
-
-                # TODO: Check if masking used - also rollout masking without model!
-                # if use_masking:
-                #    action_masks = get_action_masks(env)
-                #    actions, state = model.predict(obs,state=state, action_masks=action_masks)
-
+                # TODO: Rollout masking
+                action, state = model.predict(obs, state=state)
+                # action, state = model.predict(obs, state=state, action_masks=mask)
+                action = action[0]
 
             elif env_safe_action:
-                # TODO: Fix/Easier? / Could check for callable etc.
                 action = env.get_attr('safe_action')[0](env, safe_region, None)
 
             else:
-                # TODO: Sample is [] for box and otherwise not?
                 action = env.action_space.sample()
-
-                action = 11
                 if isinstance(action, np.ndarray):
                     action = action.item()
 
@@ -590,7 +418,6 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
                     action = random.choice(np.argwhere(mask == True))[0]
 
             obs, reward, done, info = env.step([action])
-            # print(reward)
 
             if render:
                 # Prevent render after reset
@@ -613,18 +440,24 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a', '--algorithm', type=str, default='PPO', required=False,
+    parser.add_argument('-alg', '--algorithm', type=str, default='PPO',
                         help='RL algorithm')
-    parser.add_argument('-e', '--env_id', type=str, default='MathPendulum-v0', required=False,
+    parser.add_argument('-env', type=str, default='MathPendulum-v0',
                         help='ID of a registered environment')
-    parser.add_argument('-t', '--total_timesteps', type=int, default=20e4, required=False,  # 400
-                        help='Total timesteps to train model')  # TODO: Episodes
-    parser.add_argument('-n', '--name', type=str, default='DEBUG', required=False,
-                        help='Base name for generated data')
-    parser.add_argument('-s', '--safety', type=str, default=None, required=False,
-                        help='Safety method')
-    parser.add_argument('-i', '--iterations', type=int, default=1, required=False)
-    parser.add_argument('-f', '--flag', type=int, default=0)
+    parser.add_argument('-steps', '--total_timesteps', type=int, default=10e4,
+                        help='Total timesteps to train the model')
+    parser.add_argument('-safety', '--safety', type=str, default=None,
+                        help="Safety approach \'mask\',\'shield\', \'cbf\' or None")
+    parser.add_argument('--flag', type=int, default=-1,
+                        help='Flag to specify a default configuration')
+    parser.add_argument('--model', type=int, default=0,
+                        help='Model to rollout, e.g., model.zip')
+    parser.add_argument('--sleep', type=float, default=0.1,
+                        help='Sleep time [Sec.] in between steps whilst rolling out')
+    parser.add_argument('--save_model', type=bool, default=True, help=
+    'Whether to save the model after training or not')
+    parser.add_argument('--iterations', type=int, default=1, required=False,
+                        help='Multiple training or deployment runs')
     args, unknown = parser.parse_known_args()
     return vars(args)
 
@@ -632,6 +465,7 @@ def parse_arguments():
 if __name__ == '__main__':
     args = parse_arguments()
 
+    # Register environment
     from gym.envs.registration import register
 
     register(
@@ -640,209 +474,147 @@ if __name__ == '__main__':
         entry_point='sb3_contrib.common.envs.pendulum.math_pendulum_env:MathPendulumEnv',
     )
 
-    # args["algorithm"] = "PPO"
-    # args['iterations'] = 1
-    # args["render"] = True
+    #########
+    # Rollout trained models without safety
+    #########
+
     # args["rollout"] = True
-    #args["action_space"] = "small"
+    # args["render"] = True
 
-    # for i in range(1):
-    #     #args["algorithm"] = "PPO"
-    #     #args['flag'] = 10 #0 und 6 -> PPO
-    #     #args["train"] = True
-    #     args["safety"] = "cbf"
-    #     # args["safety"] = "env_safe_action"
-    #     #args["punishment"] = "punish"
-    #     #args['total_timesteps'] = 8e4
-    #     #args["init"] = "zero"
-    #     #args["render"] = True
-    #     #args["action_space"] = "small"
-    #     #args['iterations'] = 1
-    #     args["gamma"] = 0.001
-    #     #args['group'] = 'Test'
-    #     #args['group'] += "'"
-    #     #args['group'] = "TEST"
-    #     #args['name'] = args['group']
-    #     #args["rollout"] = True
-    #     main(**args)
-
-
+    # args["safety"] = "shield"
+    # args["safety"] = "env_safe_action"
+    # args["init"] = "zero"
+    # args["action_space"] = "small"
 
     # if args["flag"] == 0:
     #     for model in range(1, 6):
-    #             for it in range(1,6): #6
+    #             for it in range(1,6):
     #                 args["name"] = f"PPO/{model}{it}"
     #                 main(**args)
-    # if args["flag"] == 1:
+    # elif args["flag"] == 1:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"PPO_SAS/{model}{it}"
     #             args["action_space"] = "small"
     #             main(**args)
-    # if args["flag"] == 2:
+    # elif args["flag"] == 2:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"PPO_INIT/{model}{it}"
+    #         for it in range(1,6):
+    #             args["name"] = f"PPO_0/{model}{it}"
     #             args["init"] = "zero"
     #             main(**args)
-
-    # if args["flag"] == 0:
+    # elif args["flag"] == 3:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"MASK/{model}{it}"
     #             main(**args)
-    # if args["flag"] == 1:
+    # elif args["flag"] == 4:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"MASK_SAS/{model}{it}"
     #             args["action_space"] = "small"
     #             main(**args)
-    # if args["flag"] == 2:
+    # elif args["flag"] == 5:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"MASK_INIT/{model}{it}"
+    #         for it in range(1,6):
+    #             args["name"] = f"MASK_0/{model}{it}"
     #             args["init"] = "zero"
     #             main(**args)
-    # if args["flag"] == 3:
+    # elif args["flag"] == 6:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"MASK_PUN/{model}{it}"
     #             main(**args)
-    # if args["flag"] == 4:
+    # elif args["flag"] == 7:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"MASK_INIT_PUN/{model}{it}"
+    #         for it in range(1,6):
+    #             args["name"] = f"MASK_0_PUN/{model}{it}"
     #             args["init"] = "zero"
     #             main(**args)
-    # if args["flag"] == 5:
+    # elif args["flag"] == 8:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"MASK_SAS_PUN/{model}{it}"
     #             args["action_space"] = "small"
     #             main(**args)
-
-    # if args["flag"] == 0:
+    # elif args["flag"] == 9:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"CBF/{model}{it}"
     #             main(**args)
-    # if args["flag"] == 1:
+    # elif args["flag"] == 10:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"CBF_SAS/{model}{it}"
     #             args["action_space"] = "small"
     #             main(**args)
-    # if args["flag"] == 2:
+    # elif args["flag"] == 11:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"CBF_INIT/{model}{it}"
+    #         for it in range(1,6):
+    #             args["name"] = f"CBF_0/{model}{it}"
     #             args["init"] = "zero"
     #             main(**args)
-    # if args["flag"] == 3:
+    # elif args["flag"] == 12:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"CBF_PUN/{model}{it}"
     #             main(**args)
-    # if args["flag"] == 4:
+    # elif args["flag"] == 13:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"CBF_INIT_PUN/{model}{it}"
+    #         for it in range(1,6):
+    #             args["name"] = f"CBF_0_PUN/{model}{it}"
     #             args["init"] = "zero"
     #             main(**args)
-    # if args["flag"] == 5:
+    # elif args["flag"] == 14:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"CBF_SAS_PUN/{model}{it}"
     #             args["action_space"] = "small"
     #             main(**args)
-    # if args["flag"] == 6:
+    # elif args["flag"] == 15:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"SHIELD/{model}{it}"
     #             main(**args)
-    # if args["flag"] == 7:
+    # elif args["flag"] == 16:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"SHIELD_SAS/{model}{it}"
     #             args["action_space"] = "small"
     #             main(**args)
-    # if args["flag"] == 8:
+    # elif args["flag"] == 17:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"SHIELD_INIT/{model}{it}"
+    #         for it in range(1,6):
+    #             args["name"] = f"SHIELD_0/{model}{it}"
     #             args["init"] = "zero"
     #             main(**args)
-    # if args["flag"] == 9:
+    # elif args["flag"] == 18:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"SHIELD_PUN/{model}{it}"
     #             main(**args)
-    # if args["flag"] == 10:
+    # elif args["flag"] == 19:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
-    #             args["name"] = f"SHIELD_INIT_PUN/{model}{it}"
+    #         for it in range(1,6):
+    #             args["name"] = f"SHIELD_0_PUN/{model}{it}"
     #             args["init"] = "zero"
     #             main(**args)
-    # if args["flag"] == 11:
+    # elif args["flag"] == 20:
     #     for model in range(1, 6):
-    #         for it in range(1,6): #6
+    #         for it in range(1,6):
     #             args["name"] = f"SHIELD_SAS_PUN/{model}{it}"
     #             args["action_space"] = "small"
     #             main(**args)
 
-
-    # for model in range(1,6):
-    #     for it in range(1,6): #6
-    #         args["name"] = f"SHIELD_INIT/{model}{it}"
-    #         args["rollout"] = True
-    #         args["algorithm"] = "PPO"
-    #         main(**args)
-    #
-    # for model in range(1,6):
-    #     for it in range(1,6): #6
-    #         args["name"] = f"CBF_INIT/{model}{it}"
-    #         args["rollout"] = True
-    #         args["algorithm"] = "PPO"
-    #         main(**args)
-    #
-    # for model in range(1,6):
-    #     for it in range(1,6): #6
-    #         args["name"] = f"CBF_SAS/{model}{it}"
-    #         args["rollout"] = True
-    #         args["algorithm"] = "PPO"
-    #         main(**args)
-    #
-    # for model in range(1,6):
-    #     for it in range(1,6): #6
-    #         args["name"] = f"CBF_SAS_PUN/{model}{it}"
-    #         args["rollout"] = True
-    #         args["algorithm"] = "PPO"
-    #         main(**args)
-    #
-    # for model in range(1,6):
-    #     for it in range(1,6): #6
-    #         args["name"] = f"CBF_INIT_PUN/{model}{it}"
-    #         args["rollout"] = True
-    #         args["algorithm"] = "PPO"
-    #         main(**args)
+    #########
+    # Train
+    #########
 
     args["train"] = True
-
-    #args["rollout"] = True
-    #args["render"] = True
-
-    #args["safety"] = "shield"
-    #args["safety"] = "env_safe_action"
-    #args["init"] = "zero"
-    #args["action_space"] = "small"
-
     args["name"] = "train"
     args['iterations'] = 5
     args['total_timesteps'] = 8e4
 
-    #args['name'] = 'maskTest'
-
-    #
     if args["flag"] == 0:
         args["algorithm"] = "A2C"
         args['group'] = "A2C_UNTUNED"
@@ -852,9 +624,8 @@ if __name__ == '__main__':
         args["action_space"] = "small"
     elif args["flag"] == 2:
         args["algorithm"] = "A2C"
-        args['group'] = "A2C_UNTUNED_INIT"
-        args["init"] = "zero"
-
+        args['group'] = "A2C_UNTUNED_0"
+        args["init"] = "equilibrium"
     elif args["flag"] == 3:
         args["algorithm"] = "A2C"
         args['group'] = "A2C"
@@ -864,27 +635,24 @@ if __name__ == '__main__':
         args["action_space"] = "small"
     elif args["flag"] == 5:
         args["algorithm"] = "A2C"
-        args['group'] = "A2C_INIT"
-        args["init"] = "zero"
-
+        args['group'] = "A2C_0"
+        args["init"] = "equilibrium"
     elif args["flag"] == 6:
         args['group'] = "PPO_UNTUNED"
     elif args["flag"] == 7:
         args['group'] = "PPO_UNTUNED_SAS"
         args["action_space"] = "small"
     elif args["flag"] == 8:
-        args['group'] = "PPO_UNTUNED_INIT"
-        args["init"] = "zero"
-
+        args['group'] = "PPO_UNTUNED_0"
+        args["init"] = "equilibrium"
     elif args["flag"] == 9:
         args['group'] = "PPO"
     elif args["flag"] == 10:
         args['group'] = "PPO_SAS"
         args["action_space"] = "small"
     elif args["flag"] == 11:
-        args['group'] = "PPO_INIT"
-        args["init"] = "zero"
-    #
+        args['group'] = "PPO_0"
+        args["init"] = "equilibrium"
     elif args["flag"] == 12:
         args['group'] = "MASK"
         args["safety"] = "mask"
@@ -893,10 +661,9 @@ if __name__ == '__main__':
         args["safety"] = "mask"
         args["action_space"] = "small"
     elif args["flag"] == 14:
-        args['group'] = "MASK_INIT"
+        args['group'] = "MASK_0"
         args["safety"] = "mask"
-        args["init"] = "zero"
-
+        args["init"] = "equilibrium"
     elif args["flag"] == 15:
         args['group'] = "MASK_PUN"
         args["safety"] = "mask"
@@ -907,11 +674,10 @@ if __name__ == '__main__':
         args["action_space"] = "small"
         args["punishment"] = "punish"
     elif args["flag"] == 17:
-        args['group'] = "MASK_INIT_PUN"
+        args['group'] = "MASK_0_PUN"
         args["safety"] = "mask"
-        args["init"] = "zero"
+        args["init"] = "equilibrium"
         args["punishment"] = "punish"
-
     elif args["flag"] == 18:
         args['group'] = "CBF"
         args["safety"] = "cbf"
@@ -920,10 +686,9 @@ if __name__ == '__main__':
         args["safety"] = "cbf"
         args["action_space"] = "small"
     elif args["flag"] == 20:
-        args['group'] = "CBF_INIT"
+        args['group'] = "CBF_0"
         args["safety"] = "cbf"
-        args["init"] = "zero"
-
+        args["init"] = "equilibrium"
     elif args["flag"] == 21:
         args['group'] = "CBF_PUN"
         args["safety"] = "cbf"
@@ -934,11 +699,10 @@ if __name__ == '__main__':
         args["action_space"] = "small"
         args["punishment"] = "punish"
     elif args["flag"] == 23:
-        args['group'] = "CBF_INIT_PUN"
+        args['group'] = "CBF_0_PUN"
         args["safety"] = "cbf"
-        args["init"] = "zero"
+        args["init"] = "equilibrium"
         args["punishment"] = "punish"
-
     elif args["flag"] == 24:
         args['group'] = "SHIELD"
         args["safety"] = "shield"
@@ -947,10 +711,9 @@ if __name__ == '__main__':
         args["safety"] = "shield"
         args["action_space"] = "small"
     elif args["flag"] == 26:
-        args['group'] = "SHIELD_INIT"
+        args['group'] = "SHIELD_0"
         args["safety"] = "shield"
-        args["init"] = "zero"
-
+        args["init"] = "equilibrium"
     elif args["flag"] == 27:
         args['group'] = "SHIELD_PUN"
         args["safety"] = "shield"
@@ -961,25 +724,24 @@ if __name__ == '__main__':
         args["action_space"] = "small"
         args["punishment"] = "punish"
     elif args["flag"] == 29:
-        args['group'] = "SHIELD_INIT_PUN"
+        args['group'] = "SHIELD_0_PUN"
         args["safety"] = "shield"
-        args["init"] = "zero"
+        args["init"] = "equilibrium"
         args["punishment"] = "punish"
-
-    # elif args["flag"] == 30:
-    #     args['group'] = "CBF_95"
-    #     args["safety"] = "cbf"
-    #     args["gamma"] = 0.95
-    # elif args["flag"] == 31:
-    #     args['group'] = "CBF_SAS_95"
-    #     args["safety"] = "cbf"
-    #     args["action_space"] = "small"
-    #     args["gamma"] = 0.95
-    # elif args["flag"] == 32:
-    #     args['group'] = "CBF_INIT_95"
-    #     args["gamma"] = 0.95
-    #     args["safety"] = "cbf"
-    #     args["init"] = "zero"
+    elif args["flag"] == 30:
+        args['group'] = "CBF_95"
+        args["safety"] = "cbf"
+        args["gamma"] = 0.95
+    elif args["flag"] == 31:
+        args['group'] = "CBF_SAS_95"
+        args["safety"] = "cbf"
+        args["action_space"] = "small"
+        args["gamma"] = 0.95
+    elif args["flag"] == 32:
+        args['group'] = "CBF_0_95"
+        args["gamma"] = 0.95
+        args["safety"] = "cbf"
+        args["init"] = "equilibrium"
     elif args["flag"] == 33:
         args['group'] = "CBF_01"
         args["safety"] = "cbf"
@@ -990,10 +752,10 @@ if __name__ == '__main__':
         args["action_space"] = "small"
         args["gamma"] = 0.1
     elif args["flag"] == 35:
-        args['group'] = "CBF_INIT_01"
+        args['group'] = "CBF_0_01"
         args["gamma"] = 0.1
         args["safety"] = "cbf"
-        args["init"] = "zero"
+        args["init"] = "equilibrium"
     elif args["flag"] == 36:
         args["punishment"] = "punish"
         args['group'] = "CBF_PUN_01"
@@ -1007,38 +769,31 @@ if __name__ == '__main__':
         args["gamma"] = 0.1
     elif args["flag"] == 38:
         args["punishment"] = "punish"
-        args['group'] = "CBF_INIT_PUN_01"
+        args['group'] = "CBF_0_PUN_01"
         args["gamma"] = 0.1
         args["safety"] = "cbf"
-        args["init"] = "zero"
-
-    #main(**args)
-
-
-
-
-
-
+        args["init"] = "equilibrium"
+    main(**args)
 
     tags = [
         # "main/avg_abs_action_rl",  # ?
-        #"main/avg_abs_safety_correction",  #
-        #"main/avg_abs_masklqr_correction",
+        # "main/avg_abs_safety_correction",  #
+        # "main/avg_abs_masklqr_correction",
         # "main/avg_abs_thdot",  # ?
         # "main/avg_abs_theta",  # ?
         # "main/avg_safety_measure",  #
-        #"main/episode_reward",  #
+        # "main/episode_reward",  #
         # "main/episode_time",  #
         # "main/max_abs_action_rl",  # ??
         # "main/max_abs_safety_correction",  #
         # "main/max_abs_thdot",  # ?
         # "main/max_abs_theta",  # ?
         # "main/max_safety_measure",  # ?
-         #"main/no_violation",  #
+        # "main/no_violation",  #
         # "main/rel_abs_safety_correction",
         # "main/avg_step_punishment",  #
-        #"main/avg_step_reward_rl"  # ???
-        "main/theta"
+        # "main/avg_step_reward_rl"  # ???
+        # "main/theta"
     ]
 
     # PRELIMINARY
@@ -1059,156 +814,54 @@ if __name__ == '__main__':
     #                     #    main(**args)
     #                     print(f"Finished training {args['group']} ...")
 
-    from thesis.util import tf_events_to_plot, external_legend_res
+    from util import tf_events_to_plot, external_legend_res
 
     for tag in tags:
         if tag == "main/avg_abs_action_rl":
-            y_label = "Absolute action per step"# \overline{\left(\left|a\\right|\\right)}$"
+            y_label = "Absolute action per step"  # \overline{\left(\left|a\\right|\\right)}$"
         elif tag == "main/avg_abs_thdot":
             y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
         elif tag == "main/avg_abs_theta":
             y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
         elif tag == "main/avg_step_reward_rl":
-            y_label = "Reward per step excl. $r_{\mathrm{t}}^{\mathrm{PUN}}$" #%$\overline{r}
+            y_label = "Reward per step excl. $r_{\mathrm{t}}^{\mathrm{PUN}}$"  # %$\overline{r}
         elif tag == "main/reward":
             y_label = "Reward"  # %$\overline{r}
         elif tag == "main/episode_reward":
-            y_label = "Episode return" #${r_{\mathrm{Episode}}}$
+            y_label = "Episode return"  # ${r_{\mathrm{Episode}}}$
         elif tag == "main/max_safety_measure":
             y_label = "Maximal reward $r_{\mathrm{max}}$"
         elif tag == "main/no_violation":
             y_label = "Safety violation"
-        #elif tag == "main/avg_abs_safety_correction":
+        # elif tag == "main/avg_abs_safety_correction":
         #    y_label = "Safety correction $|a_{\mathrm{t}}^{\mathrm{CBF}}|$"
         else:
             y_label = "Angular displacement $\\theta$"
-            #y_label = "$|\min(0,m_{\mathrm{t}}^0-m_{\mathrm{t}+1}^0,-|a_{\mathrm{t}}^{\mathrm{VER}}|)|$"
+            # y_label = "$|\min(0,m_{\mathrm{t}}^0-m_{\mathrm{t}+1}^0,-|a_{\mathrm{t}}^{\mathrm{VER}}|)|$"
 
         dirsss = [
-            ["PPO_SAS"],
-            #["CBF_SAS_PUN"]
-
-        #["SHIELD_SAS_PUN"]
-        #["A2C_UNTUNED", "PPO_UNTUNED"],
-        #["PPO_UNTUNED", "PPO"]
-        #["A2C", "A2C_UNTUNED"],
-        #["A2C", "PPO"]
-        #["PPO", "PPO_UNTUNED"],#Log/NotLog
-        #["PPO_SAS", "PPO", "PPO_INIT"],
-        #["A2C_UNTUNED_SAS", "A2C_UNTUNED", "A2C_UNTUNED_INIT"],
-        #["A2C_SAS", "A2C", "A2C_INIT"],
-        #["PPO_UNTUNED_SAS", "PPO_UNTUNED", "PPO_UNTUNED_INIT"],
-        #["PPO_SAS", "PPO", "PPO_INIT"],
-        #["MASK_SAS", "MASK", "MASK_INIT"],
-        #["SHIELD_SAS", "SHIELD", "SHIELD_INIT"],
-        #["MASK", "SHIELD"] #SAME FOR CBF NO VIOLATION PLOT
-        #["CBF_SAS", "CBF", "CBF_INIT"],
-        #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
-        #["SHIELD_SAS_PUN", "SHIELD_PUN", "SHIELD_INIT_PUN"],
-        #["CBF_SAS_PUN", "CBF_PUN", "CBF_INIT_PUN"],
-        #["MASK_SAS_PUNH", "MASK_PUNH", "MASK_INIT_PUNH"],
-        #["CBF_SAS_05", "CBF_05", "CBF_INIT_05"],
-        #["CBF_SAS_5", "CBF_5", "CBF_INIT_5"],
-        #["CBF_SAS_95", "CBF_95", "CBF_INIT_95"],
-        #["CBF_SAS_95", "CBF_SAS", "CBF_SAS_01"],
-        #["MASK_SAS", "MASK", "MASK_INIT"],
-            #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
-            #["MASK", "MASK_INIT"],
-            #["MASK_PUN", "MASK_INIT_PUN"],
-            #["SHIELD_SAS"]#, "SHIELD", "SHIELD_INIT"],
-            #["SHIELD_SAS_PUN"]#, "SHIELD_PUN", "SHIELD_INIT_PUN"],
-            #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
-            #["PPO_SAS", "PPO", "PPO_INIT"],
-            #["MASK_SAS", "MASK", "MASK_INIT"],
-            #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
-            #["SHIELD_SAS", "SHIELD", "SHIELD_INIT"],
-            #["SHIELD_SAS_PUN", "SHIELD_PUN", "SHIELD_INIT_PUN"],
-            #["CBF_SAS", "CBF", "CBF_INIT"],
-            #["CBF_SAS_PUN", "CBF_PUN", "CBF_INIT_PUN"]
-            #["MASK_SAS", "MASK", "MASK_INIT"],
-            #["MASK_SAS_PUN", "MASK_PUN", "MASK_INIT_PUN"],
+            #     ["A2C_UNTUNED_SAS", "A2C_UNTUNED", "A2C_UNTUNED_0"],
+            #     ["A2C_SAS", "A2C", "A2C_0"],
+            #     ["PPO_UNTUNED_SAS", "PPO_UNTUNED", "PPO_UNTUNED_0"],
+            #     ["PPO_SAS", "PPO", "PPO_0"],
+            #     ["SHIELD_SAS", "SHIELD", "SHIELD_0"],
+            #     ["SHIELD_SAS_PUN", "SHIELD_PUN", "SHIELD_0_PUN"],
+            #     ["CBF_SAS", "CBF", "CBF_0"],
+            #     ["CBF_SAS_PUN", "CBF_PUN", "CBF_0_PUN"],
+            #     ["CBF_SAS_95", "CBF_95", "CBF_0_95"],
+            #     ["CBF_SAS_95", "CBF_SAS", "CBF_SAS_01"],
+            #     ["MASK_SAS", "MASK", "MASK_0"],
+            #     ["MASK_SAS_PUN", "MASK_PUN", "MASK_0_PUN"],
         ]
 
-        for i, dirss in enumerate(dirsss):
-            tf_events_to_plot(dirss=dirss, #"standard"
-                              tags=[tag],
-                              x_label='Step',
-                              #x_label='Episode',
-                              y_label=y_label,
-                              width=2.5, #5   #2.5 -> 2
-                              height=2.5, #2.5
-                              episode_length=100,
-                              window_size=11, #41
-                              save_as=f"pdfs/{i}{tag.split('/')[1]}")
-
-    # labels = []
-    # for label in dirss:
-    #    labels.append(label.replace('_','/'))
-
-    # external_legend_res(labels=labels, save_as=f"pdfs/leg_{tag.split('/')[1]}")
-
-    # for alg in ["PPO", "A2C"]: #TODO: A2C run
-    #     args["algorithm"] = alg
-    #     for safety in ["no_safety", "shield", "mask", "cbf"]:
-    #         args["safety"] = safety
-    #         for action_space in ["safetorqueas", "unsafetorqueas"]:
-    #             args["action_space"] = action_space
-    #             for init in ["zero", "random"]:
-    #                 args["init"] = init
-    #                 for reward in ["opposing", "safety"]:
-    #                     args["reward"] = reward
-    #                     if not args["safety"] == "no_safety":
-    #                         for punishment in ["nopunish", "lightpunish", "heavypunish"]:
-    #                             args["punishment"] = punishment
-    #                             if safety=="cbf":
-    #                                 for gamma in [0.25, 0.75]:
-    #                                     args["gamma"] = gamma
-    #                                     args["group"] = f"{alg}_{safety}_{action_space}_{init}_{reward}_{punishment}_{str(gamma)}"
-    #                                     if not os.path.isdir(os.getcwd() + f"/tensorboard/{args['group']}"):
-    #                                         main(**args)
-    #                                     print(f"Finished training {args['group']} ...")
-    #                             else:
-    #                                 args["group"] = f"{alg}_{safety}_{action_space}_{init}_{reward}_{punishment}"
-    #                                 if not os.path.isdir(os.getcwd() + f"/tensorboard/{args['group']}"):
-    #                                     main(**args)
-    #                                 print(f"Finished training {args['group']} ...")
-    #                             #time.sleep(3)
-    #                     else:
-    #                         args["group"] = f"{alg}_{safety}_{action_space}_{init}_{reward}"
-    #                         if not os.path.isdir(os.getcwd() + f"/tensorboard/{args['group']}"):
-    #                             main(**args)
-    #                         print(f"Finished training {args['group']} ...")
-
-
-    # os.system("say The program finished.")
-
-    ########################
-
-    # args["train"] = True
-    # args['iterations'] = 2
-    # args['total_timesteps'] = 1e4
-    # args["name"]="NoSafety"
-    # args["safety"] = "shield"
-
-    # name = "test"
-    # args["group"] = name
-    # args["name"] = name
-    # args["name"] = "Shield_Punish"
-    # args["safety"] = "mask"
-    # args["name"] = "Mask"
-    # args["name"] = "Mask_Punish"
-    # args["safety"] = "cbf"
-
-    # args['train'] = True
-    # args['safety'] = 'mask'
-    # args['name'] = 'noSafetyTest'
-
-    # args['rollout'] = True
-    # args['render'] = True
-    # args['safety'] = 'cbf'
-    # args["gamma"] = 0.99999
-    # main(**args)
-
-    # args['name'] = 'maskTest'
-
-    # main(**args)
+        # for i, dirss in enumerate(dirsss):
+        #     tf_events_to_plot(dirss=dirss,  # "standard"
+        #                       tags=[tag],
+        #                       x_label='Step',
+        #                       # x_label='Episode',
+        #                       y_label=y_label,
+        #                       width=2.5,  # 5   #2.5 -> 2
+        #                       height=2.5,  # 2.5
+        #                       episode_length=100,
+        #                       window_size=11,  # 41
+        #                       save_as=f"pdfs/{i}{tag.split('/')[1]}")

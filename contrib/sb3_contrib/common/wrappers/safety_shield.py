@@ -6,20 +6,20 @@ from sb3_contrib.common.safety.safe_region import SafeRegion
 from stable_baselines3.common.type_aliases import GymStepReturn
 
 
-# TODO: Fix Callable typing, VecEnvs, Works for ints?
-# state from observations
-# Continuous to discrete via transform action space should work
-
 class SafetyShield(gym.Wrapper):
-    """
 
-    :param env: Gym environment to be wrapped
-    :param safe_region: Safe region object
-    :param dynamics_fn: Unbounded function ...
-    :param safe_action_fn: Unbounded function ...
-    :param punishment_fn: Unbounded function ...
-    :param alter_action_space: ...
-    :param transform_action_space_fn ...
+    """
+    Safety wrapper that uses post-posed shielding to stay inside a safe region
+    Inspired by https://arxiv.org/pdf/1708.08611.pdf
+
+    @param env: Gym environment to be wrapped
+    @param safe_region: Safe region instance
+    @param dynamics_fn: Dynamics function of the variables that need to be rendered safe
+    @param safe_action_fn: Verified fail safe action function
+    @param punishment_fn: Optional reward punishment function
+    @param alter_action_space: Alternative gym action space
+    @param transform_action_space_fn: Action space transformation function
+
     """
 
     def __init__(self,
@@ -38,9 +38,12 @@ class SafetyShield(gym.Wrapper):
 
         if not hasattr(self.env, "action_space"):
             warnings.warn("Environment does not have attribute ``action_space``")
+
+        # Alter action space if necessary
         if alter_action_space is not None:
             self.action_space = alter_action_space
 
+        # Fetch unbounded functions
         if isinstance(dynamics_fn, str):
             fn = getattr(self.env, dynamics_fn)
             if not callable(fn):
@@ -79,33 +82,42 @@ class SafetyShield(gym.Wrapper):
         else:
             self._transform_action_space_fn = None
 
+        if alter_action_space is not None:
+            if self._transform_action_space_fn is None:
+                raise ValueError("transform_action_space_fn is None")
+
     def step(self, action) -> GymStepReturn:
 
+        # Transform action if necessary
         if self._transform_action_space_fn is not None:
             action = self._transform_action_space_fn(action)
 
         if not self._dynamics_fn(self.env, action) in self._safe_region:
 
-            action_shield = self._safe_action_fn(self.env, self._safe_region, action)
-            obs, reward, done, info = self.env.step(action_shield)
+            # Fallback to verified fail-safe action
+            safe_action = self._safe_action_fn(self.env, self._safe_region, action)
+            obs, reward, done, info = self.env.step(safe_action)
 
+            # Optional reward punishment
             if self._punishment_fn is not None:
-                punishment = self._punishment_fn(self.env, self._safe_region, action, action_shield)
-                info["shield"] = {"action": action,
-                                  "action_shield": action_shield,
+                punishment = self._punishment_fn(self.env, self._safe_region, action, safe_action)
+                info["shield"] = {"action_rl": action,
+                                  "safe_action": safe_action,
                                   "reward": reward,
                                   "punishment": punishment}
                 reward += punishment
             else:
-                info["shield"] = {"action": action,
-                                  "action_shield": action_shield,
+                info["shield"] = {"action_rl": action,
+                                  "action_shield": safe_action,
                                   "reward": reward,
                                   "punishment": None}
 
         else:
+
+            # RL action is safe
             obs, reward, done, info = self.env.step(action)
-            info["shield"] = {"action": action,
-                              "action_shield": None,
+            info["shield"] = {"action_rl": action,
+                              "safe_action": None,
                               "reward": reward,
                               "punishment": None}
 

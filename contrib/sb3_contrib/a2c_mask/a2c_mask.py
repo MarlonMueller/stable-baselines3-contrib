@@ -22,8 +22,11 @@ from sb3_contrib.common.maskable.utils import get_action_masks, is_masking_suppo
 
 class MaskableA2C(OnPolicyAlgorithm):
     """
-    Advantage Actor Critic (A2C)
+    Advantage Actor Critic (A2C) with Invalid Action Masking.
     Paper: https://arxiv.org/abs/1602.01783
+
+    Background on Invalid Action Masking: https://arxiv.org/abs/2006.14171
+
     Code: This implementation borrows code from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail and
     and Stable Baselines (https://github.com/hill-a/stable-baselines)
     Introduction to A2C: https://hackernoon.com/intuitive-rl-intro-to-advantage-actor-critic-a2c-4ff545978752
@@ -93,25 +96,21 @@ class MaskableA2C(OnPolicyAlgorithm):
             ent_coef=ent_coef,
             vf_coef=vf_coef,
             max_grad_norm=max_grad_norm,
-            use_sde=use_sde, #TODO
-            sde_sample_freq=sde_sample_freq, #TODO
+            use_sde=False,
+            sde_sample_freq=-1,
             tensorboard_log=tensorboard_log,
             policy_kwargs=policy_kwargs,
             policy_base=MaskableActorCriticPolicy,
             verbose=verbose,
             device=device,
-            create_eval_env=create_eval_env, #TODO
+            create_eval_env=create_eval_env,
             seed=seed,
             _init_setup_model=False,
             supported_action_spaces=(
-                #spaces.Box,
                 spaces.Discrete,
                 spaces.MultiDiscrete,
-                #spaces.MultiBinary,
             ),
         )
-
-        #TODO: Sanity check PPO?
 
         self.normalize_advantage = normalize_advantage
 
@@ -126,7 +125,7 @@ class MaskableA2C(OnPolicyAlgorithm):
 
     def _setup_model(self) -> None:
 
-        #TODO: Could be refactored into Super "masked_on_policy_algorithm"
+        #TODO: Refactor into masked_on_policy_algorithm
 
         self._setup_lr_schedule()
         self.set_random_seed(self.seed)
@@ -172,7 +171,7 @@ class MaskableA2C(OnPolicyAlgorithm):
         :param use_masking: Whether or not to use invalid action masks during evaluation
         :return: A hybrid callback calling `callback` and performing evaluation.
         """
-        # TODO: Could be refactored into "masked_base_class"
+        # TODO: Refactor into masked_base_class
 
         # Convert a list of callbacks into a callback
         if isinstance(callback, list):
@@ -227,7 +226,7 @@ class MaskableA2C(OnPolicyAlgorithm):
         :return:
         """
 
-        # TODO: Could be refactored into "masked_base_class"
+        # TODO: Refactor into masked_base_class
 
         self.start_time = time.time()
         if self.ep_info_buffer is None or reset_num_timesteps:
@@ -293,9 +292,8 @@ class MaskableA2C(OnPolicyAlgorithm):
             collected, False if callback terminated rollout prematurely.
         """
 
-        # TODO: Could be refactored into Super "masked_on_policy_algorithm"
+        # TODO: Refactor into masked_on_policy_algorithm
 
-        # TODO is this assert needed?
         assert isinstance(rollout_buffer, MaskableRolloutBuffer), "RolloutBuffer doesn't support action masking"
         assert self._last_obs is not None, "No previous observation was provided"
         n_steps = 0
@@ -370,7 +368,7 @@ class MaskableA2C(OnPolicyAlgorithm):
         action_masks: Optional[np.ndarray] = None,
     ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
 
-        # TODO: Could be refactored into "masked_base_class"
+        # TODO: Refactor into masked_base_class
 
         """
         Get the model's action(s) from an observation.
@@ -404,7 +402,6 @@ class MaskableA2C(OnPolicyAlgorithm):
                 # Convert discrete action from float to long
                 actions = actions.long().flatten()
 
-            # TODO: avoid second computation of everything because of the gradient
             values, log_prob, entropy = self.policy.evaluate_actions(
                 rollout_data.observations,
                 actions,
@@ -467,7 +464,7 @@ class MaskableA2C(OnPolicyAlgorithm):
     ) -> "MaskableA2C":
         iteration = 0
 
-        # TODO: Could be refactored into "masked_on_policy_algorithm"
+        # TODO: Refactor into masked_on_policy_algorithm
 
         total_timesteps, callback = self._setup_learn(
             total_timesteps,
