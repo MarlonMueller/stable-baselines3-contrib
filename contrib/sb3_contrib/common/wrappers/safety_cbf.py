@@ -64,7 +64,7 @@ class SafetyCBF(gym.Wrapper):
         self._A, self._b = safe_region.halfspaces
 
         # Setup quadratic program (objective) https://cvxopt.org/userguide/coneprog.html
-        self._P = matrix(np.diag(_num_actions), tc='d')
+        self._P = matrix(np.identity(_num_actions), tc='d')
         self._q = matrix(np.zeros(_num_actions), tc='d')
 
         # Fetch unbounded functions
@@ -133,7 +133,7 @@ class SafetyCBF(gym.Wrapper):
         # Check whether the unactuated_dynamics_fn or the dynamics_fn have been provided
         if self._unactuated_dynamics_fn is not None:
             h = matrix(np.asarray([-np.dot(self._A[i], self._unactuated_dynamics_fn(self.env))
-                                   - np.dot(self._A[i], self._actuated_dynamics_fn(self.env, action))
+                                   - np.dot(self._A[i], self._actuated_dynamics_fn(self.env)) * action
                                    + (1 - self._gamma) * np.dot(self._A[i], self.env.state) +
                                    self._gamma * self._b[i] for i in range(len(self._A))],
                                   dtype=np.double), tc='d')
@@ -145,7 +145,7 @@ class SafetyCBF(gym.Wrapper):
 
         # Solve QP
         sol = solvers.qp(self._P, self._q, G, h)
-        compensation = sol['x']
+        compensation = sol['x'][0]
 
         # Forward safe action action + action_cbf
         obs, reward, done, info = self.env.step(action + compensation)

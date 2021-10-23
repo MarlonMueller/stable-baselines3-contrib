@@ -68,7 +68,7 @@ class SafetyMask(gym.Wrapper):
                 raise ValueError(f"Attribute {fn} is not a method")
             self._safe_action_fn = fn
         else:
-            self._safe_action_fn = dynamics_fn
+            self._safe_action_fn = safe_action_fn
 
         if punishment_fn is not None:
             if isinstance(punishment_fn, str):
@@ -150,7 +150,7 @@ class SafetyMask(gym.Wrapper):
 
             if self._punishment_fn is not None:
                 punishment = self._punishment_fn(self.env, self._safe_region, safe_action, self._mask, next_mask)
-                info["mask"] = {"action": 0,
+                info["mask"] = {"action_rl": 0,
                                 "last_mask": self._mask,
                                 "next_mask": next_mask,
                                 "safe_action": safe_action,
@@ -159,7 +159,7 @@ class SafetyMask(gym.Wrapper):
                                 }
                 reward += punishment
             else:
-                info["mask"] = {"action": 0,
+                info["mask"] = {"action_rl": 0,
                                 "last_mask": self._mask,
                                 "next_mask": next_mask,
                                 "safe_action": safe_action,

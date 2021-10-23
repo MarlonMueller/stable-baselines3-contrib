@@ -58,7 +58,7 @@ class SafetyShield(gym.Wrapper):
                 raise ValueError(f"Attribute {fn} is not a method")
             self._safe_action_fn = fn
         else:
-            self._safe_action_fn = dynamics_fn
+            self._safe_action_fn = safe_action_fn
 
         if punishment_fn is not None:
             if isinstance(punishment_fn, str):
@@ -103,13 +103,13 @@ class SafetyShield(gym.Wrapper):
                 punishment = self._punishment_fn(self.env, self._safe_region, action, safe_action)
                 info["shield"] = {"action_rl": action,
                                   "safe_action": safe_action,
-                                  "reward": reward,
+                                  "reward_rl": reward,
                                   "punishment": punishment}
                 reward += punishment
             else:
                 info["shield"] = {"action_rl": action,
                                   "action_shield": safe_action,
-                                  "reward": reward,
+                                  "reward_rl": reward,
                                   "punishment": None}
 
         else:
@@ -118,7 +118,7 @@ class SafetyShield(gym.Wrapper):
             obs, reward, done, info = self.env.step(action)
             info["shield"] = {"action_rl": action,
                               "safe_action": None,
-                              "reward": reward,
+                              "reward_rl": reward,
                               "punishment": None}
 
         return obs, reward, done, info

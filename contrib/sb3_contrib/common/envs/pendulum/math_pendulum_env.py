@@ -37,19 +37,21 @@ class MathPendulumEnv(Env):
         # Timestep
         self.dt = .05
 
-        self._init = init
+        if init == "equilibrium":
+            self._init = "equilibrium"
+        else:
+            self._init = ""
         self._safe_region = safe_region
-
         self.rng = np.random.default_rng()
 
-        # Keep for gym.make
-        # max_torque = 1
-        # self.action_space = Box(
-        #     low=-max_torque,
-        #     high=max_torque,
-        #     shape=(1,),
-        #     dtype=np.float32
-        # )
+        # Keep for gym.make/sampling
+        max_torque = 30
+        self.action_space = Box(
+            low=-max_torque,
+            high=max_torque,
+            shape=(1,),
+            dtype=np.float32
+        )
 
         obs_high = np.array([np.inf, np.inf], dtype=np.float32)
         self.observation_space = Box(
@@ -64,7 +66,7 @@ class MathPendulumEnv(Env):
 
 
     def reset(self, **kwargs) -> GymObs:
-        if self.init is not None and self.init == "equilibrium":
+        if self._init == "equilibrium":
            self.state = np.array([0, 0])
         else:
             self.state = np.asarray(self._safe_region.sample())
@@ -152,6 +154,6 @@ class MathPendulumEnv(Env):
                 self.mass.set_color(227 / 255, 114 / 255, 34 / 255)
 
         if self.last_action:
-            self.imgtrans.scale = (self.last_action / 6, abs(self.last_action) / 6)
+            self.imgtrans.scale = (-self.last_action / 6, -abs(self.last_action) / 6)
 
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')

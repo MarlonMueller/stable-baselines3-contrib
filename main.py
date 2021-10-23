@@ -28,11 +28,12 @@ from util import remove_tf_logs, rename_tf_events, load_model, save_model, tf_ev
 from sb3_contrib import SafeRegion
 from sb3_contrib import MaskableA2C, MaskablePPO
 from sb3_contrib import SafetyMask, SafetyCBF, SafetyShield
+from pendulum_roa import PendulumRegionOfAttraction
 
 logger = logging.getLogger(__name__)
 
 #TODO: State
-#TODO: New typing, state, more support
+#TODO: New typing, state, more support, veenc, color if safety used, Check for multiple
 
 def main(**kwargs):
     logger.info(f"kargs {kwargs}")
@@ -61,6 +62,16 @@ def main(**kwargs):
 
     name = f"{kwargs['name']}_{kwargs['algorithm']}"
 
+    # Define the precomputed safe region
+    theta_roa = 3.092505268377452
+    vertices = np.array([
+        [-theta_roa, 12.762720155208534],  # LeftUp
+        [theta_roa, -5.890486225480862],  # RightUp
+        [theta_roa, -12.762720155208534],  # RightLow
+        [-theta_roa, 5.890486225480862]  # LeftLow
+    ])
+    safe_region = PendulumRegionOfAttraction(vertices=vertices)
+
     # Initialize environment
     if 'env' not in kwargs:
         raise ValueError(f"env not in kwargs")
@@ -70,7 +81,7 @@ def main(**kwargs):
     if "init" in kwargs and kwargs["init"] == "equilibrium":
         env = gym.make(kwargs['env'], init="equilibrium")
     else:
-        env = gym.make(kwargs['env'], init="random")
+        env = gym.make(kwargs['env'], safe_region=safe_region, init="random")
 
     env_spec = env.spec
     # Care VecEnv does not specify __getattr__
@@ -79,16 +90,6 @@ def main(**kwargs):
         # As a result, logging each state results in env_spec.max_episode_steps -1 entries.
         # To log env_spec.max_episode_steps this simple modification is used.
         env = TimeLimit(env.unwrapped, max_episode_steps=env_spec.max_episode_steps + 1)
-
-    # Define the precomputed safe region
-    theta_roa = 3.092505268377452
-    vertices = np.array([
-        [-theta_roa, 12.762720155208534],  # LeftUp
-        [theta_roa, -5.890486225480862],  # RightUp
-        [theta_roa, -12.762720155208534],  # RightLow
-        [-theta_roa, 5.890486225480862]  # LeftLow
-    ])
-    safe_region = SafeRegion(vertices=vertices)
 
     # Adjust action space
     alter_action_space = gym.spaces.Discrete(21)
@@ -115,8 +116,8 @@ def main(**kwargs):
             if "punishment" in kwargs and kwargs["punishment"] == "default":
                 def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                                   action_rl: Union[int, float, np.ndarray],
-                                  safety_correction: Union[int, float, np.ndarray]) -> float:
-                    return -abs(action_rl - safety_correction)
+                                  safe_action: Union[int, float, np.ndarray]) -> float:
+                    return -abs(action_rl - safe_action)
             else:
                 punishment_fn = None
 
@@ -352,7 +353,7 @@ def main(**kwargs):
         rename_tf_events(kwargs["group"])
 
 
-def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, env_safe_action=False, render=False,
+def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, safe_action_fn=None, render=False,
             rgb_array=False, sleep=0.1):
     is_vec_env = isinstance(env, VecEnv)
     if is_vec_env:
@@ -405,9 +406,9 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, en
                 # action, state = model.predict(obs, state=state, action_masks=mask)
                 action = action[0]
 
-            elif env_safe_action:
-                action = env.get_attr('safe_action')[0](env, safe_region, None)
-
+            elif safe_action_fn is not None:
+                action = safe_action_fn(env, safe_region, None)
+                #action = env.get_attr('safe_action')[0](env, safe_region, None)
             else:
                 action = env.action_space.sample()
                 if isinstance(action, np.ndarray):
