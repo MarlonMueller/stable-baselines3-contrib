@@ -154,7 +154,7 @@ class SafetyMask(gym.Wrapper):
                                 "last_mask": self._mask,
                                 "next_mask": next_mask,
                                 "safe_action": safe_action,
-                                "reward": reward,
+                                "reward_rl": reward,
                                 "punishment": punishment,
                                 }
                 reward += punishment
@@ -163,7 +163,7 @@ class SafetyMask(gym.Wrapper):
                                 "last_mask": self._mask,
                                 "next_mask": next_mask,
                                 "safe_action": safe_action,
-                                "reward": reward,
+                                "reward_rl": reward,
                                 "punishment": None
                                 }
         else:
@@ -181,7 +181,7 @@ class SafetyMask(gym.Wrapper):
                                 "last_mask": self._mask,
                                 "next_mask": next_mask,
                                 "safe_action": None,
-                                "reward": reward,
+                                "reward_rl": reward,
                                 "punishment": punishment}
                 reward += punishment
             else:
@@ -189,7 +189,7 @@ class SafetyMask(gym.Wrapper):
                                 "last_mask": self._mask,
                                 "next_mask": next_mask,
                                 "safe_action": None,
-                                "reward": reward,
+                                "reward_rl": reward,
                                 "punishment": None
                                 }
 

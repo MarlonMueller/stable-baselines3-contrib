@@ -108,7 +108,7 @@ class SafetyShield(gym.Wrapper):
                 reward += punishment
             else:
                 info["shield"] = {"action_rl": action,
-                                  "action_shield": safe_action,
+                                  "safe_action": safe_action,
                                   "reward_rl": reward,
                                   "punishment": None}
 

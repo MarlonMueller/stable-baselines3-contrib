@@ -209,7 +209,7 @@ def main(**kwargs):
             def step(self, action) -> GymStepReturn:
                 action = self._transform_action_space_fn(action)
                 obs, reward, done, info = self.env.step(action)
-                info["standard"] = {"action": action, "reward": reward}
+                info["standard"] = {"action_rl": action, "reward_rl": reward}
                 return obs, reward, done, info
 
         env = ActionInfoWrapper(env,

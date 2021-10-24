@@ -155,13 +155,13 @@ class SafetyCBF(gym.Wrapper):
             punishment = self._punishment_fn(self.env, self._safe_region, action, compensation)
             info["cbf"] = {"action_rl": action,
                            "compensation": compensation,
-                           "reward": reward,
+                           "reward_rl": reward,
                            "punishment": punishment}
             reward += punishment
         else:
             info["cbf"] = {"action_rl": action,
                            "action_cbf": compensation,
-                           "reward": reward,
+                           "reward_rl": reward,
                            "punishment": None}
 
         return obs, reward, done, info

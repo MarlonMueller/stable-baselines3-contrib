@@ -5,130 +5,121 @@ from stable_baselines3.common.callbacks import BaseCallback
 class PendulumRolloutCallback(BaseCallback):
 
     """
-    Extends logged values within Tensorboard.
-    #TODO: HandleVecEnvs
+    Extends the logged values for the inverted pendulum problem by following measurements
 
-    Notes
-    ----------
-    Used for evaluation (see main) without learning.
-    As a result, the passed information is 'info' instead of 'infos'.
+    episode_reward: Cumulated reward
+    episode_length: Episode length
+    episode_time: Measured by class Monitor(gym.Wrapper)
+
+    theta: Angular displacement
+    thdot: Angular velocity
+    action_rl: Action of the policy
+    reward_rl: Reward (excluding reward punishment)
+
+    Safety Constraints
+    - safe: True iff state is inside ROA
+    - safe_excl_approx: True iff state is inside ROA or fail-safe controller is active
+
+    Safety Correction (see README.md)
+    - safety_correction
+    - safety_correction_mask_lqr
+
+    punishment: Reward punishment
+
+    Assumes DummyVecEnv instance as outermost wrapper
+    Note that 'info' is used instead of 'infos'
     """
 
     def __init__(self, safe_region, verbose=0):
         super(PendulumRolloutCallback, self).__init__(verbose)
-
-        # TODO: Could (Maybe) directly via Monitor (guarantee that top wrapper?) / check VecEnvs
-        # Manually update timesteps (self.model.timesteps refers to the trained model)
-        # Note: self.num_timesteps not set since on_step only called via .learn
-        # Note: start at -1 for repeated _on_rollout_start calls
+        # Start at -1 for repeated _on_rollout_start calls
         self.num_steps = -1
-
-        #TODO: As in Train
-        #from pendulum.mathematical_pendulum.envs.pendulum_region_of_attraction import RegionOfAttraction
-        #self.roa = RegionOfAttraction()
         self._safe_region = safe_region
 
-
-
     def _on_rollout_start(self) -> None:
-        """
 
-        Notes
-        -------
-        This callback is used for rolling out episodes after training (see main)
+        """
         The usage of _on_rollout_start(self) is redefined compared to its use in BaseAlgorithms ('collecting rollouts').
         As a result, '_on_rollout_start' is called for each new episode rollout.
-
         """
 
         self.num_steps += 1
 
-        # See warning in _on_step
-        state = self.training_env.get_attr('state')[0]
-
         # Log initial state
+        state = self.training_env.get_attr('state')[0]
         self.logger.record('main/theta', state[0])
         self.logger.record('main/omega', state[1])
         self.logger.dump(step=self.num_steps)
 
     def _on_step(self) -> bool:
-        """
 
-        Returns
-        -------
-        If the callback returns False, training is aborted early.
-        """
-
-        # Note: Envs are always wrapped in VecEnvs (i.e. for a single env a DummyVecEnv is used) (.item())
         info = self.locals.get('info')[0]
-
         if "episode" in info.keys():
-            # Log episode reward (SB3 only tracks ep_rew_mean with ep_info_buffer) using updated locals (SB3's intended way)
-            # Note: ep_info_buffer (update in BaseAlgorithm) is set after callback evaluation (and restricted due to size)
+
+            # SB3 only tracks ep_rew_mean with ep_info_buffer using updated locals
+            # ep_info_buffer (update in BaseAlgorithm) is set after callback evaluation (and restricted due to size)
             self.logger.record('main/episode_reward', info['episode']['r'])
-            # self.logger.record('main/episode_length', infos['episode']['l'], exclude='tensorboard')
-            # self.logger.record('main/episode_time',infos['episode']['t'], exclude='tensorboard')
+            self.logger.record('main/episode_length', info['episode']['l'])
+            self.logger.record('main/episode_time',info['episode']['t'])
             self.logger.dump(step=self.num_steps)
 
         self.num_steps += 1
 
-
-        # Warning: Assuming VecEnv instance as outermost wrapper.
-        # Alternatively, use locals directly, unwrap or store reference to unwrapped env.
-        # _get_attr_ not defined for VecEnvs (get_attr) but for Wrappers
+        # VecEnvs only define get_attr not __getattr__; alternatively, use locals directly
         state = self.training_env.get_attr('state')[0]
-        #print(state)
 
+        # Log state
         self.logger.record('main/theta', state[0])
         self.logger.record('main/omega', state[1])
 
         if "mask" in info.keys():
-            action_rl = info['mask']["action"]
-            reward = info['mask']["reward"]
+            action_rl = info['mask']["action_rl"]
+            reward_rl = info['mask']["reward_rl"]
             mask = info['mask']["last_mask"][:-1]
-            self.logger.record("main/masked",np.count_nonzero(mask == 0))
-            if info['mask']["action_mask"] is not None:
-                self.logger.record("main/lqr",abs(info['mask']["action_mask"]))
+            self.logger.record("main/safety_correction",np.count_nonzero(mask == 0))
+            if info['mask']["safe_action"] is not None:
+                self.logger.record("main/safety_correction_mask_lqr", abs(info['mask']["safe_action"]))
             if info['mask']["punishment"] is not None:
-                self.logger.record("main/punish",info['mask']["punishment"])
+                self.logger.record("main/punishment",info['mask']["punishment"])
+
         elif "shield" in info.keys():
-            action_rl = info['shield']["action"]
-            reward = info['shield']["reward"]
+            action_rl = info['shield']["action_rl"]
+            reward_rl = info['shield']["reward_rl"]
             if info['shield']["action_shield"] is not None:
-                self.logger.record("main/correction", abs(action_rl - info['shield']["action_shield"]))
+                self.logger.record("main/safety_correction", abs(action_rl - info['shield']["safe_action"]))
             if info['shield']["punishment"] is not None:
-                self.logger.record("main/punish", info['shield']["punishment"])
+                self.logger.record("main/punishment", info['shield']["punishment"])
 
         elif "cbf" in info.keys():
-            action_rl = info['cbf']["action"]
-            reward  = info['cbf']["reward"]
-            self.logger.record("main/correction",info['cbf']["action_bar"])
+            action_rl = info['cbf']["action_rl"]
+            reward_rl = info['cbf']["reward_rl"]
+            self.logger.record("main/safety_correction",abs(info['cbf']["compensation"]))
             if info['cbf']["punishment"] is not None:
-                self.logger.record("main/punish", info['cbf']["punishment"])
+                self.logger.record("main/punishment", info['cbf']["punishment"])
 
         else:
-            action_rl = info['standard']["action"]
-            reward = info['standard']["reward"]
+            action_rl = info['standard']["action_rl"]
+            reward_rl = info['standard']["reward_rl"]
 
-        self.logger.record('main/actionrl', action_rl)
-        self.logger.record('main/reward', reward)
+        self.logger.record('main/action_rl', action_rl)
+        self.logger.record('main/reward_rl', reward_rl)
 
         if state not in self._safe_region:
-            self.logger.record('main/violation', True)
-            if "shield" in info.keys() and info['shield']["action_shield"] is not None:
-                self.logger.record('main/realviolation', False)
-            elif "mask" in info.keys() and info['mask']["action_mask"] is not None:
-                self.logger.record('main/realviolation', False)
-            elif "cbf" in info.keys() and info['cbf']["epsilon"] <= 1e-10:
-                self.logger.record('main/realviolation', False)
+            # State is outside of ROA
+            self.logger.record('safe', False)
+            # Check whether fail-safe controller is active
+            if "shield" in info.keys() and info['shield']["safe_action"] is not None:
+                    self.logger.record('safe_excl_approx', True)
+            if "mask" in info.keys() and info['mask']["safe_action"] is not None:
+                    self.logger.record('safe_excl_approx', True)
             else:
-                self.logger.record('main/realviolation', True)
+                self.logger.record('safe_excl_approx', False)
+            # In case CBFs with a slack variable are used, check for e.g. epsilon >= 1e-20
         else:
-            self.logger.record('main/realviolation', False)
-            self.logger.record('main/violation', False)
+            self.logger.record('safe', True)
+            self.logger.record('safe_excl_approx', True)
 
         self.logger.dump(step=self.num_steps)
-
         return True
 
 

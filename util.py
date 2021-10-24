@@ -1,4 +1,5 @@
 """Utilities for working with plots and tf events."""
+
 from matplotlib.lines import Line2D
 from stable_baselines3.common.base_class import BaseAlgorithm
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
@@ -12,16 +13,7 @@ from matplotlib import colors as clr
 from numpy import pi, sin, cos
 import pandas as pd
 
-
 logger = logging.getLogger(__name__)
-
-# COLORS_PLOTS = [
-#     '#0065bd', #blue
-#     '#e37222', #orange
-#     '#008f7c', #green
-#     '#f0266b' #magenta
-# ]
-
 
 COLORS_PLOTS = [
     'tab:blue', #blue
@@ -37,6 +29,7 @@ COLORS = {
     'LIGHT_BLUE': (100 / 255, 160 / 255, 200 / 255),
     'LIGHTER_BLUE': (152 / 255, 198 / 255, 234 / 255)
 }
+
 COLORS_HEX = {
     'BLUE': '#0065bd',
     'ORANGE': '#e37222',
@@ -47,7 +40,7 @@ COLORS_HEX = {
 def save_model(name, model):
     path = os.getcwd() + '/models/'
     os.makedirs(path, exist_ok=True)
-    model.save(path + name)  # TODO: Check if save_to_zip_file
+    model.save(path + name)
 
 def load_model(name, base: BaseAlgorithm):
     path = os.getcwd() + '/models/'
@@ -71,7 +64,8 @@ def torque_given_state(gain_matrix, state):
     return np.dot(gain_matrix, state)
 
 def setup_plot(fig, width, height, font_size=11):
-    """ Used to initialize uniform plots.
+    """
+    Used to initialize uniform plots.
     """
     fig.set_size_inches(width, height)
     plt.rcParams["text.usetex"] = True
@@ -81,7 +75,8 @@ def setup_plot(fig, width, height, font_size=11):
     # plt.gca().tick_params(axis="y", direction="in")
 
 def finalize_plot(fig=None, width=.0, height=.0, x_label='', y_label='', path=None):
-    """ Finalize and save plots.
+    """
+    Finalize and save plots.
     """
     plt.gca().tick_params(axis="x", direction="out", zorder=10)  # =0)
     plt.gca().tick_params(axis="y", direction="out", zorder=10)  # length=0)
@@ -90,7 +85,6 @@ def finalize_plot(fig=None, width=.0, height=.0, x_label='', y_label='', path=No
     if path:
         plt.savefig(path, dpi=1000, bbox_inches='tight')
     plt.show()
-
 
 
 def safety_measure_plot(v1, v2, width=2.5, height=2.5, l=1, m=1, g=9.81, K=None, vertices=None, save_as=None):
@@ -1156,10 +1150,6 @@ def animate(frames, interval=50, dpi=100):
     plt.close()
 
     return animation.FuncAnimation(fig, lambda i: im.set_data(frames[i]), frames=len(frames), interval=interval)
-
-
-
-
 
 
 if __name__ == '__main__':
