@@ -808,7 +808,10 @@ if __name__ == '__main__':
         args["gamma"] = 0.1
         args["safety"] = "cbf"
         args["init"] = "equilibrium"
-    main(**args)
+    else:
+        _invalid_flag = True
+    if not _invalid_flag:
+        main(**args)
 
     tags = [
         # "main/avg_abs_action_rl",  # ?
