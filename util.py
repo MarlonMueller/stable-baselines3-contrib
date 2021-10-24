@@ -1,4 +1,8 @@
-"""Utilities for working with plots and tf events."""
+"""
+Utilities to generate plots
+Note that this file only contains auxiliary code
+Some methods are uncommented / should not be used as is
+"""
 
 from matplotlib.lines import Line2D
 from stable_baselines3.common.base_class import BaseAlgorithm
@@ -16,10 +20,10 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 COLORS_PLOTS = [
-    'tab:blue', #blue
-    'tab:orange', #orange
-    'tab:green', #green
-    '#f0266b' #magenta
+    'tab:blue',
+    'tab:orange',
+    'tab:green',
+    '#f0266b'
 ]
 
 # https://gist.github.com/lnksz/51e3566af2df5c7aa678cd4dfc8305f7
@@ -50,7 +54,9 @@ def load_model(name, base: BaseAlgorithm):
         raise FileNotFoundError(f'No such model {name}')
 
 def gain_matrix():
-    """ Gain matrix (K) of the pendulum's LQR controller."""
+    """
+    Gain matrix of the pendulum's LQR controller
+    """
     import matlab.engine
     path_matlab = f'{os.path.dirname(os.path.abspath(__file__))}/matlab'
     eng = matlab.engine.start_matlab()
@@ -65,7 +71,7 @@ def torque_given_state(gain_matrix, state):
 
 def setup_plot(fig, width, height, font_size=11):
     """
-    Used to initialize uniform plots.
+    Used to initialize plots
     """
     fig.set_size_inches(width, height)
     plt.rcParams["text.usetex"] = True
@@ -76,10 +82,10 @@ def setup_plot(fig, width, height, font_size=11):
 
 def finalize_plot(fig=None, width=.0, height=.0, x_label='', y_label='', path=None):
     """
-    Finalize and save plots.
+    Finalize and save plots
     """
-    plt.gca().tick_params(axis="x", direction="out", zorder=10)  # =0)
-    plt.gca().tick_params(axis="y", direction="out", zorder=10)  # length=0)
+    plt.gca().tick_params(axis="x", direction="out", zorder=10)
+    plt.gca().tick_params(axis="y", direction="out", zorder=10)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     if path:
@@ -87,7 +93,283 @@ def finalize_plot(fig=None, width=.0, height=.0, x_label='', y_label='', path=No
     plt.show()
 
 
+def remove_tf_logs(*dirs):
+    """
+    Removes directories within ./tensorboard
+    """
+    cwd = os.getcwd() + '/tensorboard/'
+    if not dirs:
+        dirs = os.listdir(cwd)
+    for dir in dirs:
+        shutil.rmtree(cwd + dir, ignore_errors=True)
+
+
+def reward_at(theta: float, thdot: float) -> float:
+    """
+
+    """
+    det_12 = 10.62620981660255
+    max_theta = 3.092505268377452
+    return -max(
+        abs((theta * 3.436116964863835) / det_12),
+        abs((theta * 9.326603190344699 + thdot * max_theta) / det_12)
+    )
+
+
+def rename_tf_events(group):
+    """
+    Renames the tf events within ./tensorboard/*dirs to tfevents.event.
+    """
+    cwd = os.getcwd() + f"/tensorboard/{group}/"
+
+    dirs = [dir for dir in os.listdir(cwd) if os.path.isdir(cwd + dir)]
+    for dir in dirs:
+        files = os.listdir(cwd + dir + '/')
+        if len(files) != 1:
+            logger.warning(f'No unique event file found within {cwd + dir}')
+        os.rename(cwd + dir + '/' + files[0],
+                  cwd + dir + '/' + 'tfevents.event')
+
+
+def smooth_data(ys, window_size=5):
+    """
+    Smooth data with a central moving average
+    """
+    if window_size <= 0 or window_size % 2 != 1:
+        raise ValueError('Choose window_size > 0 and window_size % 2 == 1')
+    w = np.ones(window_size)
+    # Adapted from https://github.com/openai/spinningup/blob/master/spinup/utils/plot.py
+    return np.convolve(ys, w, mode='same') / np.convolve(np.ones(len(ys)), w, mode='same')
+
+def external_legend_res(labels, save_as=None, width=1., height=.25, ncols=2, colors=None, equi=False):
+    """
+    Generates legend plots
+    """
+    fig = plt.figure()
+    setup_plot(fig=fig, width=width, height=height)
+    plt.gca().axis('off')
+
+    handles = []
+    if colors is None:
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    for i, label in enumerate(labels):
+        color = colors[i]
+        handles.append(Line2D([0], [0], color=color, label=label))
+    if equi:
+        handles.append(Line2D([0], [0], color="white", markerfacecolor=COLORS_HEX['BLUE'], marker='o', label='Equilibrium'))
+    plt.gca().legend(handles=handles, frameon=True, loc='center', ncol=ncols)
+    if save_as is not None:
+        plt.savefig(f'{os.getcwd()}/{save_as}.pdf', dpi=1000, bbox_inches='tight')
+    plt.show()
+
+
+def external_legend(save_as=None, width=1., height=.25):
+    """
+    Generates legend plots
+    """
+    fig = plt.figure()
+    setup_plot(fig=fig, width=width, height=height)
+    plt.gca().axis('off')
+
+    b_line = Line2D([0], [0], color="white", markerfacecolor=COLORS_HEX['BLUE'], marker='o', label='Equilibrium')
+    m_line = Line2D([0], [0], color='magenta', label='ROA (Polygon)')
+    g_line = Line2D([0], [0], color='green', label='$|\\tau|\\leq\\tau_{\mathrm{max}}\;\mathrm{and}\;|\\theta|\\leq\\theta_{\mathrm{max}}$')
+    o_line = Line2D([0], [0], color='orange', label='$|\\tau|\\leq\\tau_{\mathrm{max}}\;\mathrm{and}\;|\\theta|>\\theta_{\mathrm{max}}$')
+    r_line = Line2D([0], [0], color='red', label='$|\\tau| >\\tau_{\mathrm{max}}$')
+    t_line = Line2D([0], [0], color='darkturquoise', label='ROA (Subpaving)')
+
+    plt.gca().legend(handles=[g_line, o_line, r_line, b_line, t_line, m_line], frameon=True, loc='center', ncol=2)
+
+    if save_as is not None:
+        plt.savefig(f'{os.getcwd()}/{save_as}.pdf', dpi=1000, bbox_inches='tight')
+    plt.show()
+
+def animate(frames, interval=50, dpi=100):
+    """
+    Returns an animation object given a list of frames.
+    Interval adjusts the delay between frames in milliseconds.
+    See also: https://matplotlib.org/stable/api/_as_gen/matplotlib.animation.FuncAnimation.html
+    """
+
+    fig = plt.figure(dpi=dpi)
+    im = plt.imshow(frames[0])
+    ax = plt.gca()
+    ax.get_xaxis().set_ticks([])
+    ax.get_yaxis().set_ticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    plt.close()
+
+    return animation.FuncAnimation(fig, lambda i: im.set_data(frames[i]), frames=len(frames), interval=interval)
+
+def phase_plot(width=2.5, height=2.5, l=1, m=1, g=9.81,
+               K=None, max_torque=None, max_theta=None, vertices=None, boxes=None, save_as=None):
+    """ Generates different kinds of phase plots"""
+
+    theta, thetadot = np.meshgrid(np.linspace(-1.5 * np.pi, 1.5 * np.pi, 375), np.linspace(-5 * np.pi, 5 * np.pi, 350))
+
+    if K is None:
+
+        start_points = [
+            [0, 4 * pi],
+            [0, -4 * pi],
+            [0, 3 * pi],
+            [0, -3 * pi],
+            [0, 2 * pi],
+            [0, -2 * pi],
+            [0, 1 * pi],
+            [0, -1 * pi],
+            [-pi, 1.7 * pi],
+            [pi, 1.7 * pi],
+            [-pi, 1.2 * pi],
+            [pi, 1.2 * pi],
+            [-pi, 0.7 * pi],
+            [pi, 0.7 * pi],
+        ]
+        # Uncontrolled system
+        thetadotdot = g / l * sin(theta)
+        color = (abs(np.sin(theta)) + (1.5 / 4) * abs(thetadot)) ** 0.5
+        cmap = clr.LinearSegmentedColormap.from_list("", [COLORS_HEX['BLUE'], COLORS_HEX['ORANGE']])
+
+    else:
+
+        # Custom starting points for clean/useful plots
+        start_points = [
+            [pi / 2, 0],
+            [-pi / 2, 0],
+            [0, -2 * pi],
+            [0, 2 * pi],
+            [-0.55 * pi, -4 * pi],
+            [0.55 * pi, 4 * pi],
+            [-pi, -4 * pi],
+            [pi, 4 * pi],
+            [-1.5 * pi, 2 * pi],
+            [1.5 * pi, -2 * pi],
+            [-0.8 * pi, 4 * pi],
+            [0.8 * pi, -4 * pi],
+
+        ]
+
+        # Controlled system
+        if max_torque and max_theta:
+
+            u = np.dot(np.moveaxis([theta, thetadot], 0, -1), K)
+            thetadotdot = g / l * sin(theta) - (1 / (m * l ** 2)) * u
+
+            orange = (abs(np.dot(np.moveaxis([theta, thetadot], 0, -1), K)) <= max_torque)
+            orange2 = (abs(theta) > max_theta)  # .astype(int)
+            orange = -10000 * np.logical_and(orange, orange2).astype(int)
+            green1 = (abs(np.dot(np.moveaxis([theta, thetadot], 0, -1), K)) <= max_torque)
+            green2 = (abs(theta) <= pi)  # Artefacts in plot
+            green3 = (abs(theta) <= max_theta)
+            green = np.logical_and(green1, green2)
+            green = 10000 * np.logical_and(green, green3).astype(int)
+            color = orange + green
+            cmap = clr.ListedColormap(['orange', 'red', 'green'])
+
+        else:
+
+            thetadotdot = g / l * sin(theta) - (1 / (m * l ** 2)) * np.dot(np.moveaxis([theta, thetadot], 0, -1), K)
+            color = (abs(theta) + (1.5 / 4) * abs(thetadot)) ** 0.5
+            cmap = clr.LinearSegmentedColormap.from_list("", [COLORS_HEX['BLUE'], COLORS_HEX['ORANGE']])
+
+    fig = plt.figure()
+    setup_plot(fig=fig, width=width, height=height)
+    linewidth = 1
+
+    if vertices is not None:
+        codes = [Path.MOVETO]
+        for _ in range(len(vertices) - 1):
+            codes.append(Path.LINETO)
+        codes.append(Path.CLOSEPOLY)
+        vertices = np.vstack((vertices, [0., 0.]))
+        path = Path(vertices, codes)
+        polytope = patches.PathPatch(path,
+                                     facecolor='none',
+                                     edgecolor='magenta',
+                                     linewidth=linewidth,
+                                     linestyle='-',  # {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
+                                     alpha=1.0,
+                                     zorder=3)
+        plt.gca().add_patch(polytope)
+
+    if boxes is not None:
+
+        for b in boxes:
+            w, h = b[1] - b[0]
+
+            # if abs(b[1,1]) <= max_thdot and abs(b[0,1]) <= max_thdot:
+            box = patches.Rectangle(b[0], w, h,
+                                    facecolor='none',
+                                    edgecolor='darkturquoise',
+                                    linewidth=.85,
+                                    linestyle='-',  # {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
+                                    alpha=1.0,
+                                    zorder=2)
+            plt.gca().add_patch(box)
+
+    if vertices is None and boxes is None:
+        plt.streamplot(theta, thetadot, thetadot, thetadotdot,
+                       density=30,
+                       linewidth=linewidth,
+                       cmap=cmap,
+                       arrowstyle="-|>",
+                       arrowsize=0.65,
+                       start_points=start_points,
+                       color=color,
+                       )
+    else:
+        plt.streamplot(theta, thetadot, thetadot, thetadotdot,
+                       density=30,
+                       linewidth=linewidth,
+                       cmap=cmap,
+                       start_points=start_points,
+                       color=color,
+                       )
+        for c in plt.gca().get_children():
+            if not isinstance(c, patches.FancyArrowPatch):
+                continue
+            c.remove()
+
+    if K is None:
+        equilibrium = np.array([[-np.pi, 0, np.pi], [0, 0, 0]])
+    else:
+        equilibrium = np.array([[0], [0]])
+
+    plt.gca().scatter(equilibrium[0], equilibrium[1], s=8, c=COLORS_HEX['BLUE'], zorder=4)
+
+    plt.yticks([-4 * np.pi, -2 * np.pi, 0, 2 * np.pi, 4 * np.pi])
+    plt.gca().set_yticklabels(["$-4\pi$", "$-2\pi$", "0", "$2\pi$", "$4\pi$"])
+    plt.xticks([-np.pi, 0, np.pi])
+    plt.xticks([-np.pi, -np.pi / 2, 0, np.pi / 2, np.pi])
+    plt.xlim([-1.5 * pi, 1.5 * pi])
+    plt.ylim([-5 * pi, 5 * pi])
+    plt.gca().set_xticklabels(
+        ["$-\pi$", "$-\\frac{\pi}{2}$", "0", "$\\frac{\pi}{2}$", "$\pi$"])
+
+    plt.gca().xaxis.grid(True, linestyle='dotted', linewidth=0.5)
+    plt.gca().yaxis.grid(True, linestyle='dotted', linewidth=0.5)
+    # plt.gca().axhline(0, color='gray', linewidth=0.5)
+    # plt.gca().yaxis.set_label_position("right")
+    # plt.gca().yaxis.tick_right()
+
+    if save_as:
+        finalize_plot(x_label='$\\theta[\mathrm{rad}]$',
+                      y_label='$\dot{\\theta}[\\frac{\mathrm{rad}}{\mathrm{s}}]$',
+                      path=f'{os.getcwd()}/{save_as}.pdf')
+        # path=f'{os.getcwd()}/../../report/thesis/figures/{save_as}.pdf')
+    else:
+        finalize_plot(x_label='$\\theta[\mathrm{rad}]$',
+                      y_label='$\dot{\\theta}[\\frac{\mathrm{rad}}{\mathrm{s}}]$')
+
+
 def safety_measure_plot(v1, v2, width=2.5, height=2.5, l=1, m=1, g=9.81, K=None, vertices=None, save_as=None):
+
+    """
+    Used to create the reward function plot as well as the discretization anomaly plot
+    Do not use as is!
+    """
+
     # Custom starting points for clean/useful plots
     # start_points = [
     #     [pi / 2, 0],
@@ -196,8 +478,6 @@ def safety_measure_plot(v1, v2, width=2.5, height=2.5, l=1, m=1, g=9.81, K=None,
     #                    xytext=(.35*v2[0], .35*v2[1]),
     #                    arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="green"), annotation_clip=True,
     #                    zorder=5)
-    # #
-    # #
     #
     # rect = patches.Rectangle((-.2 + .15*v2[0], -1.25 + .15*v2[1]), .4, 2.5, linewidth=1,
     #                          edgecolor='blue',
@@ -232,8 +512,6 @@ def safety_measure_plot(v1, v2, width=2.5, height=2.5, l=1, m=1, g=9.81, K=None,
     #                    xytext=(pi/2 +.25*v2[0], -2.25*pi -.3 +.25*v2[1]),
     #                    arrowprops=dict(arrowstyle="-|>", mutation_scale=5, color="red"), annotation_clip=True,
     #                    zorder=6)
-
-
     # rect = patches.Rectangle((pi / 2 - .2*v2[0] -.3, -2.25 * pi - .2*v2[1] + .5 -1.5 -.3), .6, 3, linewidth=.75, edgecolor='blue',
     #                         facecolor='none', zorder=3)
     # plt.gca().add_patch(rect)
@@ -255,9 +533,6 @@ def safety_measure_plot(v1, v2, width=2.5, height=2.5, l=1, m=1, g=9.81, K=None,
     #                          edgecolor='blue',
     #                          facecolor='none', zorder=3)
     # plt.gca().add_patch(rect)
-
-
-
 
     # plt.gca().annotate("$s_{\mathrm{t}}^{1}$", xytext=(.35*v2[0] -.28, .35*v2[1] -.2), xy=(0, 0))
     # plt.gca().annotate("$s_{\mathrm{t}}^{2}$", xytext=(pi/2 +.25*v2[0] + .1, -2.25*pi -.3 +.25*v2[1] -.6), xy=(0, 0))
@@ -424,259 +699,15 @@ def safety_measure_plot(v1, v2, width=2.5, height=2.5, l=1, m=1, g=9.81, K=None,
         finalize_plot(x_label='$\\theta[\mathrm{rad}]$',
                       y_label='$\dot{\\theta}[\\frac{\mathrm{rad}}{\mathrm{s}}]$')
 
-def phase_plot(width=2.5, height=2.5, l=1, m=1, g=9.81, K=None, max_torque=None, max_theta=None, vertices=None, boxes=None,
-               save_as=None):
-    """ Generates (and saves) a phase plot of a (controlled) mathematical / simple gravity pendulum."""
-
-
-    theta, thetadot = np.meshgrid(np.linspace(-1.5 * np.pi, 1.5 * np.pi, 375), np.linspace(-5 * np.pi, 5 * np.pi, 350))
-
-    if K is None:
-
-        start_points = [
-            [0, 4 * pi],
-            [0, -4 * pi],
-            [0, 3 * pi],
-            [0, -3 * pi],
-            [0, 2 * pi],
-            [0, -2 * pi],
-            [0, 1 * pi],
-            [0, -1 * pi],
-            [-pi, 1.7*pi],
-            [pi, 1.7 * pi],
-            [-pi, 1.2 * pi],
-            [pi, 1.2 * pi],
-            [-pi, 0.7 * pi],
-            [pi, 0.7 * pi],
-        ]
-        # Uncontrolled system
-        thetadotdot = g / l * sin(theta)
-        color =  (abs(np.sin(theta)) + (1.5/4)*abs(thetadot)) ** 0.5
-        cmap = clr.LinearSegmentedColormap.from_list("", [COLORS_HEX['BLUE'], COLORS_HEX['ORANGE']])
-
-    else:
-
-        # Custom starting points for clean/useful plots
-        start_points = [
-            [pi/2, 0],
-            [-pi/2, 0],
-            [0, -2*pi],
-            [0, 2 * pi],
-            [-0.55*pi, -4*pi],
-            [0.55*pi, 4*pi],
-            [-pi, -4 * pi],
-            [pi, 4 * pi],
-            [-1.5*pi, 2*pi],
-            [1.5 * pi, -2 * pi],
-            [-0.8*pi, 4*pi],
-            [0.8 * pi, -4 * pi],
-
-
-        ]
-
-        # Controlled system
-        if max_torque and max_theta:
-
-            u = np.dot(np.moveaxis([theta, thetadot], 0, -1), K)
-            thetadotdot = g / l * sin(theta) - (1 / (m * l ** 2)) * u
-
-            orange = (abs(np.dot(np.moveaxis([theta, thetadot], 0, -1), K)) <= max_torque)
-            orange2 = (abs(theta) > max_theta)#.astype(int)
-            orange = -10000*np.logical_and(orange, orange2).astype(int)
-            green1 = (abs(np.dot(np.moveaxis([theta, thetadot], 0, -1), K)) <= max_torque)
-            green2 = (abs(theta) <= pi) #Artefacts in plot
-            green3 = (abs(theta) <= max_theta)
-            green = np.logical_and(green1, green2)
-            green = 10000*np.logical_and(green, green3).astype(int)
-            color = orange + green
-            cmap = clr.ListedColormap(['orange', 'red', 'green'])
-
-        else:
-
-            thetadotdot = g / l * sin(theta) - (1 / (m * l ** 2)) * np.dot(np.moveaxis([theta, thetadot], 0, -1), K)
-            color = (abs(theta) + (1.5/4)*abs(thetadot)) ** 0.5
-            cmap = clr.LinearSegmentedColormap.from_list("", [COLORS_HEX['BLUE'], COLORS_HEX['ORANGE']])
-
-    fig = plt.figure()
-    setup_plot(fig=fig, width=width, height=height)
-    linewidth = 1
-
-    if vertices is not None:
-        codes = [Path.MOVETO]
-        for _ in range(len(vertices) - 1):
-            codes.append(Path.LINETO)
-        codes.append(Path.CLOSEPOLY)
-        vertices = np.vstack((vertices, [0., 0.]))
-        path = Path(vertices, codes)
-        polytope = patches.PathPatch(path,
-                                     facecolor='none',
-                                     edgecolor='magenta',
-                                     linewidth=linewidth,
-                                     linestyle='-',  # {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
-                                     alpha=1.0,
-                                     zorder=3)
-        plt.gca().add_patch(polytope)
-
-    if boxes is not None:
-
-        for b in boxes:
-            w, h = b[1] - b[0]
-
-            #if abs(b[1,1]) <= max_thdot and abs(b[0,1]) <= max_thdot:
-            box = patches.Rectangle(b[0], w, h,
-                                    facecolor='none',
-                                    edgecolor='darkturquoise',
-                                    linewidth=.85,
-                                    linestyle='-',  # {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
-                                    alpha=1.0,
-                                    zorder=2)
-            plt.gca().add_patch(box)
-
-    if vertices is None and boxes is None:
-        plt.streamplot(theta, thetadot, thetadot, thetadotdot,
-                       density=30,
-                       linewidth=linewidth,
-                       cmap=cmap,
-                       arrowstyle="-|>",
-                       arrowsize=0.65,
-                       start_points=start_points,
-                       color=color,
-                       )
-    else:
-        plt.streamplot(theta, thetadot, thetadot, thetadotdot,
-                       density=30,
-                       linewidth=linewidth,
-                       cmap=cmap,
-                       start_points=start_points,
-                       color=color,
-                       )
-        for c in plt.gca().get_children():
-            if not isinstance(c, patches.FancyArrowPatch):
-                continue
-            c.remove()
-
-    if K is None:
-        equilibrium = np.array([[-np.pi, 0, np.pi], [0, 0, 0]])
-    else:
-        equilibrium = np.array([[0], [0]])
-
-    plt.gca().scatter(equilibrium[0], equilibrium[1], s=8, c=COLORS_HEX['BLUE'], zorder=4)
-
-    plt.yticks([-4* np.pi, -2 * np.pi, 0, 2 * np.pi, 4*np.pi])
-    plt.gca().set_yticklabels(["$-4\pi$", "$-2\pi$", "0", "$2\pi$", "$4\pi$"])
-    plt.xticks([-np.pi, 0, np.pi])
-    plt.xticks([-np.pi, -np.pi / 2, 0, np.pi / 2, np.pi])
-    plt.xlim([-1.5*pi, 1.5*pi])
-    plt.ylim([-5*pi, 5*pi])
-    plt.gca().set_xticklabels(
-        ["$-\pi$", "$-\\frac{\pi}{2}$", "0", "$\\frac{\pi}{2}$", "$\pi$"])
-
-    plt.gca().xaxis.grid(True, linestyle='dotted', linewidth=0.5)
-    plt.gca().yaxis.grid(True, linestyle='dotted', linewidth=0.5)
-    #plt.gca().axhline(0, color='gray', linewidth=0.5)
-
-    #plt.gca().yaxis.set_label_position("right")
-    #plt.gca().yaxis.tick_right()
-
-    if save_as:
-        finalize_plot(x_label='$\\theta[\mathrm{rad}]$',
-                      y_label='$\dot{\\theta}[\\frac{\mathrm{rad}}{\mathrm{s}}]$',
-                      path = f'{os.getcwd()}/{save_as}.pdf')
-                      #path=f'{os.getcwd()}/../../report/thesis/figures/{save_as}.pdf')
-    else:
-        finalize_plot(x_label='$\\theta[\mathrm{rad}]$',
-                      y_label='$\dot{\\theta}[\\frac{\mathrm{rad}}{\mathrm{s}}]$')
-
-
-def external_legend_res(labels, save_as=None, width=1., height=.25, ncols=2, colors=None, equi=False):
-    fig = plt.figure()
-    setup_plot(fig=fig, width=width, height=height)
-    plt.gca().axis('off')
-
-    handles = []
-    if colors is None:
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-    for i, label in enumerate(labels):
-        color = colors[i]
-        handles.append(Line2D([0], [0], color=color, label=label))
-
-    if equi:
-        handles.append(Line2D([0], [0], color="white", markerfacecolor=COLORS_HEX['BLUE'], marker='o', label='Equilibrium'))
-
-    #, ncol=2
-    plt.gca().legend(handles=handles, frameon=True, loc='center', ncol=ncols)
-
-    if save_as is not None:
-        plt.savefig(f'{os.getcwd()}/{save_as}.pdf', dpi=1000, bbox_inches='tight')
-    plt.show()
-
-
-def external_legend(save_as=None, width=1., height=.25):
-
-    fig = plt.figure()
-    setup_plot(fig=fig, width=width, height=height)
-    plt.gca().axis('off')
-
-    b_line = Line2D([0], [0], color="white", markerfacecolor=COLORS_HEX['BLUE'], marker='o', label='Equilibrium')
-    m_line = Line2D([0], [0], color='magenta', label='ROA (Polygon)')
-    g_line = Line2D([0], [0], color='green', label='$|\\tau|\\leq\\tau_{\mathrm{max}}\;\mathrm{and}\;|\\theta|\\leq\\theta_{\mathrm{max}}$')
-    o_line = Line2D([0], [0], color='orange', label='$|\\tau|\\leq\\tau_{\mathrm{max}}\;\mathrm{and}\;|\\theta|>\\theta_{\mathrm{max}}$')
-    r_line = Line2D([0], [0], color='red', label='$|\\tau| >\\tau_{\mathrm{max}}$')
-    t_line = Line2D([0], [0], color='darkturquoise', label='ROA (Subpaving)')
-
-    plt.gca().legend(handles=[g_line, o_line, r_line, b_line, t_line, m_line], frameon=True, loc='center', ncol=2)
-
-    if save_as is not None:
-        plt.savefig(f'{os.getcwd()}/{save_as}.pdf', dpi=1000, bbox_inches='tight')
-    plt.show()
-
-def remove_tf_logs(*dirs):
-    """ Removes directories within ./tensorboard.
-    """
-    cwd = os.getcwd() + '/tensorboard/'
-    if not dirs:
-        dirs = os.listdir(cwd)
-    for dir in dirs:
-        shutil.rmtree(cwd + dir, ignore_errors=True)
-
-
-def reward_at(theta: float, thdot: float) -> float:
-    # if self.reward is not None: #TODO: Clean
-    #     # #Opposing -
-    #     return -(.5 * abs(action) + abs(self._norm_theta(theta)) + abs(.1 * thdot))
-    #else: #Safety
-    det_12 = 10.62620981660255
-    max_theta = 3.092505268377452
-    return -max(
-        abs((theta * 3.436116964863835) / det_12),
-        abs((theta * 9.326603190344699 + thdot * max_theta) / det_12) #Try: **2/Action
-    )
-
-def rename_tf_events(group):
-    """ Renames the tf events within ./tensorboard/*dirs to tfevents.event.
-    """
-    cwd = os.getcwd() + f"/tensorboard/{group}/"
-
-    dirs = [dir for dir in os.listdir(cwd) if os.path.isdir(cwd + dir)]
-    for dir in dirs:
-        files = os.listdir(cwd + dir + '/')
-        if len(files) != 1:
-            logger.warning(f'No unique event file found within {cwd + dir}')
-        os.rename(cwd + dir + '/' + files[0],
-                  cwd + dir + '/' + 'tfevents.event')
 
 
 
-
-def smooth_data(ys, window_size=5):
-    if window_size <= 0 or window_size % 2 != 1:
-        raise ValueError('Choose window_size > 0 and window_size % 2 == 1')
-    w = np.ones(window_size)
-    # Adapted from https://github.com/openai/spinningup/blob/master/spinup/utils/plot.py
-    return np.convolve(ys, w, mode='same') / np.convolve(np.ones(len(ys)), w, mode='same')
 
 def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, height=2.5, episodes =20e2, episode_length=100, window_size=1, save_as=None):
-
+    """
+    This method averages the training runs in dirss for given tags and generates according plots
+    Do not use as is!
+    """
     cwd = os.getcwd() + '/tensorboard/'
 
     fig = plt.figure()
@@ -1075,7 +1106,9 @@ def tf_events_to_plot(dirss, tags, x_label='Episode', y_label='', width=5, heigh
 
 
 def tf_event_to_plot(dir, tags, x_label='Episode', y_label='', width=5, height=2.5, window_size=1, episode_length=100, save_as=None):
-    """ Exports the tf event within ./tensorboard/dir as plotted pdf to ../report/thesis/data/.
+    """
+    Exports the tf event within ./tensorboard/dir as plotted pdf to ../report/thesis/data/.
+    Do not use as is!
     """
 
     cwd = os.getcwd() + '/tensorboard/'
@@ -1133,23 +1166,7 @@ def tf_event_to_plot(dir, tags, x_label='Episode', y_label='', width=5, height=2
                   y_label=y_label,
                   path=path)
 
-def animate(frames, interval=50, dpi=100):
-    """
-    Returns an animation object given a list of frames.
-    Interval adjusts the delay between frames in milliseconds.
-    See also: https://matplotlib.org/stable/api/_as_gen/matplotlib.animation.FuncAnimation.html
-    """
 
-    fig = plt.figure(dpi=dpi)
-    im = plt.imshow(frames[0])
-    ax = plt.gca()
-    ax.get_xaxis().set_ticks([])
-    ax.get_yaxis().set_ticks([])
-    ax.set_xticklabels([])
-    ax.set_yticklabels([])
-    plt.close()
-
-    return animation.FuncAnimation(fig, lambda i: im.set_data(frames[i]), frames=len(frames), interval=interval)
 
 
 if __name__ == '__main__':

@@ -35,7 +35,23 @@ logger = logging.getLogger(__name__)
 #TODO: State
 #TODO: New typing, state, more support, veenc, color if safety used, Check for multiple
 
+
+# Matlab / CORA / SymbolicMath
+#'stable-baselines3[extra]'
+#pyglet==1.5.11 BigSur (https://github.com/openai/gym/issues/2101)
+#imagemagick
+
+"""
+Disclaimer: Use only to reproduce results or modify/generalize accordingly.  
+"""
+
 def main(**kwargs):
+
+    """
+    Controls and configures the training and deployment of RL policies
+    @param kwargs: See parse_arguments()
+    """
+
     logger.info(f"kargs {kwargs}")
     module = importlib.import_module('stable_baselines3')
 
@@ -60,7 +76,7 @@ def main(**kwargs):
     #     kwargs['total_timesteps'] = 1e3
     #     remove_tf_logs(name + '_1', name + '_E_1')
 
-    name = f"{kwargs['name']}_{kwargs['algorithm']}"
+    name = f"{kwargs['name']}"#_{kwargs['algorithm']}"
 
     # Define the precomputed safe region
     theta_roa = 3.092505268377452
@@ -107,7 +123,7 @@ def main(**kwargs):
                 # Precomputed LQR gain matrix
                 gain_matrix = [19.670836678497427, 6.351509533724627]
                 # Note that __getattr__ is not implemented in VecEnvs
-                return -np.dot(gain_matrix, env.get_attr("state")[0])
+                return -np.dot(gain_matrix, env.state)
 
             def dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
                 theta, thdot = env.state
@@ -134,8 +150,8 @@ def main(**kwargs):
         # CBF wrapper
         elif kwargs['safety'] == "cbf":
 
-            def actuated_dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
-                return np.array([action * env.dt ** 2, action * env.dt])
+            def actuated_dynamics_fn(env: gym.Env) -> np.ndarray:
+                return np.array([env.dt ** 2, env.dt])
 
             def dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
                 theta, thdot = env.state
@@ -144,8 +160,8 @@ def main(**kwargs):
             if "punishment" in kwargs and kwargs["punishment"] == "default":
                 def punishment_fn(env: gym.Env, safe_region: SafeRegion,
                                   action_rl: Union[int, float, np.ndarray],
-                                  safety_correction: Union[int, float, np.ndarray]) -> float:
-                    return -abs(safety_correction)
+                                  compensation: Union[int, float, np.ndarray]) -> float:
+                    return -abs(compensation)
             else:
                 punishment_fn = None
 
@@ -170,7 +186,7 @@ def main(**kwargs):
                 # Precomputed LQR gain matrix
                 gain_matrix = [19.670836678497427, 6.351509533724627]
                 # Note that __getattr__ is not implemented in VecEnvs
-                return -np.dot(gain_matrix, env.get_attr("state")[0])
+                return -np.dot(gain_matrix, env.state)
 
             def dynamics_fn(env: gym.Env, action: Union[int, float, np.ndarray]) -> np.ndarray:
                 theta, thdot = env.state
@@ -220,6 +236,7 @@ def main(**kwargs):
     if not is_wrapped(env, Monitor):
         env = Monitor(env)
 
+    # Either train or deploy
     if 'train' in kwargs and kwargs['train']:
 
         # VecEnvs not supported
@@ -230,6 +247,7 @@ def main(**kwargs):
         else:
             iters = kwargs['iterations']
 
+        # Multiple training runs
         for iteration in range(iters):
 
             tensorboard_log = os.getcwd() + '/tensorboard/'
@@ -250,11 +268,14 @@ def main(**kwargs):
             #     return func
 
             if kwargs['algorithm'] == "PPO":
-                if 'flag' in kwargs and (kwargs['flag'] == 6 or kwargs['flag'] == 7 or kwargs['flag'] == 8):
-                    model = base_algorithm(policy=policy, env=env, verbose=0, tensorboard_log=tensorboard_log)
 
+                # Either use untuned or tuned parameters
+                if 'flag' in kwargs and (kwargs['flag'] == 6 or kwargs['flag'] == 7 or kwargs['flag'] == 8):
+                    model = base_algorithm(policy=policy,
+                                           env=env,
+                                           verbose=0,
+                                           tensorboard_log=tensorboard_log)
                 else:
-                    # Tuned parameters
                     model = base_algorithm(policy=policy,
                                            env=env,
                                            verbose=0,
@@ -275,15 +296,15 @@ def main(**kwargs):
                                                ortho_init=True)
                                            )
 
-
             elif kwargs['algorithm'] == "A2C":
+
+                # Either use untuned or tuned parameters
                 if 'flag' in kwargs and kwargs['flag'] <= 2:
                     model = base_algorithm(policy=policy,
                                            env=env,
                                            verbose=0,
                                            tensorboard_log=tensorboard_log)
                 else:
-                    # Tuned parameters
                     model = base_algorithm(policy=policy,
                                            env=env,
                                            verbose=0,
@@ -304,11 +325,12 @@ def main(**kwargs):
                                                ortho_init=True)
                                            )
 
+            # Logging callbacks
             callback = CallbackList([PendulumTrainCallback(safe_region=safe_region)])
             model.learn(total_timesteps=kwargs['total_timesteps'],
                         tb_log_name=name,
                         callback=callback)
-            # log_interval=log_interval)
+                      # log_interval=log_interval)
 
             if 'save_model' in kwargs and kwargs['save_model']:
                 save_model(kwargs["group"] + "/" + str(iteration + 1), model)
@@ -322,9 +344,10 @@ def main(**kwargs):
         callback = None
 
         if 'model' in kwargs:
+
+            # Load trained model
             mode = load_model(kwargs['model'], policy)
             model.set_env(env)
-
             callback = CallbackList([PendulumRolloutCallback(safe_region=safe_region)])
             _logger = configure_logger(verbose=0, tb_log_name=name,
                                        tensorboard_log=os.getcwd() + '/tensorboard/')
@@ -335,26 +358,37 @@ def main(**kwargs):
         if 'render' in kwargs and kwargs['render']:
             render = True
 
-        env_safe_action = False
-        if 'safety' in kwargs and kwargs['safety'] == "env_safe_action":
-            env_safe_action = True
-
         rollout(env, model,
                 safe_region=safe_region,
                 num_episodes=kwargs['iterations'],
                 callback=callback,
-                env_safe_action=env_safe_action,
                 render=render,
                 sleep=kwargs['sleep'])
 
     if 'env' in locals(): env.close()
 
+    # Uniform renaming of tf events
     if "group" in kwargs:
         rename_tf_events(kwargs["group"])
 
 
 def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, safe_action_fn=None, render=False,
             rgb_array=False, sleep=0.1):
+
+    """
+    Rollout trained models, the fail-safe controller or the environment whilst sampling
+    @param env: Gym environment
+    @param model: (Optional) Trained RL model
+    @param safe_region: (Optional) safe_region instance iff safe_action_fn is supplied
+    @param num_episodes: Number of episodes to rollout
+    @param callback: (Optional) Callback to extend the logged values
+    @param safe_action_fn: (Optional) Function to control the environment
+    @param render: True if the rollout should be rendered
+    @param rgb_array: True if an rgb array should be returned (requieres rendering)
+    @param sleep: Sleep in Sec. in between steps
+    @return: rendered frames if rgb_array
+    """
+
     is_vec_env = isinstance(env, VecEnv)
     if is_vec_env:
         if env.num_envs != 1:
@@ -369,7 +403,7 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, sa
     frames = []
     reset = True
 
-    # Rollout of Maskable model needs auxiliary mask
+    # Rollout of maskable model without mask wrapper needs auxiliary mask
     mask = np.ones(22)
     mask[-1] = 0
 
@@ -388,14 +422,12 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, sa
             callback.on_rollout_start()
 
         while not done:
-
             if render:
                 if rgb_array:
                     frame = env.render(mode='rgb_array')
                     frames.append(frame)
                 else:
                     env.render()
-
             time.sleep(sleep)
 
             # Use trained model if provided
@@ -445,6 +477,8 @@ def parse_arguments():
                         help='RL algorithm')
     parser.add_argument('-env', type=str, default='MathPendulum-v0',
                         help='ID of a registered environment')
+    parser.add_argument('--train', type=bool, default=True, help='Training')
+    parser.add_argument('--rollout', type=bool, default=False, help='Rolling out')
     parser.add_argument('-steps', '--total_timesteps', type=int, default=10e4,
                         help='Total timesteps to train the model')
     parser.add_argument('-safety', '--safety', type=str, default=None,

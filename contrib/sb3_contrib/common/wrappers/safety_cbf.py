@@ -160,7 +160,7 @@ class SafetyCBF(gym.Wrapper):
             reward += punishment
         else:
             info["cbf"] = {"action_rl": action,
-                           "action_cbf": compensation,
+                           "compensation": compensation,
                            "reward_rl": reward,
                            "punishment": None}
 

@@ -1,5 +1,11 @@
-TODO
-# Matlab / CORA / SymbolicMath
-#'stable-baselines3[extra]'
-#pyglet==1.5.11 BigSur (https://github.com/openai/gym/issues/2101)
-#imagemagick
+cvxopt==1.2.0
+gym==0.18.0
+matplotlib==3.4.1
+numpy==1.19.2
+pandas==1.2.4
+pypoman==0.5.4
+pytest==6.2.5
+setuptools==52.0.0.post20210125
+sphinxcontrib_programoutput==0.17
+stable_baselines3==1.2.0a2
+torch==1.8.1

@@ -117,44 +117,51 @@ class PendulumTrainCallback(BaseCallback):
         #     self.max_safety_measure = safety_measure
 
         if "shield" in infos.keys():
-            infos = infos['shield']
-            if infos["safe_action"] is not None:
-                action_rl = infos["action_rl"]
-                correction = abs(action_rl - infos["safe_action"])
+            infos_shield = infos['shield']
+            action_rl = infos_shield["action_rl"]
+            self.total_reward_rl += infos_shield["reward_rl"]
+            if infos_shield["safe_action"] is not None:
+                action_rl = infos_shield["action_rl"]
+                correction = abs(action_rl - infos_shield["safe_action"])
                 self.total_abs_safety_correction += correction
                 if correction > self.max_abs_safety_correction:
                     self.max_abs_safety_correction = correction
-                if infos["punishment"] is not None:
-                    self.total_punishment += infos["punishment"]
+                if infos_shield["punishment"] is not None:
+                    self.total_punishment += infos_shield["punishment"]
 
         elif "cbf" in infos.keys():
-            infos = infos['cbf']
-            correction = abs(infos["compensation"])
+            infos_cbf = infos['cbf']
+            action_rl = infos_cbf["action_rl"]
+            self.total_reward_rl += infos_cbf["reward_rl"]
+            correction = abs(infos_cbf["compensation"])
             self.total_abs_safety_correction += correction
             if correction > self.max_abs_safety_correction:
                 self.max_abs_safety_correction = correction
-            if infos["punishment"] is not None:
-                self.total_punishment += infos["punishment"]
+            if infos_cbf["punishment"] is not None:
+                self.total_punishment += infos_cbf["punishment"]
 
         elif "mask" in infos.keys():
-            infos = infos['mask']
-            mask = infos["last_mask"][:-1]
+            infos_mask = infos['mask']
+            action_rl = infos_mask["action_rl"]
+            self.total_reward_rl += infos_mask["reward_rl"]
+            mask = infos_mask["last_mask"][:-1]
             correction = np.count_nonzero(mask == 0)
             self.total_abs_safety_correction += correction
             if correction > self.max_abs_safety_correction:
                 self.max_abs_safety_correction = correction
-            if infos["safe_action"] is not None:
-                self.total_abs_safety_correction_mask_lqr += infos["safe_action"]
-                if infos["safe_action"] > self.max_abs_safety_correction_mask_lqr:
-                    self.max_abs_safety_correction_mask_lqr = infos["safe_action"]
-            if infos["punishment"] is not None:
-                self.total_punishment += infos["punishment"]
+            if infos_mask["safe_action"] is not None:
+                self.total_abs_safety_correction_mask_lqr += infos_mask["safe_action"]
+                if infos_mask["safe_action"] > self.max_abs_safety_correction_mask_lqr:
+                    self.max_abs_safety_correction_mask_lqr = infos_mask["safe_action"]
+            if infos_mask["punishment"] is not None:
+                self.total_punishment += infos_mask["punishment"]
 
         else:
-            infos = infos['standard']
+            infos_default = infos['standard']
+            action_rl = infos_default["action_rl"]
+            self.total_reward_rl += infos_default["reward_rl"]
 
-        action_rl = infos["action_rl"]
-        self.total_reward_rl += infos["reward_rl"]
+
         if abs(action_rl) > self.max_abs_action_rl:
             self.max_abs_action_rl = abs(action_rl)
         self.total_abs_action_rl += abs(action_rl)
@@ -206,7 +213,8 @@ class PendulumTrainCallback(BaseCallback):
             self.logger.record('main/safe_episode', self.safe_episode)
             self.logger.record('main/safe_episode_excl_approx', self.safe_episode_excl_approx)
 
-            self._reset()
             self.logger.dump(step=self.num_steps)
+            self._reset()
+
 
         return True
