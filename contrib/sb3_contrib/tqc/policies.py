@@ -1,9 +1,10 @@
+import warnings
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import gym
 import torch as th
 from stable_baselines3.common.distributions import SquashedDiagGaussianDistribution, StateDependentNoiseDistribution
-from stable_baselines3.common.policies import BaseModel, BasePolicy, create_sde_features_extractor, register_policy
+from stable_baselines3.common.policies import BaseModel, BasePolicy, register_policy
 from stable_baselines3.common.preprocessing import get_action_dim
 from stable_baselines3.common.torch_layers import (
     BaseFeaturesExtractor,
@@ -24,7 +25,6 @@ LOG_STD_MIN = -20
 class Actor(BasePolicy):
     """
     Actor network (policy) for TQC.
-
     :param observation_space: Obervation space
     :param action_space: Action space
     :param net_arch: Network architecture
@@ -74,7 +74,6 @@ class Actor(BasePolicy):
         # Save arguments to re-create object at loading
         self.use_sde = use_sde
         self.sde_features_extractor = None
-        self.sde_net_arch = sde_net_arch
         self.net_arch = net_arch
         self.features_dim = features_dim
         self.activation_fn = activation_fn
@@ -89,19 +88,15 @@ class Actor(BasePolicy):
         self.latent_pi = nn.Sequential(*latent_pi_net)
         last_layer_dim = net_arch[-1] if len(net_arch) > 0 else features_dim
 
-        if self.use_sde:
-            latent_sde_dim = last_layer_dim
-            # Separate feature extractor for gSDE
-            if sde_net_arch is not None:
-                self.sde_features_extractor, latent_sde_dim = create_sde_features_extractor(
-                    features_dim, sde_net_arch, activation_fn
-                )
+        if sde_net_arch is not None:
+            warnings.warn("sde_net_arch is deprecated and will be removed in SB3 v2.4.0.", DeprecationWarning)
 
+        if self.use_sde:
             self.action_dist = StateDependentNoiseDistribution(
                 action_dim, full_std=full_std, use_expln=use_expln, learn_features=True, squash_output=True
             )
             self.mu, self.log_std = self.action_dist.proba_distribution_net(
-                latent_dim=last_layer_dim, latent_sde_dim=latent_sde_dim, log_std_init=log_std_init
+                latent_dim=last_layer_dim, latent_sde_dim=last_layer_dim, log_std_init=log_std_init
             )
             # Avoid numerical issues by limiting the mean of the Gaussian
             # to be in [-clip_mean, clip_mean]
@@ -123,7 +118,6 @@ class Actor(BasePolicy):
                 use_sde=self.use_sde,
                 log_std_init=self.log_std_init,
                 full_std=self.full_std,
-                sde_net_arch=self.sde_net_arch,
                 use_expln=self.use_expln,
                 features_extractor=self.features_extractor,
                 clip_mean=self.clip_mean,
@@ -138,7 +132,6 @@ class Actor(BasePolicy):
         It corresponds to ``th.exp(log_std)`` in the normal case,
         but is slightly different when using ``expln`` function
         (cf StateDependentNoiseDistribution doc).
-
         :return:
         """
         msg = "get_std() is only available when using gSDE"
@@ -148,7 +141,6 @@ class Actor(BasePolicy):
     def reset_noise(self, batch_size: int = 1) -> None:
         """
         Sample new weights for the exploration matrix, when using gSDE.
-
         :param batch_size:
         """
         msg = "reset_noise() is only available when using gSDE"
@@ -158,7 +150,6 @@ class Actor(BasePolicy):
     def get_action_dist_params(self, obs: th.Tensor) -> Tuple[th.Tensor, th.Tensor, Dict[str, th.Tensor]]:
         """
         Get the parameters for the action distribution.
-
         :param obs:
         :return:
             Mean, standard deviation and optional keyword arguments.
@@ -168,10 +159,7 @@ class Actor(BasePolicy):
         mean_actions = self.mu(latent_pi)
 
         if self.use_sde:
-            latent_sde = latent_pi
-            if self.sde_features_extractor is not None:
-                latent_sde = self.sde_features_extractor(features)
-            return mean_actions, self.log_std, dict(latent_sde=latent_sde)
+            return mean_actions, self.log_std, dict(latent_sde=latent_pi)
         # Unstructured exploration (Original implementation)
         log_std = self.log_std(latent_pi)
         # Original Implementation to cap the standard deviation
@@ -195,7 +183,6 @@ class Actor(BasePolicy):
 class Critic(BaseModel):
     """
     Critic network (q-value function) for TQC.
-
     :param observation_space: Obervation space
     :param action_space: Action space
     :param net_arch: Network architecture
@@ -256,7 +243,6 @@ class Critic(BaseModel):
 class TQCPolicy(BasePolicy):
     """
     Policy class (with both actor and critic) for TQC.
-
     :param observation_space: Observation space
     :param action_space: Action space
     :param lr_schedule: Learning rate schedule (could be constant)
@@ -335,10 +321,13 @@ class TQCPolicy(BasePolicy):
             "normalize_images": normalize_images,
         }
         self.actor_kwargs = self.net_args.copy()
+
+        if sde_net_arch is not None:
+            warnings.warn("sde_net_arch is deprecated and will be removed in SB3 v2.4.0.", DeprecationWarning)
+
         sde_kwargs = {
             "use_sde": use_sde,
             "log_std_init": log_std_init,
-            "sde_net_arch": sde_net_arch,
             "use_expln": use_expln,
             "clip_mean": clip_mean,
         }
@@ -376,6 +365,9 @@ class TQCPolicy(BasePolicy):
         self.critic_target = self.make_critic(features_extractor=None)
         self.critic_target.load_state_dict(self.critic.state_dict())
 
+        # Target networks should always be in eval mode
+        self.critic_target.set_training_mode(False)
+
         self.critic.optimizer = self.optimizer_class(critic_parameters, lr=lr_schedule(1), **self.optimizer_kwargs)
 
     def _get_constructor_parameters(self) -> Dict[str, Any]:
@@ -387,7 +379,6 @@ class TQCPolicy(BasePolicy):
                 activation_fn=self.net_args["activation_fn"],
                 use_sde=self.actor_kwargs["use_sde"],
                 log_std_init=self.actor_kwargs["log_std_init"],
-                sde_net_arch=self.actor_kwargs["sde_net_arch"],
                 use_expln=self.actor_kwargs["use_expln"],
                 clip_mean=self.actor_kwargs["clip_mean"],
                 lr_schedule=self._dummy_schedule,  # dummy lr schedule, not needed for loading policy alone
@@ -404,7 +395,6 @@ class TQCPolicy(BasePolicy):
     def reset_noise(self, batch_size: int = 1) -> None:
         """
         Sample new weights for the exploration matrix, when using gSDE.
-
         :param batch_size:
         """
         self.actor.reset_noise(batch_size=batch_size)
@@ -423,6 +413,16 @@ class TQCPolicy(BasePolicy):
     def _predict(self, observation: th.Tensor, deterministic: bool = False) -> th.Tensor:
         return self.actor(observation, deterministic)
 
+    def set_training_mode(self, mode: bool) -> None:
+        """
+        Put the policy in either training or evaluation mode.
+        This affects certain modules, such as batch normalisation and dropout.
+        :param mode: if true, set to training mode, else set to evaluation mode
+        """
+        self.actor.set_training_mode(mode)
+        self.critic.set_training_mode(mode)
+        self.training = mode
+
 
 MlpPolicy = TQCPolicy
 
@@ -430,7 +430,6 @@ MlpPolicy = TQCPolicy
 class CnnPolicy(TQCPolicy):
     """
     Policy class (with both actor and critic) for TQC.
-
     :param observation_space: Observation space
     :param action_space: Action space
     :param lr_schedule: Learning rate schedule (could be constant)
@@ -504,7 +503,6 @@ class CnnPolicy(TQCPolicy):
 class MultiInputPolicy(TQCPolicy):
     """
     Policy class (with both actor and critic) for TQC.
-
     :param observation_space: Observation space
     :param action_space: Action space
     :param lr_schedule: Learning rate schedule (could be constant)
