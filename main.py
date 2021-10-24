@@ -483,7 +483,7 @@ def parse_arguments():
                         help='Total timesteps to train the model')
     parser.add_argument('-safety', '--safety', type=str, default=None,
                         help="Safety approach \'mask\',\'shield\', \'cbf\' or None")
-    parser.add_argument('--flag', type=int, default=-1,
+    parser.add_argument('--flag', type=int, default=9,
                         help='Flag to specify a default configuration')
     parser.add_argument('--model', type=int, default=0,
                         help='Model to rollout, e.g., model.zip')
@@ -650,6 +650,7 @@ if __name__ == '__main__':
     args['iterations'] = 5
     args['total_timesteps'] = 8e4
 
+    _invalid_flag = False
     if args["flag"] == 0:
         args["algorithm"] = "A2C"
         args['group'] = "A2C_UNTUNED"
