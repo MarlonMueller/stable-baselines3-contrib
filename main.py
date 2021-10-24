@@ -32,7 +32,7 @@ from pendulum_roa import PendulumRegionOfAttraction
 
 logger = logging.getLogger(__name__)
 
-#TODO: State
+#TODO: State, timing not quite working, buggy
 #TODO: New typing, state, more support, veenc, color if safety used, Check for multiple
 
 
@@ -703,17 +703,17 @@ if __name__ == '__main__':
     elif args["flag"] == 15:
         args['group'] = "MASK_PUN"
         args["safety"] = "mask"
-        args["punishment"] = "punish"
+        args["punishment"] = "default"
     elif args["flag"] == 16:
         args['group'] = "MASK_SAS_PUN"
         args["safety"] = "mask"
         args["action_space"] = "small"
-        args["punishment"] = "punish"
+        args["punishment"] = "default"
     elif args["flag"] == 17:
         args['group'] = "MASK_0_PUN"
         args["safety"] = "mask"
         args["init"] = "equilibrium"
-        args["punishment"] = "punish"
+        args["punishment"] = "default"
     elif args["flag"] == 18:
         args['group'] = "CBF"
         args["safety"] = "cbf"
@@ -728,17 +728,17 @@ if __name__ == '__main__':
     elif args["flag"] == 21:
         args['group'] = "CBF_PUN"
         args["safety"] = "cbf"
-        args["punishment"] = "punish"
+        args["punishment"] = "default"
     elif args["flag"] == 22:
         args['group'] = "CBF_SAS_PUN"
         args["safety"] = "cbf"
         args["action_space"] = "small"
-        args["punishment"] = "punish"
+        args["punishment"] = "default"
     elif args["flag"] == 23:
         args['group'] = "CBF_0_PUN"
         args["safety"] = "cbf"
         args["init"] = "equilibrium"
-        args["punishment"] = "punish"
+        args["punishment"] = "default"
     elif args["flag"] == 24:
         args['group'] = "SHIELD"
         args["safety"] = "shield"
@@ -753,17 +753,17 @@ if __name__ == '__main__':
     elif args["flag"] == 27:
         args['group'] = "SHIELD_PUN"
         args["safety"] = "shield"
-        args["punishment"] = "punish"
+        args["punishment"] = "default"
     elif args["flag"] == 28:
         args['group'] = "SHIELD_SAS_PUN"
         args["safety"] = "shield"
         args["action_space"] = "small"
-        args["punishment"] = "punish"
+        args["punishment"] = "default"
     elif args["flag"] == 29:
         args['group'] = "SHIELD_0_PUN"
         args["safety"] = "shield"
         args["init"] = "equilibrium"
-        args["punishment"] = "punish"
+        args["punishment"] = "default"
     elif args["flag"] == 30:
         args['group'] = "CBF_95"
         args["safety"] = "cbf"
@@ -793,18 +793,18 @@ if __name__ == '__main__':
         args["safety"] = "cbf"
         args["init"] = "equilibrium"
     elif args["flag"] == 36:
-        args["punishment"] = "punish"
+        args["punishment"] = "default"
         args['group'] = "CBF_PUN_01"
         args["safety"] = "cbf"
         args["gamma"] = 0.1
     elif args["flag"] == 37:
-        args["punishment"] = "punish"
+        args["punishment"] = "default"
         args['group'] = "CBF_SAS_PUN_01"
         args["safety"] = "cbf"
         args["action_space"] = "small"
         args["gamma"] = 0.1
     elif args["flag"] == 38:
-        args["punishment"] = "punish"
+        args["punishment"] = "default"
         args['group'] = "CBF_0_PUN_01"
         args["gamma"] = 0.1
         args["safety"] = "cbf"

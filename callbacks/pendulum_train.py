@@ -99,7 +99,7 @@ class PendulumTrainCallback(BaseCallback):
             if "shield" in infos.keys():
                 if infos['shield']["safe_action"] is None:
                     self.safe_episode_excl_approx = False
-            if "mask" in infos.keys():
+            elif "mask" in infos.keys():
                 if infos['mask']["safe_action"] is None:
                     self.safe_episode_excl_approx = False
             else:
