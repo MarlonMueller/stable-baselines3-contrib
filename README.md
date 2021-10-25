@@ -130,6 +130,20 @@ Tags logged during training
 | rel_abs_safety_correction     | total_abs_safety_correction/total_abs_action_rl |
 
 Tags logged during deployment
+| tag        | Description      | 
+| ------------- |-------------| 
+| episode_reward     | Cumulated reward |
+| episode_length      | Episode length   |  
+| episode_time | Measured by class Monitor(gym.Wrapper) TBD|
+| theta     | Angular displacement |
+| thdot     | Angular velocity |
+| action_rl     | Action of the policy |
+| reward_rl     | Reward (excluding reward punishment) |
+| safe     | True iff state is inside ROA |
+| safe_excl_approx     | True iff state is inside ROA or fail-safe controller is active |
+| safety_correction     | Safety correction by the wrapper |
+| safety_correction_mask_lqr     | " by the LQR when action masking is used |
+| punishment     | Reward punishment |
 
 <!---![Tensorboard](https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/gifs/tensorboard.png?raw=true)--->
 
