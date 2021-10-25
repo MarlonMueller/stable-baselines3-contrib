@@ -1,9 +1,9 @@
 # General
 
-For an introduction on the safety wrappers have a look at the provided [Jupyter Notebook](https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/notebook.ipynb).
+An **introduction to the safety wrappers** is provided in this [Jupyter Notebook](https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/notebook.ipynb).
 
 
-Information and code on how to tune the environment can be found here: https://github.com/MarlonMueller/math_pendulum_tuning
+Information and code on how to **tune the environment** can be found here: https://github.com/MarlonMueller/math_pendulum_tuning
 
 # Getting Started
 
