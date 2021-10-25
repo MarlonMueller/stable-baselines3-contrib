@@ -130,7 +130,7 @@ Tags logged during deployment
 
 <!---![Tensorboard](https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/gifs/tensorboard.png?raw=true)--->
 
-# Future Work (quick & easy)
+## Immediate Future Work
 - Tensorboard episode_time measurement
 - Adjust for VecEnv support
 - Environment state is assumed to be exposed 
