@@ -68,7 +68,8 @@ contrib/
 ## Auxiliary
 
 The following code utilizes SB3-Contrib (including the wrappers etc.) to generate and evaluate benchmarks.<br>
-Note that this part should only be used to reproduce the results of the benchmark conducted in main.py. Otherwise modify/generalize it accordingly.
+Note that this part should only be used to reproduce the results of the benchmark conducted in main.py.<br>
+Otherwise modify/generalize it accordingly.
 
 ```
 ./
