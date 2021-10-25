@@ -14,7 +14,7 @@ We recommend to use a virtual environment - name it ``safetyWrappers``.
 conda create -n safetyWrappers python=3.8
 source activate safetyWrappers
 ```
-Note that not all required packages are available in conda or conda-forge channels.
+Anaconda is only an example. Note that not all required packages are available in conda or conda-forge channels.
 ```
 pip3 install -r requirements.txt
 ```
