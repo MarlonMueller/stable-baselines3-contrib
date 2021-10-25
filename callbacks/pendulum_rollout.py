@@ -72,7 +72,7 @@ class PendulumRolloutCallback(BaseCallback):
 
         # Log state
         self.logger.record('main/theta', state[0])
-        self.logger.record('main/omega', state[1])
+        self.logger.record('main/thdot', state[1])
 
         if "mask" in info.keys():
             action_rl = info['mask']["action_rl"]
@@ -108,7 +108,7 @@ class PendulumRolloutCallback(BaseCallback):
 
         if state not in self._safe_region:
             # State is outside of ROA
-            self.logger.record('safe', False)
+            self.logger.record('main/safe', False)
             # Check whether fail-safe controller is active
             if "shield" in info.keys() and info['shield']["safe_action"] is not None:
                     self.logger.record('main/safe_excl_approx', True)

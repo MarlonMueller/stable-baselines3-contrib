@@ -778,9 +778,10 @@ if __name__ == '__main__':
                               length=800,
                               window_size=11,
                               save_as=f"pdfs/{''.join(map(str, group))}/{tag}")
-    """
 
     """
+
+
     # Rollout
     # Do not uncomment further blocks if used
     
@@ -964,13 +965,14 @@ if __name__ == '__main__':
                 args["safety"] = "shield"
                 args["name"] = f"SHIELD_SAS_PUN_S/{model}{it}"
                 _call_main()
-    """
 
 
-    """
+
+
     # Auto-generate averaged deployment plots
     # Do not uncomment further blocks if used
 
+    """
     tags = [
         "theta"	,
         "thdot"	,
@@ -1015,18 +1017,19 @@ if __name__ == '__main__':
                        save_as=f"pdfs/{''.join(map(str, group))}/{tag}")
     """
 
-
+    """
     #Manual rollout & render
     #Adapt the arguments as you wish
     #Trained models need to be in ./models
     #Do not uncomment further blocks if used
-
+    
     args["rollout"] = True
     args["render"] = True
-    args["name"] = "manuel"
+    args["name"] = "manual"
     args["safety"] = None #mask/shield/cbf/
     args["init"] = "equilibrium" #random/equilibrium
     args["action_space"] = "small" #default/small
     args["model"] = "" #""/"myModel.zip"
     main(**args)
+    """
 
