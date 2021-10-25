@@ -1,6 +1,10 @@
 # General
 
 
+Information and code on how to tune the environment can be found here: https://github.com/MarlonMueller/math_pendulum_tuning
+
+# Getting Started
+
 ```
 git clone https://github.com/MarlonMueller/stable-baselines3-contrib.git
 git checkout feat/safety-wrappers
@@ -20,7 +24,7 @@ To use all provided functionality which uses MATLAB make sure to install
 
 Make sure to follow the respective installation guideluines.
 Add all MATLAB related files in ./matlab/.<br>
-**Note** Proprietary AROC version as of now.
+**Note**: Proprietary AROC version as of now.
 
 On BigSur use pyglet==1.5.11 (https://github.com/openai/gym/issues/2101)
 
@@ -63,7 +67,7 @@ contrib/
 
 ## Auxiliary
 
-The following code utilizes SB3-Contrib (including the wrappers etc.) to generate and evaluate benchmarks.
+The following code utilizes SB3-Contrib (including the wrappers etc.) to generate and evaluate benchmarks.<br>
 Note that this part should only be used to reproduce results. Otherwise modify/generalize it accordingly.
 
 ```
