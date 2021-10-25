@@ -22,7 +22,7 @@ To use all provided functionality which uses MATLAB make sure to install
 - [the MATLAB Engine API for Python](https://de.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html)
 - [AROC](https://tumcps.github.io/AROC/) wich among others requires [CORA](https://tumcps.github.io/CORA/)
 
-Make sure to follow the respective installation guideluines.
+Make sure to follow the respective installation guidelines.
 Add all MATLAB related files in ./matlab/.<br>
 **Note**: Proprietary AROC version as of now.
 
