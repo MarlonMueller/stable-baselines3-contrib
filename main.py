@@ -812,8 +812,7 @@ if __name__ == '__main__':
         #main(**args)
 
     # Auto-generate averaged plots
-
-    
+    """
     # Uncomment tags to exclude them
     tags = [
         "episode_reward",
@@ -863,4 +862,4 @@ if __name__ == '__main__':
                               episode_length=100,
                               window_size=11,
                               save_as=f"pdfs/{''.join(map(str, group))}/{tag}")
-
+    """
