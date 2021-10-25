@@ -150,9 +150,9 @@ class PendulumTrainCallback(BaseCallback):
             if correction > self.max_abs_safety_correction:
                 self.max_abs_safety_correction = correction
             if infos_mask["safe_action"] is not None:
-                self.total_abs_safety_correction_mask_lqr += infos_mask["safe_action"]
+                self.total_abs_safety_correction_mask_lqr += abs(infos_mask["safe_action"])
                 if infos_mask["safe_action"] > self.max_abs_safety_correction_mask_lqr:
-                    self.max_abs_safety_correction_mask_lqr = infos_mask["safe_action"]
+                    self.max_abs_safety_correction_mask_lqr = abs(infos_mask["safe_action"])
             if infos_mask["punishment"] is not None:
                 self.total_punishment += infos_mask["punishment"]
 

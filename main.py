@@ -641,10 +641,8 @@ if __name__ == '__main__':
     #             args["action_space"] = "small"
     #             main(**args)
 
-    #########
-    # Train
-    #########
 
+    #Train
     args["train"] = True
     args["name"] = "train"
     args['iterations'] = 5
@@ -812,95 +810,59 @@ if __name__ == '__main__':
     else:
         _invalid_flag = True
     if not _invalid_flag:
-        main(**args)
+        pass
+        #main(**args)
 
+    # Auto-generate averaged plots
+    """
+    
+    # Uncomment tags to exclude them
     tags = [
-        # "main/avg_abs_action_rl",  # ?
-        # "main/avg_abs_safety_correction",  #
-        # "main/avg_abs_masklqr_correction",
-        # "main/avg_abs_thdot",  # ?
-        # "main/avg_abs_theta",  # ?
-        # "main/avg_safety_measure",  #
-        # "main/episode_reward",  #
-        # "main/episode_time",  #
-        # "main/max_abs_action_rl",  # ??
-        # "main/max_abs_safety_correction",  #
-        # "main/max_abs_thdot",  # ?
-        # "main/max_abs_theta",  # ?
-        # "main/max_safety_measure",  # ?
-        # "main/no_violation",  #
-        # "main/rel_abs_safety_correction",
-        # "main/avg_step_punishment",  #
-        # "main/avg_step_reward_rl"  # ???
-        # "main/theta"
+        "episode_reward",
+        "episode_length",
+        "episode_time",
+        "avg_abs_theta",
+        "avg_abs_thdot",
+        "max_abs_theta",
+        "max_abs_thdot",
+        "avg_abs_action_rl",
+        "max_abs_action_rl",
+        "avg_reward_rl",
+        "safe_episode",
+        "safe_episode_excl_approx",
+        "avg_abs_safety_correction",
+        "max_abs_safety_correction",
+        "max_abs_safety_correction_mask_lqr",
+        "avg_abs_safety_correction_mask_lqr",
+        "avg_punishment",
+        "rel_abs_safety_correction",
     ]
 
-    # PRELIMINARY
-    # dirss = []
-    # for alg in ["PPO"]:#"A2C"]: # ["PPO", "A2C"]
-    #     args["algorithm"] = alg
-    #     for safety in ["no_safety"]:
-    #         args["safety"] = safety
-    #         for action_space in ["small"]: #",verysmall", "normal", "large"]: #TODO
-    #             args["action_space"] = action_space
-    #             for init in ["zero", "random"]:
-    #                 args["init"] = init
-    #                 for reward in ["safety"]:
-    #                     args["reward"] = reward
-    #                     args["group"] = f"{alg}_{action_space}_{init}"
-    #                     dirss.append(args["group"])
-    #                     #if not os.path.isdir(os.getcwd() + f"/tensorboard/{args['group']}"):
-    #                     #    main(**args)
-    #                     print(f"Finished training {args['group']} ...")
-
-    from util import tf_events_to_plot, external_legend_res
+    # Uncomment or modify groups
+    groups = [
+            ["A2C_UNTUNED_SAS", "A2C_UNTUNED", "A2C_UNTUNED_0"],
+            ["A2C_SAS", "A2C", "A2C_0"],
+            ["PPO_UNTUNED_SAS", "PPO_UNTUNED", "PPO_UNTUNED_0"],
+            ["PPO_SAS", "PPO", "PPO_0"],
+            ["SHIELD_SAS", "SHIELD", "SHIELD_0"],
+            ["SHIELD_SAS_PUN", "SHIELD_PUN", "SHIELD_0_PUN"],
+            ["CBF_SAS", "CBF", "CBF_0"],
+            ["CBF_SAS_PUN", "CBF_PUN", "CBF_0_PUN"],
+            ["CBF_SAS_95", "CBF_95", "CBF_0_95"],
+            ["CBF_SAS_01", "CBF_01", "CBF_0_01"],
+            ["MASK_SAS", "MASK", "MASK_0"],
+            ["MASK_SAS_PUN", "MASK_PUN", "MASK_0_PUN"],
+    ]
 
     for tag in tags:
-        if tag == "main/avg_abs_action_rl":
-            y_label = "Absolute action per step"  # \overline{\left(\left|a\\right|\\right)}$"
-        elif tag == "main/avg_abs_thdot":
-            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\dot{\\theta}\\right|\\right)}$"
-        elif tag == "main/avg_abs_theta":
-            y_label = "$\mathrm{Mean\ absolute\ } \overline{\left(\left|\\theta\\right|\\right)}$"
-        elif tag == "main/avg_step_reward_rl":
-            y_label = "Reward per step excl. $r_{\mathrm{t}}^{\mathrm{PUN}}$"  # %$\overline{r}
-        elif tag == "main/reward":
-            y_label = "Reward"  # %$\overline{r}
-        elif tag == "main/episode_reward":
-            y_label = "Episode return"  # ${r_{\mathrm{Episode}}}$
-        elif tag == "main/max_safety_measure":
-            y_label = "Maximal reward $r_{\mathrm{max}}$"
-        elif tag == "main/no_violation":
-            y_label = "Safety violation"
-        # elif tag == "main/avg_abs_safety_correction":
-        #    y_label = "Safety correction $|a_{\mathrm{t}}^{\mathrm{CBF}}|$"
-        else:
-            y_label = "Angular displacement $\\theta$"
-            # y_label = "$|\min(0,m_{\mathrm{t}}^0-m_{\mathrm{t}+1}^0,-|a_{\mathrm{t}}^{\mathrm{VER}}|)|$"
-
-        dirsss = [
-            #     ["A2C_UNTUNED_SAS", "A2C_UNTUNED", "A2C_UNTUNED_0"],
-            #     ["A2C_SAS", "A2C", "A2C_0"],
-            #     ["PPO_UNTUNED_SAS", "PPO_UNTUNED", "PPO_UNTUNED_0"],
-            #     ["PPO_SAS", "PPO", "PPO_0"],
-            #     ["SHIELD_SAS", "SHIELD", "SHIELD_0"],
-            #     ["SHIELD_SAS_PUN", "SHIELD_PUN", "SHIELD_0_PUN"],
-            #     ["CBF_SAS", "CBF", "CBF_0"],
-            #     ["CBF_SAS_PUN", "CBF_PUN", "CBF_0_PUN"],
-            #     ["CBF_SAS_95", "CBF_95", "CBF_0_95"],
-            #     ["CBF_SAS_95", "CBF_SAS", "CBF_SAS_01"],
-            #     ["MASK_SAS", "MASK", "MASK_0"],
-            #     ["MASK_SAS_PUN", "MASK_PUN", "MASK_0_PUN"],
-        ]
-
-        # for i, dirss in enumerate(dirsss):
-        #     tf_events_to_plot(dirss=dirss,  # "standard"
-        #                       tags=[tag],
-        #                       x_label='Step',
-        #                       # x_label='Episode',
-        #                       y_label=y_label,
-        #                       width=2.5,  # 5   #2.5 -> 2
-        #                       height=2.5,  # 2.5
-        #                       episode_length=100,
-        #                       window_size=11,  # 41
-        #                       save_as=f"pdfs/{i}{tag.split('/')[1]}")
+        for i, group in enumerate(groups):
+            tf_events_to_plot(group=group,
+                              tags=["main/"+tag],
+                              x_label='episode',
+                              y_label=tag.replace('_','-'),
+                              width=2.5,
+                              height=2.5,
+                              episode_length=100,
+                              window_size=11,
+                              save_as=f"pdfs/{''.join(map(str, group))}/{tag}")
+    """
