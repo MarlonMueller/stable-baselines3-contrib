@@ -509,13 +509,11 @@ if __name__ == '__main__':
         entry_point='sb3_contrib.common.envs.pendulum.math_pendulum_env:MathPendulumEnv',
     )
 
-    #########
-    # Rollout trained models without safety
-    #########
+
+    # Rollout
 
     # args["rollout"] = True
     # args["render"] = True
-
     # args["safety"] = "shield"
     # args["safety"] = "env_safe_action"
     # args["init"] = "zero"
@@ -814,7 +812,7 @@ if __name__ == '__main__':
         #main(**args)
 
     # Auto-generate averaged plots
-    """
+
     
     # Uncomment tags to exclude them
     tags = [
@@ -865,4 +863,4 @@ if __name__ == '__main__':
                               episode_length=100,
                               window_size=11,
                               save_as=f"pdfs/{''.join(map(str, group))}/{tag}")
-    """
+
