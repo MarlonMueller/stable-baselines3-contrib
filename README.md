@@ -101,8 +101,10 @@ By calling ``./train.sh``, the default training benchmark will be performed. ``t
 ```
 tensorboard --logdir tensorboard
 ```
-Uncomment respective parts in main.py to deploy trained models or to automatically generate averaged plots. The plots are saved to ./plots. For futher insights we refer to main.py.
+Uncomment respective parts in main.py to deploy trained models or to automatically generate averaged plots.<br>
+The plots are saved to ./plots. For futher insights we refer to main.py.
 
+Tags logged during training
 | tag        | Description      | 
 | ------------- |-------------| 
 | episode_reward     | Cumulated reward |
