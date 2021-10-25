@@ -126,6 +126,6 @@ An according tensorboard folder will generate.
 tensorboard --logdir tensorboard
 ```
 
-![Tensorboard](https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/gifs/tensorboard.png?raw=true)
+<!---![Tensorboard](https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/gifs/tensorboard.png?raw=true)--->
 
 By calling ./train.sh the training benchmark will be performed. train.sh distribute main calls to isolated hardware threads. By default, each training is done five times. The trained models are saved to ./models. Uncomment respective parts in main.py to deploy trained models or to automatically generate averaged plots. The plots are saved to ./plots. For futher insights we refer to main.py.
