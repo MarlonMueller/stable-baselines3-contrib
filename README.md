@@ -9,7 +9,7 @@ Information and code on how to tune the environment can be found here: https://g
 git clone https://github.com/MarlonMueller/stable-baselines3-contrib.git
 git checkout feat/safety-wrappers
 ```
-We recommend to use a virtual environment.
+We recommend to use a virtual environment. Name the venv ``safetyWrappers``.
 ```
 conda create -n safetyWrappers python=3.8
 source activate safetyWrappers
