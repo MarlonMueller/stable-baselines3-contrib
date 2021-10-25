@@ -126,5 +126,11 @@ Tags logged during training
 | avg_punishment     | Average reward punishment |
 | rel_abs_safety_correction     | total_abs_safety_correction/total_abs_action_rl |
 
+Tags logged during deployment
 
 <!---![Tensorboard](https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/gifs/tensorboard.png?raw=true)--->
+
+# Future Work (quick & easy)
+- Tensorboard episode_time measurement
+- Adjust for VecEnv support
+- Environment state is assumed to be exposed 
