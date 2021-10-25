@@ -97,7 +97,11 @@ Note that this part should only be used to reproduce results. Otherwise modify/g
 
 # Benchmark
 
-During training tensorboard logs
+By calling ``./train.sh``, the default training benchmark will be performed. ``train.sh`` distributes main calls to isolated hardware threads. Note that this might need adaption depending on the available threads. By default, each training is repeated five times, i.e., iteration is set to five. The trained models are saved to ./models. An according tensorboard folder will generate.
+```
+tensorboard --logdir tensorboard
+```
+Uncomment respective parts in main.py to deploy trained models or to automatically generate averaged plots. The plots are saved to ./plots. For futher insights we refer to main.py.
 
 | tag        | Description      | 
 | ------------- |-------------| 
@@ -120,12 +124,5 @@ During training tensorboard logs
 | avg_punishment     | Average reward punishment |
 | rel_abs_safety_correction     | total_abs_safety_correction/total_abs_action_rl |
 
-An according tensorboard folder will generate.
-
-```
-tensorboard --logdir tensorboard
-```
 
 <!---![Tensorboard](https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/gifs/tensorboard.png?raw=true)--->
-
-By calling ./train.sh the training benchmark will be performed. train.sh distributes main calls to isolated hardware threads. Note that this might need adaption depending on the available threads. By default, each training is done five times. The trained models are saved to ./models. Uncomment respective parts in main.py to deploy trained models or to automatically generate averaged plots. The plots are saved to ./plots. For futher insights we refer to main.py.
