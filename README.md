@@ -81,6 +81,8 @@ Note that this part should only be used to reproduce results. Otherwise modify/g
 │   ├── gainMatrix.m
 │   ├── mathematicalPendulum.m
 │   └── regionOfAttraction.m
+├── pdfs/ <- Generated plots
+├── models/ <- Trained models
 ├── .gitignore
 ├── README.md
 ├── main.py <- Controls and configures the benchmark
@@ -92,15 +94,40 @@ Note that this part should only be used to reproduce results. Otherwise modify/g
 ├── util.py <- Auxiliary functions
 
 ```
-Depending on the usage, additional folders will generate (ignored in git)
+
+# Benchmark
+
+During training tensorboard logs
+
+| tag        | Description      | 
+| ------------- |-------------| 
+| episode_reward     | Cumulated reward |
+| episode_length      | Episode length   |  
+| episode_time | Measured by class Monitor(gym.Wrapper) TBD|
+| avg_abs_theta     | Average absolute angular displacement throughout the episode  |
+| avg_abs_thdot     | Average absolute angular velocity throughout the episode  |
+| max_abs_theta     | Maximal absolute angular displacement throughout the episode  |
+| max_abs_thdot     | Maximal absolute angular velocity throughout the episode |
+| avg_abs_action_rl     |  Average absolute action of the policy throughout the episode|
+| max_abs_action_rl     |  Maximal absolute action of the policy throughout the episode |
+| avg_reward_rl     | Average reward (excluding reward punishment) |
+| safe_episode     | True iff ROA is never left |
+| safe_episode_excl_approx     | True iff ROA is only left whenever the fail-safe controller is active |
+| avg_abs_safety_correction     | Average absolute safety correction by the wrappers |
+| max_abs_safety_correction     | Maximal absolute safety correction by the wrappers |
+| avg_abs_safety_correction_mask_lqr     | " by the LQR when action masking is used  |
+| max_abs_safety_correction_mask_lqr     | " by the LQR when action masking is used |
+| avg_punishment     | Average reward punishment |
+| rel_abs_safety_correction     | total_abs_safety_correction/total_abs_action_rl |
+
+An according tensorboard folder will generate.
 
 ```
-./
-├── pdfs/ <- Generated plots
-├── tensorboard/ <- Tensorboard logs
-├── models/ <- Trained models
-
+tensorboard --logdir tensorboard
 ```
+
+![Tensorboard](https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/gifs/tensorboard.png?raw=true)
+
 
 
 
