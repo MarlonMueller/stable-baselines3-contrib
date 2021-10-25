@@ -48,20 +48,22 @@ class PendulumRolloutCallback(BaseCallback):
         # Log initial state
         state = self.training_env.get_attr('state')[0]
         self.logger.record('main/theta', state[0])
-        self.logger.record('main/omega', state[1])
+        self.logger.record('main/thdot', state[1])
         self.logger.dump(step=self.num_steps)
 
     def _on_step(self) -> bool:
 
         info = self.locals.get('info')[0]
-        if "episode" in info.keys():
 
-            # SB3 only tracks ep_rew_mean with ep_info_buffer using updated locals
-            # ep_info_buffer (update in BaseAlgorithm) is set after callback evaluation (and restricted due to size)
-            self.logger.record('main/episode_reward', info['episode']['r'])
-            self.logger.record('main/episode_length', info['episode']['l'])
-            self.logger.record('main/episode_time',info['episode']['t'])
-            self.logger.dump(step=self.num_steps)
+        # Adapt main/rollout if last step is important
+        # if "episode" in info.keys():
+        #
+        #     # SB3 only tracks ep_rew_mean with ep_info_buffer using updated locals
+        #     # ep_info_buffer (update in BaseAlgorithm) is set after callback evaluation (and restricted due to size)
+        #     self.logger.record('main/episode_reward', info['episode']['r'])
+        #     self.logger.record('main/episode_length', info['episode']['l'])
+        #     self.logger.record('main/episode_time',info['episode']['t'])
+        #     self.logger.dump(step=self.num_steps)
 
         self.num_steps += 1
 
@@ -85,7 +87,7 @@ class PendulumRolloutCallback(BaseCallback):
         elif "shield" in info.keys():
             action_rl = info['shield']["action_rl"]
             reward_rl = info['shield']["reward_rl"]
-            if info['shield']["action_shield"] is not None:
+            if info['shield']["safe_action"] is not None:
                 self.logger.record("main/safety_correction", abs(action_rl - info['shield']["safe_action"]))
             if info['shield']["punishment"] is not None:
                 self.logger.record("main/punishment", info['shield']["punishment"])
@@ -109,15 +111,15 @@ class PendulumRolloutCallback(BaseCallback):
             self.logger.record('safe', False)
             # Check whether fail-safe controller is active
             if "shield" in info.keys() and info['shield']["safe_action"] is not None:
-                    self.logger.record('safe_excl_approx', True)
+                    self.logger.record('main/safe_excl_approx', True)
             if "mask" in info.keys() and info['mask']["safe_action"] is not None:
-                    self.logger.record('safe_excl_approx', True)
+                    self.logger.record('main/safe_excl_approx', True)
             else:
-                self.logger.record('safe_excl_approx', False)
+                self.logger.record('main/safe_excl_approx', False)
             # In case CBFs with a slack variable are used, check for e.g. epsilon >= 1e-20
         else:
-            self.logger.record('safe', True)
-            self.logger.record('safe_excl_approx', True)
+            self.logger.record('main/safe', True)
+            self.logger.record('main/safe_excl_approx', True)
 
         self.logger.dump(step=self.num_steps)
         return True

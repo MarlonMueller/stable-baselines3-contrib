@@ -23,7 +23,8 @@ from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
 import gym
 import numpy as np
 from torch import nn as nn
-from util import remove_tf_logs, rename_tf_events, load_model, save_model, tf_events_to_plot
+from util import remove_tf_logs, rename_tf_events, load_model,\
+    save_model, tf_events_to_plot, tf_to_plot
 
 from sb3_contrib import SafeRegion
 from sb3_contrib import MaskableA2C, MaskablePPO
@@ -109,6 +110,20 @@ def main(**kwargs):
 
     # Adjust action space
     alter_action_space = gym.spaces.Discrete(21)
+
+    """
+    SB3/Torch checks for equal action spaces and base_algorithms whilst deploying trained policies.
+    Thus, when deploying unsafe policies that have been trained with action masking,
+    action masking still needs to be active, but set the action mask to [1,...,1,0]
+    """
+    if (not 'safety' in kwargs or kwargs['safety'] != "mask") and \
+            'rollout' in kwargs and kwargs['rollout'] and \
+            "MASK" in kwargs['name']:
+        alter_action_space = gym.spaces.Discrete(22)
+        _deploy_maskModel = True
+    else:
+        _deploy_maskModel = False
+
     if "action_space" in kwargs and kwargs["action_space"] == "small":
         transform_action_space_fn = lambda a: 0.65 * (a - 10)
     else:
@@ -343,10 +358,17 @@ def main(**kwargs):
         model = None
         callback = None
 
-        if 'model' in kwargs:
+        if 'model' in kwargs and kwargs['model'] != "":
 
-            # Load trained model
-            mode = load_model(kwargs['model'], policy)
+            # Load trained model (PPO)
+            if "MASK" in name:
+                if kwargs['algorithm'] == "A2C":
+                    model = load_model(kwargs['model'], MaskableA2C)
+                elif kwargs['algorithm'] == "PPO":
+                    model = load_model(kwargs['model'], MaskablePPO)
+            else:
+                model = load_model(kwargs['model'], base_algorithm)
+
             model.set_env(env)
             callback = CallbackList([PendulumRolloutCallback(safe_region=safe_region)])
             _logger = configure_logger(verbose=0, tb_log_name=name,
@@ -361,6 +383,7 @@ def main(**kwargs):
         rollout(env, model,
                 safe_region=safe_region,
                 num_episodes=kwargs['iterations'],
+                _deploy_maskModel=_deploy_maskModel,
                 callback=callback,
                 render=render,
                 sleep=kwargs['sleep'])
@@ -373,7 +396,7 @@ def main(**kwargs):
 
 
 def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, safe_action_fn=None, render=False,
-            rgb_array=False, sleep=0.1):
+            rgb_array=False, sleep=0.1, _deploy_maskModel=False):
 
     """
     Rollout trained models, the fail-safe controller or the environment whilst sampling
@@ -386,6 +409,7 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, sa
     @param render: True if the rollout should be rendered
     @param rgb_array: True if an rgb array should be returned (requieres rendering)
     @param sleep: Sleep in Sec. in between steps
+    @param _deploy_maskModel: Internal use
     @return: rendered frames if rgb_array
     """
 
@@ -404,8 +428,8 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, sa
     reset = True
 
     # Rollout of maskable model without mask wrapper needs auxiliary mask
-    mask = np.ones(22)
-    mask[-1] = 0
+    fake_mask = np.ones(22)
+    fake_mask[-1] = 0
 
     for episode in range(num_episodes):
 
@@ -433,22 +457,31 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, sa
             # Use trained model if provided
             if model is not None:
 
-                # TODO: Rollout masking
-                action, state = model.predict(obs, state=state)
-                # action, state = model.predict(obs, state=state, action_masks=mask)
+                if is_masking_supported(env):
+                    # Only called if an action masking wrapper is active
+                    mask = get_action_masks(env)[0]
+                    action, state = model.predict(obs, state=state, action_masks=mask)
+                else:
+                    if _deploy_maskModel:
+                        action, state = model.predict(obs, state=state, action_masks=fake_mask)
+                    else:
+                        action, state = model.predict(obs, state=state)
+
                 action = action[0]
 
             elif safe_action_fn is not None:
                 action = safe_action_fn(env, safe_region, None)
                 #action = env.get_attr('safe_action')[0](env, safe_region, None)
             else:
-                action = env.action_space.sample()
-                if isinstance(action, np.ndarray):
-                    action = action.item()
 
                 if is_masking_supported(env):
                     mask = get_action_masks(env)[0]
                     action = random.choice(np.argwhere(mask == True))[0]
+                else:
+                    action = env.action_space.sample()
+                    if isinstance(action, np.ndarray):
+                        action = action.item()
+
 
             obs, reward, done, info = env.step([action])
 
@@ -477,22 +510,22 @@ def parse_arguments():
                         help='RL algorithm')
     parser.add_argument('-env', type=str, default='MathPendulum-v0',
                         help='ID of a registered environment')
-    parser.add_argument('--train', type=bool, default=True, help='Training')
-    parser.add_argument('--rollout', type=bool, default=False, help='Rolling out')
+    parser.add_argument('--train', type=bool, default=False, help='Training')
+    parser.add_argument('--rollout', type=bool, default=False, help='Deployment')
     parser.add_argument('-steps', '--total_timesteps', type=int, default=10e4,
                         help='Total timesteps to train the model')
     parser.add_argument('-safety', '--safety', type=str, default=None,
                         help="Safety approach \'mask\',\'shield\', \'cbf\' or None")
     parser.add_argument('--flag', type=int, default=9,
                         help='Flag to specify a default configuration')
-    parser.add_argument('--model', type=int, default=0,
+    parser.add_argument('--model', type=str, default="",
                         help='Model to rollout, e.g., model.zip')
     parser.add_argument('--sleep', type=float, default=0.1,
                         help='Sleep time [Sec.] in between steps whilst rolling out')
     parser.add_argument('--save_model', type=bool, default=True, help=
     'Whether to save the model after training or not')
     parser.add_argument('--iterations', type=int, default=1, required=False,
-                        help='Multiple training or deployment runs')
+                        help='Multiple training runs')
     args, unknown = parser.parse_known_args()
     return vars(args)
 
@@ -509,138 +542,15 @@ if __name__ == '__main__':
         entry_point='sb3_contrib.common.envs.pendulum.math_pendulum_env:MathPendulumEnv',
     )
 
+    """
+    Uncomment the necessary blocks (only one at a time).
+    To try out certain configurations, set the respective flag manually.
+    """
 
-    # Rollout
-
-    # args["rollout"] = True
-    # args["render"] = True
-    # args["safety"] = "shield"
-    # args["safety"] = "env_safe_action"
-    # args["init"] = "zero"
-    # args["action_space"] = "small"
-
-    # if args["flag"] == 0:
-    #     for model in range(1, 6):
-    #             for it in range(1,6):
-    #                 args["name"] = f"PPO/{model}{it}"
-    #                 main(**args)
-    # elif args["flag"] == 1:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"PPO_SAS/{model}{it}"
-    #             args["action_space"] = "small"
-    #             main(**args)
-    # elif args["flag"] == 2:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"PPO_0/{model}{it}"
-    #             args["init"] = "zero"
-    #             main(**args)
-    # elif args["flag"] == 3:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"MASK/{model}{it}"
-    #             main(**args)
-    # elif args["flag"] == 4:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"MASK_SAS/{model}{it}"
-    #             args["action_space"] = "small"
-    #             main(**args)
-    # elif args["flag"] == 5:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"MASK_0/{model}{it}"
-    #             args["init"] = "zero"
-    #             main(**args)
-    # elif args["flag"] == 6:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"MASK_PUN/{model}{it}"
-    #             main(**args)
-    # elif args["flag"] == 7:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"MASK_0_PUN/{model}{it}"
-    #             args["init"] = "zero"
-    #             main(**args)
-    # elif args["flag"] == 8:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"MASK_SAS_PUN/{model}{it}"
-    #             args["action_space"] = "small"
-    #             main(**args)
-    # elif args["flag"] == 9:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"CBF/{model}{it}"
-    #             main(**args)
-    # elif args["flag"] == 10:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"CBF_SAS/{model}{it}"
-    #             args["action_space"] = "small"
-    #             main(**args)
-    # elif args["flag"] == 11:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"CBF_0/{model}{it}"
-    #             args["init"] = "zero"
-    #             main(**args)
-    # elif args["flag"] == 12:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"CBF_PUN/{model}{it}"
-    #             main(**args)
-    # elif args["flag"] == 13:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"CBF_0_PUN/{model}{it}"
-    #             args["init"] = "zero"
-    #             main(**args)
-    # elif args["flag"] == 14:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"CBF_SAS_PUN/{model}{it}"
-    #             args["action_space"] = "small"
-    #             main(**args)
-    # elif args["flag"] == 15:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"SHIELD/{model}{it}"
-    #             main(**args)
-    # elif args["flag"] == 16:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"SHIELD_SAS/{model}{it}"
-    #             args["action_space"] = "small"
-    #             main(**args)
-    # elif args["flag"] == 17:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"SHIELD_0/{model}{it}"
-    #             args["init"] = "zero"
-    #             main(**args)
-    # elif args["flag"] == 18:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"SHIELD_PUN/{model}{it}"
-    #             main(**args)
-    # elif args["flag"] == 19:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"SHIELD_0_PUN/{model}{it}"
-    #             args["init"] = "zero"
-    #             main(**args)
-    # elif args["flag"] == 20:
-    #     for model in range(1, 6):
-    #         for it in range(1,6):
-    #             args["name"] = f"SHIELD_SAS_PUN/{model}{it}"
-    #             args["action_space"] = "small"
-    #             main(**args)
-
-
-    #Train
+    """
+    # Train
+    # Do not uncomment further blocks if used
+    
     args["train"] = True
     args["name"] = "train"
     args['iterations'] = 5
@@ -808,12 +718,15 @@ if __name__ == '__main__':
     else:
         _invalid_flag = True
     if not _invalid_flag:
-        pass
-        #main(**args)
-
-    # Auto-generate averaged plots
+        main(**args)
     """
-    # Uncomment tags to exclude them
+
+
+    """
+    # Auto-generate averaged training plots
+    # Do not uncomment further blocks if used
+    
+    # Comment tags to exclude them
     tags = [
         "episode_reward",
         "episode_length",
@@ -835,7 +748,7 @@ if __name__ == '__main__':
         "rel_abs_safety_correction",
     ]
 
-    # Uncomment or modify groups
+    # Comment or modify groups
     groups = [
             ["A2C_UNTUNED_SAS", "A2C_UNTUNED", "A2C_UNTUNED_0"],
             ["A2C_SAS", "A2C", "A2C_0"],
@@ -851,15 +764,266 @@ if __name__ == '__main__':
             ["MASK_SAS_PUN", "MASK_PUN", "MASK_0_PUN"],
     ]
 
-    for tag in tags:
-        for i, group in enumerate(groups):
-            tf_events_to_plot(group=group,
+    for i, group in enumerate(groups):
+        for tag in tags:
+            tf_to_plot(group=group,
                               tags=["main/"+tag],
                               x_label='episode',
                               y_label=tag.replace('_','-'),
                               width=2.5,
                               height=2.5,
-                              episode_length=100,
+                              length=800,
                               window_size=11,
                               save_as=f"pdfs/{''.join(map(str, group))}/{tag}")
     """
+
+    """
+    # Rollout
+    # Do not uncomment further blocks if used
+    
+    args["rollout"] = True
+    def _call_main():
+        model_str = args['name'].split('/')[0][:-2] + '/' + str(model) + '.zip'
+        args["model"] = model_str
+        print(model_str)
+        main(**args)
+
+    if args["flag"] == 0:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"PPO_U/{model}{it}"
+                _call_main()
+    elif args["flag"] == 1:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"PPO_SAS_U/{model}{it}"
+                args["action_space"] = "small"
+                _call_main()
+    elif args["flag"] == 2:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"PPO_0_U/{model}{it}"
+                args["init"] = "zero"
+                _call_main()
+    elif args["flag"] == 3:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"MASK_U/{model}{it}"
+                _call_main()
+                args["safety"] = "mask"
+                args["name"] = f"MASK_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 4:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"MASK_SAS_U/{model}{it}"
+                args["action_space"] = "small"
+                _call_main()
+                args["safety"] = "mask"
+                args["name"] = f"MASK_SAS_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 5:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"MASK_0_U/{model}{it}"
+                args["init"] = "zero"
+                _call_main()
+                args["safety"] = "mask"
+                args["name"] = f"MASK_0_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 6:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"MASK_PUN_U/{model}{it}"
+                _call_main()
+                args["safety"] = "mask"
+                args["name"] = f"MASK_PUN_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 7:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"MASK_0_PUN_U/{model}{it}"
+                args["init"] = "zero"
+                _call_main()
+                args["safety"] = "mask"
+                args["name"] = f"MASK_0_PUN_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 8:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"MASK_SAS_PUN_U/{model}{it}"
+                args["action_space"] = "small"
+                _call_main()
+                args["safety"] = "mask"
+                args["name"] = f"MASK_SAS_PUN_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 9:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"CBF_U/{model}{it}"
+                _call_main()
+                args["safety"] = "cbf"
+                args["name"] = f"CBF_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 10:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"CBF_SAS_U/{model}{it}"
+                args["action_space"] = "small"
+                _call_main()
+                args["safety"] = "cbf"
+                args["name"] = f"CBF_SAS_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 11:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"CBF_0_U/{model}{it}"
+                args["init"] = "zero"
+                _call_main()
+                args["safety"] = "cbf"
+                args["name"] = f"CBF_0_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 12:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"CBF_PUN_U/{model}{it}"
+                _call_main()
+                args["safety"] = "cbf"
+                args["name"] = f"CBF_PUN_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 13:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"CBF_0_PUN_U/{model}{it}"
+                args["init"] = "zero"
+                _call_main()
+                args["safety"] = "cbf"
+                args["name"] = f"CBF_0_PUN_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 14:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"CBF_SAS_PUN_U/{model}{it}"
+                args["action_space"] = "small"
+                _call_main()
+                args["safety"] = "cbf"
+                args["name"] = f"CBF_SAS_PUN_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 15:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"SHIELD_U/{model}{it}"
+                _call_main()
+                args["safety"] = "shield"
+                args["name"] = f"SHIELD_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 16:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"SHIELD_SAS_U/{model}{it}"
+                args["action_space"] = "small"
+                _call_main()
+                args["safety"] = "shield"
+                args["name"] = f"SHIELD_SAS_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 17:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"SHIELD_0_U/{model}{it}"
+                args["init"] = "zero"
+                _call_main()
+                args["safety"] = "shield"
+                args["name"] = f"SHIELD_0_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 18:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"SHIELD_PUN_U/{model}{it}"
+                _call_main()
+                args["safety"] = "shield"
+                args["name"] = f"SHIELD_PUN_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 19:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"SHIELD_0_PUN_U/{model}{it}"
+                args["init"] = "zero"
+                _call_main()
+                args["safety"] = "shield"
+                args["name"] = f"SHIELD_0_PUN_S/{model}{it}"
+                _call_main()
+    elif args["flag"] == 20:
+        for model in range(1, 6):
+            for it in range(1, 6):
+                args["name"] = f"SHIELD_SAS_PUN_U/{model}{it}"
+                args["action_space"] = "small"
+                _call_main()
+                args["safety"] = "shield"
+                args["name"] = f"SHIELD_SAS_PUN_S/{model}{it}"
+                _call_main()
+    """
+
+
+    """
+    # Auto-generate averaged deployment plots
+    # Do not uncomment further blocks if used
+
+    tags = [
+        "theta"	,
+        "thdot"	,
+        "action_rl"	,
+        "reward_rl"	,
+        "safe"	,
+        "safe_excl_approx"	,
+        "safety_correction"	,
+        "safety_correction_mask_lqr",
+        "punishment",
+        # "episode_reward",
+        # "episode_length",
+        # "episode_time",
+    ]
+
+    groups = [
+        ["PPO_SAS_U", "PPO_U", "PPO_0_U"],
+        ["SHIELD_SAS_U", "SHIELD_U", "SHIELD_0_U"],
+        ["SHIELD_SAS_PUN_U", "SHIELD_PUN_U", "SHIELD_0_PUN_U"],
+        ["SHIELD_SAS_S", "SHIELD_S", "SHIELD_0_S"],
+        ["SHIELD_SAS_PUN_S", "SHIELD_PUN", "SHIELD_0_PUN_S"],
+        ["CBF_SAS_U", "CBF_U", "CBF_0_U"],
+        ["CBF_SAS_PUN_U", "CBF_PUN_U", "CBF_0_PUN_U"],
+        ["CBF_SAS_S", "CBF_S", "CBF_0_S"],
+        ["CBF_SAS_PUN_S", "CBF_PUN_S", "CBF_0_PUN_S"],
+        ["MASK_SAS_U", "MASK_U", "MASK_0_U"],
+        ["MASK_SAS_PUN_U", "MASK_PUN_U", "MASK_0_PUN_U"],
+        ["MASK_SAS_S", "MASK_S", "MASK_0_S"],
+        ["MASK_SAS_PUN_S", "MASK_PUN_S", "MASK_0_PUN_S"]
+    ]
+
+    for i, group in enumerate(groups):
+        for tag in tags:
+            tf_to_plot(group=group,
+                       tags=["main/" + tag],
+                       x_label='step',
+                       y_label=tag.replace('_', '-'),
+                       width=2.5,
+                       height=2.5,
+                       length=100,
+                       window_size=0,
+                       save_as=f"pdfs/{''.join(map(str, group))}/{tag}")
+    """
+
+
+    #Manual rollout & render
+    #Adapt the arguments as you wish
+    #Trained models need to be in ./models
+    #Do not uncomment further blocks if used
+
+    args["rollout"] = True
+    args["render"] = True
+    args["name"] = "manuel"
+    args["safety"] = None #mask/shield/cbf/
+    args["init"] = "equilibrium" #random/equilibrium
+    args["action_space"] = "small" #default/small
+    args["model"] = "" #""/"myModel.zip"
+    main(**args)
+

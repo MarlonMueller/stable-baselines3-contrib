@@ -108,7 +108,7 @@ def remove_tf_logs(*dirs):
 
 def reward_at(theta: float, thdot: float) -> float:
     """
-
+    Returns the reward at a state for the specified reward function
     """
     det_12 = 10.62620981660255
     max_theta = 3.092505268377452
@@ -703,6 +703,75 @@ def safety_measure_plot(v1, v2, width=2.5, height=2.5, l=1, m=1, g=9.81, K=None,
 
 
 
+def tf_to_plot(group, tags, x_label='Episode', y_label='', width=5, height=2.5, episodes =20e2, length=100, window_size=1, save_as=None):
+
+    """
+    Generates basic plots that average over different tf events
+    """
+
+    cwd = os.getcwd() + '/tensorboard/'
+    fig = plt.figure()
+    setup_plot(fig=fig, width=width, height=height)
+
+    if not tags:
+        logger.error(f'No tags specified: {tags}')
+        return
+    else:
+        for tag in tags:
+            for dirs in group:
+
+                label = None
+                if isinstance(dirs, str):
+                    label = dirs
+                    cwd = os.getcwd() + f"/tensorboard/{dirs}/"
+                    dirs = [dir for dir in os.listdir(cwd) if os.path.isdir(cwd + dir)]
+
+                values = []
+
+                for dir in dirs:
+
+                    summary_iterator = EventAccumulator(cwd + dir).Reload()
+                    scalar_tags = summary_iterator.Tags()['scalars']
+
+                    if tag not in scalar_tags:
+                        logger.warning(f'{tag} not found in {cwd}{dir}')
+                        continue
+
+                    if label == "standard":
+                        safety_only = False
+
+                    df = pd.DataFrame.from_records(summary_iterator.Scalars(tag),
+                                                   columns=summary_iterator.Scalars(tag)[0]._fields)
+
+                    #print(type(df["value"]), type(df["value"].to_list()))
+                    values.append(df["value"].to_list()[:length])
+
+                if values:
+
+                    values = np.array(values)
+
+                    mean = np.mean(values, axis=0)
+                    std_dev = np.std(values, axis=0)
+
+                    if window_size > 1:
+                        mean = smooth_data(mean, window_size)
+                        std_dev = smooth_data(std_dev, window_size)
+
+                    plt.plot(range(1, len(mean) + 1), mean, label=label.replace('_', '/'),
+                             linewidth=1.25, zorder=2)
+                    plt.fill_between(range(1, len(mean) + 1), mean - std_dev, mean + std_dev, alpha=0.4, zorder=0)
+
+        plt.grid()
+        plt.gca().set_xlim(left=0)
+        plt.gca().set_xlim(right=length)
+        plt.legend(loc="lower right", fontsize=4)
+
+        path = None
+        if save_as:
+            path = f'{os.getcwd()}/{save_as}.pdf'
+        finalize_plot(x_label=x_label,
+                      y_label=y_label,
+                      path=path)
 
 
 def tf_events_to_plot(group, tags, x_label='Episode', y_label='', width=5, height=2.5, episodes =20e2, episode_length=100, window_size=1, save_as=None):
