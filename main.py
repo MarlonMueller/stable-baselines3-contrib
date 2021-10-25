@@ -33,24 +33,21 @@ from pendulum_roa import PendulumRegionOfAttraction
 
 logger = logging.getLogger(__name__)
 
-#TODO: State, timing not quite working, buggy
-#TODO: New typing, state, more support, veenc, color if safety used, Check for multiple
-
-
-# Matlab / CORA / SymbolicMath
-#'stable-baselines3[extra]'
-#pyglet==1.5.11 BigSur (https://github.com/openai/gym/issues/2101)
-#imagemagick
-
 """
-Disclaimer: Use only to reproduce results or modify/generalize accordingly.  
+##########
+IMPORTANT: 
+Argparse etc. still not fully supported
+Follow instructions in __name__ == '__main__'
+Use only to reproduce results or modify/generalize accordingly
+##########
 """
 
 def main(**kwargs):
 
     """
     Controls and configures the training and deployment of RL policies
-    @param kwargs: See parse_arguments()
+    @param kwargs: See parse_arguments() and rollout()
+    As is, use only to validate the benchmark - argparse etc. still not fully supported
     """
 
     logger.info(f"kargs {kwargs}")
@@ -505,6 +502,12 @@ def rollout(env, model=None, safe_region=None, num_episodes=1, callback=None, sa
 
 
 def parse_arguments():
+
+    """
+    Warning, needs further work
+    Please adjust main directly
+    """
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-alg', '--algorithm', type=str, default='PPO',
                         help='RL algorithm')
