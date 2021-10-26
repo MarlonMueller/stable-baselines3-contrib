@@ -746,8 +746,6 @@ def tf_to_plot(group, tags, x_label='Episode', y_label='', width=5, height=2.5, 
                     #print(type(df["value"]), type(df["value"].to_list()))
                     values.append(df["value"].to_list()[:length])
 
-                    print(dir, len(values))
-
                 if values:
 
                     values = np.array(values)

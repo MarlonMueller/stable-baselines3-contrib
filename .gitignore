@@ -1,5 +1,11 @@
 tensorboard/
 
+pdfs/
+!pdfs/example/
+
+models/
+!models/example/
+
 # CORA/AROC/MPT
 matlab/AROC_2020
 matlab/CORA_2020

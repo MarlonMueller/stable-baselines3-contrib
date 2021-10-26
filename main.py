@@ -781,7 +781,7 @@ if __name__ == '__main__':
 
     """
 
-
+    """
     # Rollout
     # Do not uncomment further blocks if used
     
@@ -966,20 +966,20 @@ if __name__ == '__main__':
                 args["safety"] = "shield"
                 args["name"] = f"SHIELD_SAS_PUN_S/{model}{it}"
                 _call_main()
-
-
     """
+
+
     # Auto-generate averaged deployment plots
     # Do not uncomment further blocks if used
 
 
     tags = [
-        #"theta"	,
-        #"thdot"	,
-        #"action_rl"	,
-        #"reward_rl"	,
-        #"safe"	,
-        #"safe_excl_approx"	,
+        "theta"	,
+        "thdot"	,
+        "action_rl"	,
+        "reward_rl"	,
+        "safe"	,
+        "safe_excl_approx"	,
         "safety_correction"	,
         "safety_correction_mask_lqr",
         "punishment",
@@ -989,10 +989,10 @@ if __name__ == '__main__':
     ]
 
     groups = [
-        #["PPO_SAS_U", "PPO_U", "PPO_0_U"],
-        #["SHIELD_SAS_U", "SHIELD_U", "SHIELD_0_U"],
-        #["SHIELD_SAS_PUN_U", "SHIELD_PUN_U", "SHIELD_0_PUN_U"],
-        ["SHIELD_S"], #"SHIELD_S", "SHIELD_0_S"],
+        ["PPO_SAS_U", "PPO_U", "PPO_0_U"],
+        ["SHIELD_SAS_U", "SHIELD_U", "SHIELD_0_U"],
+        ["SHIELD_SAS_PUN_U", "SHIELD_PUN_U", "SHIELD_0_PUN_U"],
+        ["SHIELD_SAS_S", "SHIELD_S", "SHIELD_0_S"],
         ["SHIELD_SAS_PUN_S", "SHIELD_PUN_S", "SHIELD_0_PUN_S"],
         ["CBF_SAS_U", "CBF_U", "CBF_0_U"],
         ["CBF_SAS_PUN_U", "CBF_PUN_U", "CBF_0_PUN_U"],
@@ -1006,7 +1006,6 @@ if __name__ == '__main__':
 
     for i, group in enumerate(groups):
         for tag in tags:
-            print(tag)
             if tag != "safety_correction_mask_lqr" or "MASK" in group[0]:
                 tf_to_plot(group=group,
                            tags=["main/" + tag],
@@ -1018,7 +1017,7 @@ if __name__ == '__main__':
                            window_size=0,
                            save_as=f"pdfs/{''.join(map(str, group))}/{tag}")
 
-    """
+
 
     """
     #Manual rollout & render
