@@ -81,16 +81,24 @@ class PendulumRolloutCallback(BaseCallback):
             self.logger.record("main/safety_correction",np.count_nonzero(mask == 0))
             if info['mask']["safe_action"] is not None:
                 self.logger.record("main/safety_correction_mask_lqr", abs(info['mask']["safe_action"]))
+            else:
+                self.logger.record("main/safety_correction_mask_lqr", 0)
             if info['mask']["punishment"] is not None:
                 self.logger.record("main/punishment",info['mask']["punishment"])
+            else:
+                self.logger.record("main/punishment", 0)
 
         elif "shield" in info.keys():
             action_rl = info['shield']["action_rl"]
             reward_rl = info['shield']["reward_rl"]
             if info['shield']["safe_action"] is not None:
                 self.logger.record("main/safety_correction", abs(action_rl - info['shield']["safe_action"]))
+            else:
+                self.logger.record("main/safety_correction", 0)
             if info['shield']["punishment"] is not None:
                 self.logger.record("main/punishment", info['shield']["punishment"])
+            else:
+                self.logger.record("main/punishment", 0)
 
         elif "cbf" in info.keys():
             action_rl = info['cbf']["action_rl"]
@@ -98,6 +106,8 @@ class PendulumRolloutCallback(BaseCallback):
             self.logger.record("main/safety_correction",abs(info['cbf']["compensation"]))
             if info['cbf']["punishment"] is not None:
                 self.logger.record("main/punishment", info['cbf']["punishment"])
+            else:
+                self.logger.record("main/punishment", 0)
 
         else:
             action_rl = info['standard']["action_rl"]

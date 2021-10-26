@@ -969,7 +969,6 @@ if __name__ == '__main__':
 
 
     """
-
     # Auto-generate averaged deployment plots
     # Do not uncomment further blocks if used
 
@@ -982,8 +981,8 @@ if __name__ == '__main__':
         #"safe"	,
         #"safe_excl_approx"	,
         "safety_correction"	,
-        #"safety_correction_mask_lqr",
-        #"punishment",
+        "safety_correction_mask_lqr",
+        "punishment",
         # "episode_reward",
         # "episode_length",
         # "episode_time",
@@ -992,17 +991,17 @@ if __name__ == '__main__':
     groups = [
         #["PPO_SAS_U", "PPO_U", "PPO_0_U"],
         #["SHIELD_SAS_U", "SHIELD_U", "SHIELD_0_U"],
-        ["SHIELD_SAS_PUN_U", "SHIELD_PUN_U", "SHIELD_0_PUN_U"],
-        #["SHIELD_SAS_S", "SHIELD_S", "SHIELD_0_S"],
-        #["SHIELD_SAS_PUN_S", "SHIELD_PUN_S", "SHIELD_0_PUN_S"],
+        #["SHIELD_SAS_PUN_U", "SHIELD_PUN_U", "SHIELD_0_PUN_U"],
+        ["SHIELD_S"], #"SHIELD_S", "SHIELD_0_S"],
+        ["SHIELD_SAS_PUN_S", "SHIELD_PUN_S", "SHIELD_0_PUN_S"],
         ["CBF_SAS_U", "CBF_U", "CBF_0_U"],
-        #["CBF_SAS_PUN_U", "CBF_PUN_U", "CBF_0_PUN_U"],
-        #["CBF_SAS_S", "CBF_S", "CBF_0_S"],
-        #["CBF_SAS_PUN_S", "CBF_PUN_S", "CBF_0_PUN_S"],
-        #["MASK_SAS_U", "MASK_U", "MASK_0_U"],
-        #["MASK_SAS_PUN_U", "MASK_PUN_U", "MASK_0_PUN_U"],
-        #["MASK_SAS_S", "MASK_S", "MASK_0_S"],
-        #["MASK_SAS_PUN_S", "MASK_PUN_S", "MASK_0_PUN_S"]
+        ["CBF_SAS_PUN_U", "CBF_PUN_U", "CBF_0_PUN_U"],
+        ["CBF_SAS_S", "CBF_S", "CBF_0_S"],
+        ["CBF_SAS_PUN_S", "CBF_PUN_S", "CBF_0_PUN_S"],
+        ["MASK_SAS_U", "MASK_U", "MASK_0_U"],
+        ["MASK_SAS_PUN_U", "MASK_PUN_U", "MASK_0_PUN_U"],
+        ["MASK_SAS_S", "MASK_S", "MASK_0_S"],
+        ["MASK_SAS_PUN_S", "MASK_PUN_S", "MASK_0_PUN_S"]
     ]
 
     for i, group in enumerate(groups):
@@ -1018,8 +1017,8 @@ if __name__ == '__main__':
                            length=100,
                            window_size=0,
                            save_as=f"pdfs/{''.join(map(str, group))}/{tag}")
-    """
 
+    """
 
     """
     #Manual rollout & render
