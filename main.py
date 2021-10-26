@@ -789,8 +789,9 @@ if __name__ == '__main__':
     def _call_main():
         model_str = args['name'].split('/')[0][:-2] + '/' + str(model) + '.zip'
         args["model"] = model_str
-        print(model_str)
+        #print(model_str)
         main(**args)
+        args["safety"] = None
 
     if args["flag"] == 0:
         for model in range(1, 6):
@@ -798,16 +799,16 @@ if __name__ == '__main__':
                 args["name"] = f"PPO_U/{model}{it}"
                 _call_main()
     elif args["flag"] == 1:
+        args["action_space"] = "small"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"PPO_SAS_U/{model}{it}"
-                args["action_space"] = "small"
                 _call_main()
     elif args["flag"] == 2:
+        args["init"] = "zero"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"PPO_0_U/{model}{it}"
-                args["init"] = "zero"
                 _call_main()
     elif args["flag"] == 3:
         for model in range(1, 6):
@@ -818,19 +819,19 @@ if __name__ == '__main__':
                 args["name"] = f"MASK_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 4:
+        args["action_space"] = "small"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"MASK_SAS_U/{model}{it}"
-                args["action_space"] = "small"
                 _call_main()
                 args["safety"] = "mask"
                 args["name"] = f"MASK_SAS_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 5:
+        args["init"] = "zero"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"MASK_0_U/{model}{it}"
-                args["init"] = "zero"
                 _call_main()
                 args["safety"] = "mask"
                 args["name"] = f"MASK_0_S/{model}{it}"
@@ -844,19 +845,19 @@ if __name__ == '__main__':
                 args["name"] = f"MASK_PUN_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 7:
+        args["init"] = "zero"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"MASK_0_PUN_U/{model}{it}"
-                args["init"] = "zero"
                 _call_main()
                 args["safety"] = "mask"
                 args["name"] = f"MASK_0_PUN_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 8:
+        args["action_space"] = "small"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"MASK_SAS_PUN_U/{model}{it}"
-                args["action_space"] = "small"
                 _call_main()
                 args["safety"] = "mask"
                 args["name"] = f"MASK_SAS_PUN_S/{model}{it}"
@@ -870,19 +871,19 @@ if __name__ == '__main__':
                 args["name"] = f"CBF_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 10:
+        args["action_space"] = "small"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"CBF_SAS_U/{model}{it}"
-                args["action_space"] = "small"
                 _call_main()
                 args["safety"] = "cbf"
                 args["name"] = f"CBF_SAS_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 11:
+        args["init"] = "zero"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"CBF_0_U/{model}{it}"
-                args["init"] = "zero"
                 _call_main()
                 args["safety"] = "cbf"
                 args["name"] = f"CBF_0_S/{model}{it}"
@@ -896,19 +897,19 @@ if __name__ == '__main__':
                 args["name"] = f"CBF_PUN_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 13:
+        args["init"] = "zero"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"CBF_0_PUN_U/{model}{it}"
-                args["init"] = "zero"
                 _call_main()
                 args["safety"] = "cbf"
                 args["name"] = f"CBF_0_PUN_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 14:
+        args["action_space"] = "small"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"CBF_SAS_PUN_U/{model}{it}"
-                args["action_space"] = "small"
                 _call_main()
                 args["safety"] = "cbf"
                 args["name"] = f"CBF_SAS_PUN_S/{model}{it}"
@@ -922,19 +923,19 @@ if __name__ == '__main__':
                 args["name"] = f"SHIELD_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 16:
+        args["action_space"] = "small"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"SHIELD_SAS_U/{model}{it}"
-                args["action_space"] = "small"
                 _call_main()
                 args["safety"] = "shield"
                 args["name"] = f"SHIELD_SAS_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 17:
+        args["init"] = "zero"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"SHIELD_0_U/{model}{it}"
-                args["init"] = "zero"
                 _call_main()
                 args["safety"] = "shield"
                 args["name"] = f"SHIELD_0_S/{model}{it}"
@@ -948,74 +949,77 @@ if __name__ == '__main__':
                 args["name"] = f"SHIELD_PUN_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 19:
+        args["init"] = "zero"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"SHIELD_0_PUN_U/{model}{it}"
-                args["init"] = "zero"
                 _call_main()
                 args["safety"] = "shield"
                 args["name"] = f"SHIELD_0_PUN_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 20:
+        args["action_space"] = "small"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"SHIELD_SAS_PUN_U/{model}{it}"
-                args["action_space"] = "small"
                 _call_main()
                 args["safety"] = "shield"
                 args["name"] = f"SHIELD_SAS_PUN_S/{model}{it}"
                 _call_main()
 
 
-
+    """
 
     # Auto-generate averaged deployment plots
     # Do not uncomment further blocks if used
 
-    """
+
     tags = [
-        "theta"	,
-        "thdot"	,
-        "action_rl"	,
-        "reward_rl"	,
-        "safe"	,
-        "safe_excl_approx"	,
+        #"theta"	,
+        #"thdot"	,
+        #"action_rl"	,
+        #"reward_rl"	,
+        #"safe"	,
+        #"safe_excl_approx"	,
         "safety_correction"	,
-        "safety_correction_mask_lqr",
-        "punishment",
+        #"safety_correction_mask_lqr",
+        #"punishment",
         # "episode_reward",
         # "episode_length",
         # "episode_time",
     ]
 
     groups = [
-        ["PPO_SAS_U", "PPO_U", "PPO_0_U"],
-        ["SHIELD_SAS_U", "SHIELD_U", "SHIELD_0_U"],
+        #["PPO_SAS_U", "PPO_U", "PPO_0_U"],
+        #["SHIELD_SAS_U", "SHIELD_U", "SHIELD_0_U"],
         ["SHIELD_SAS_PUN_U", "SHIELD_PUN_U", "SHIELD_0_PUN_U"],
-        ["SHIELD_SAS_S", "SHIELD_S", "SHIELD_0_S"],
-        ["SHIELD_SAS_PUN_S", "SHIELD_PUN", "SHIELD_0_PUN_S"],
+        #["SHIELD_SAS_S", "SHIELD_S", "SHIELD_0_S"],
+        #["SHIELD_SAS_PUN_S", "SHIELD_PUN_S", "SHIELD_0_PUN_S"],
         ["CBF_SAS_U", "CBF_U", "CBF_0_U"],
-        ["CBF_SAS_PUN_U", "CBF_PUN_U", "CBF_0_PUN_U"],
-        ["CBF_SAS_S", "CBF_S", "CBF_0_S"],
-        ["CBF_SAS_PUN_S", "CBF_PUN_S", "CBF_0_PUN_S"],
-        ["MASK_SAS_U", "MASK_U", "MASK_0_U"],
-        ["MASK_SAS_PUN_U", "MASK_PUN_U", "MASK_0_PUN_U"],
-        ["MASK_SAS_S", "MASK_S", "MASK_0_S"],
-        ["MASK_SAS_PUN_S", "MASK_PUN_S", "MASK_0_PUN_S"]
+        #["CBF_SAS_PUN_U", "CBF_PUN_U", "CBF_0_PUN_U"],
+        #["CBF_SAS_S", "CBF_S", "CBF_0_S"],
+        #["CBF_SAS_PUN_S", "CBF_PUN_S", "CBF_0_PUN_S"],
+        #["MASK_SAS_U", "MASK_U", "MASK_0_U"],
+        #["MASK_SAS_PUN_U", "MASK_PUN_U", "MASK_0_PUN_U"],
+        #["MASK_SAS_S", "MASK_S", "MASK_0_S"],
+        #["MASK_SAS_PUN_S", "MASK_PUN_S", "MASK_0_PUN_S"]
     ]
 
     for i, group in enumerate(groups):
         for tag in tags:
-            tf_to_plot(group=group,
-                       tags=["main/" + tag],
-                       x_label='step',
-                       y_label=tag.replace('_', '-'),
-                       width=2.5,
-                       height=2.5,
-                       length=100,
-                       window_size=0,
-                       save_as=f"pdfs/{''.join(map(str, group))}/{tag}")
+            print(tag)
+            if tag != "safety_correction_mask_lqr" or "MASK" in group[0]:
+                tf_to_plot(group=group,
+                           tags=["main/" + tag],
+                           x_label='step',
+                           y_label=tag.replace('_', '-'),
+                           width=2.5,
+                           height=2.5,
+                           length=100,
+                           window_size=0,
+                           save_as=f"pdfs/{''.join(map(str, group))}/{tag}")
     """
+
 
     """
     #Manual rollout & render
