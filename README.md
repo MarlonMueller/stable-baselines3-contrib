@@ -151,6 +151,18 @@ Tags logged during deployment
 | safety_correction_mask_lqr     | " by the LQR when action masking is used |
 | punishment     | Reward punishment |
 
+This reward function measures the maximum relative distance from the equilibrium in direction of the vectors that span the ROA.
+
+The default safety corrections are as follows:
+- Action masking: Masked out actions & absolute fail-safe LQR action
+- Post-posed shielding: Absolute difference of RL action and fail-safe LQR action
+- Discrete-time CBFs: Absolute CBF compensation
+
+The default reward punishments are as follows:
+- Action masking: min(0, difference of masked out actions and masked out actions at next step, minus absolute fail-safe LQR action)
+- Post-posed shielding: Minus absolute difference of RL action and fail-safe LQR action
+- Discrete-time CBFs: Minus absolute CBF compensation
+
 <!---![Tensorboard](https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/gifs/tensorboard.png?raw=true)--->
 
 ## Immediate Future Work
