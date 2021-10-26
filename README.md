@@ -26,7 +26,7 @@ pip3 install -r requirements.txt
 ```
 Note that some packages might require further system-wide functionality.<br>
 
-The following is only necessary if you want to use e.g. ``compute_roa()`` in ``pendulum_roa.py`` (see 'Benchmark' below).<br>
+The following is only necessary if you want to use e.g. ``compute_roa()``<br>in ``pendulum_roa.py`` (see 'Benchmark' below).<br>
 To use all provided functionality which uses MATLAB make sure to install
 - [the MATLAB Engine API for Python](https://de.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html)
 - [AROC](https://tumcps.github.io/AROC/) wich among others requires [CORA](https://tumcps.github.io/CORA/)
