@@ -550,7 +550,7 @@ if __name__ == '__main__':
     To try out certain configurations, set the respective flag manually.
     """
 
-    """
+
     # Train
     # Do not uncomment further blocks if used
     
@@ -722,7 +722,7 @@ if __name__ == '__main__':
         _invalid_flag = True
     if not _invalid_flag:
         main(**args)
-    """
+
 
 
     """
@@ -971,7 +971,7 @@ if __name__ == '__main__':
 
     # Auto-generate averaged deployment plots
     # Do not uncomment further blocks if used
-
+    """
 
     tags = [
         "theta"	,
@@ -1016,7 +1016,7 @@ if __name__ == '__main__':
                            length=100,
                            window_size=0,
                            save_as=f"pdfs/{''.join(map(str, group))}/{tag}")
-
+    """
 
 
     """

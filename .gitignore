@@ -1,9 +1,9 @@
 tensorboard/
 
-pdfs/
+pdfs/*
 !pdfs/example/
 
-models/
+models/*
 !models/example/
 
 # CORA/AROC/MPT
