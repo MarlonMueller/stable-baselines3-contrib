@@ -82,8 +82,8 @@ Otherwise modify/generalize it accordingly.
 │   ├── gainMatrix.m
 │   ├── mathematicalPendulum.m
 │   └── regionOfAttraction.m
-├── pdfs/ <- Generated plots
-├── models/ <- Trained models
+├── models/example <- Pretrained models
+├── pdfs/example <- Precomputed plots
 ├── .gitignore
 ├── README.md
 ├── main.py <- Controls and configures the benchmark
@@ -98,19 +98,20 @@ Otherwise modify/generalize it accordingly.
 
 # Benchmark
 
-By calling ``./train.sh``, the default training benchmark will be performed. ``train.sh`` distributes main calls to isolated hardware threads. Note that this might need adaption depending on the available threads. By default, each training is repeated five times, i.e., iteration is set to five. The trained models are saved to ./models. An according tensorboard folder will generate.
+The benchmark trains and deploys policies on the inverted pendulum task. Specifically, three environment configurations are tested: the default one, initializing the pendulum at the equilibrium (often denoted as **0**) and reducing the available actions value-wise (often denoted as **SAS**). Training runs include default A2C & PPO runs and PPO runs with all safety wrappers applied. For each wrapper configuration we benchmark the wrappers without or with additional reward punishment (**PUN**). For the CBF wrapper, the gamma values 0.1, 0.5 and 0.95 are tested. Deployment is done in two different ways. Firstly, the trained models are deployed using the same configuration. In other words, the safety wrappers are still used in most cases (denoted as suffix "**SAFE**"). Furthermore, all models are deployed without safety wrappers (denoted as suffix ""**UNSAFE**"). 
+
+By calling ``./train.sh``, the default training benchmark will be performed. ``train.sh`` distributes main calls to isolated hardware threads. Note that this might need adaption depending on the available threads. By default, each training is repeated five times, i.e., iteration is set to five. The trained models are saved to ``./models``. An according ``./tensorboard`` folder will store the logs. Pretrained models are included in the repository. To use the models, **extract** them into ``./models``.
 ```
 tensorboard --logdir tensorboard
 ```
-Uncomment respective parts in main.py to deploy trained models or to automatically generate averaged plots.<br>
-The plots are saved to ./plots. For futher insights we refer to main.py.
+Uncomment respective parts at the **bottom** of main.py to deploy trained models (by default 5 models for 5 runs each) or to automatically generate plots, which average over all logs in a directory. The plots are saved to ``./plots``. Precomputed plots are included in the repository. Moreover, at the end of main.py, a code block to manually deploy specific configurations is provided.
 
 Tags logged during training
 | tag        | Description      | 
 | ------------- |-------------| 
 | episode_reward     | Cumulated reward |
 | episode_length      | Episode length   |  
-| episode_time | Measured by class Monitor(gym.Wrapper) TBD|
+| episode_time | Measured by class Monitor(gym.Wrapper) **TBD**|
 | avg_abs_theta     | Average absolute angular displacement throughout the episode  |
 | avg_abs_thdot     | Average absolute angular velocity throughout the episode  |
 | max_abs_theta     | Maximal absolute angular displacement throughout the episode  |
@@ -130,9 +131,6 @@ Tags logged during training
 Tags logged during deployment
 | tag        | Description      | 
 | ------------- |-------------| 
-| episode_reward     | Cumulated reward |
-| episode_length      | Episode length   |  
-| episode_time | Measured by class Monitor(gym.Wrapper) TBD|
 | theta     | Angular displacement |
 | thdot     | Angular velocity |
 | action_rl     | Action of the policy |
@@ -146,6 +144,6 @@ Tags logged during deployment
 <!---![Tensorboard](https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/gifs/tensorboard.png?raw=true)--->
 
 ## Immediate Future Work
-- Tensorboard episode_time measurement
-- Adjust for VecEnv support
-- Environment state is assumed to be exposed 
+Fix Tensorboard episode_time measurement<br>
+Adjust for VecEnv support<br>
+Environment state is assumed to be exposed<br>
