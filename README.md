@@ -1,7 +1,7 @@
 # General
 
 An **introduction to this project** is provided in this [**Jupyter Notebook**](https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/notebook.ipynb).<br>
-Information and code on how to **tune the environment** can be found [**here**](https://github.com/MarlonMueller/math_pendulum_tuning)
+Information and code on how to **tune the environment** can be found [**here**](https://github.com/MarlonMueller/math_pendulum_tuning).
 
 This project is primarily based on
 - [Safe Reinforcement Learning for Autonomous Lane Changing Using Set-Based Prediction](https://mediatum.ub.tum.de/doc/1548735/256213.pdf)
