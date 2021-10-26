@@ -167,6 +167,6 @@ Tags logged during deployment
 | punishment     | Reward punishment |
 
 ## Immediate Future Work
-Fix Tensorboard episode_time measurement<br>
-Adjust for VecEnv support<br>
-Environment state is assumed to be exposed<br>
+- Fix Tensorboard episode_time measurement<br>
+- Adjust for VecEnv support<br>
+- Environment state is assumed to be exposed<br>
