@@ -550,7 +550,7 @@ if __name__ == '__main__':
     To try out certain configurations, set the respective flag manually.
     """
 
-
+    """
     # Train
     # Do not uncomment further blocks if used
     
@@ -722,7 +722,7 @@ if __name__ == '__main__':
         _invalid_flag = True
     if not _invalid_flag:
         main(**args)
-
+    """
 
 
     """
@@ -781,7 +781,7 @@ if __name__ == '__main__':
 
     """
 
-    """
+
     # Rollout
     # Do not uncomment further blocks if used
     
@@ -805,7 +805,7 @@ if __name__ == '__main__':
                 args["name"] = f"PPO_SAS_U/{model}{it}"
                 _call_main()
     elif args["flag"] == 2:
-        args["init"] = "zero"
+        args["init"] = "equilibrium"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"PPO_0_U/{model}{it}"
@@ -828,7 +828,7 @@ if __name__ == '__main__':
                 args["name"] = f"MASK_SAS_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 5:
-        args["init"] = "zero"
+        args["init"] = "equilibrium"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"MASK_0_U/{model}{it}"
@@ -845,7 +845,7 @@ if __name__ == '__main__':
                 args["name"] = f"MASK_PUN_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 7:
-        args["init"] = "zero"
+        args["init"] = "equilibrium"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"MASK_0_PUN_U/{model}{it}"
@@ -880,7 +880,7 @@ if __name__ == '__main__':
                 args["name"] = f"CBF_SAS_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 11:
-        args["init"] = "zero"
+        args["init"] = "equilibrium"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"CBF_0_U/{model}{it}"
@@ -897,7 +897,7 @@ if __name__ == '__main__':
                 args["name"] = f"CBF_PUN_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 13:
-        args["init"] = "zero"
+        args["init"] = "equilibrium"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"CBF_0_PUN_U/{model}{it}"
@@ -932,7 +932,7 @@ if __name__ == '__main__':
                 args["name"] = f"SHIELD_SAS_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 17:
-        args["init"] = "zero"
+        args["init"] = "equilibrium"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"SHIELD_0_U/{model}{it}"
@@ -949,7 +949,7 @@ if __name__ == '__main__':
                 args["name"] = f"SHIELD_PUN_S/{model}{it}"
                 _call_main()
     elif args["flag"] == 19:
-        args["init"] = "zero"
+        args["init"] = "equilibrium"
         for model in range(1, 6):
             for it in range(1, 6):
                 args["name"] = f"SHIELD_0_PUN_U/{model}{it}"
@@ -966,7 +966,7 @@ if __name__ == '__main__':
                 args["safety"] = "shield"
                 args["name"] = f"SHIELD_SAS_PUN_S/{model}{it}"
                 _call_main()
-    """
+
 
 
     # Auto-generate averaged deployment plots
