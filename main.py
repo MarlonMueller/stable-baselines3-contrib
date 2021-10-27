@@ -550,7 +550,7 @@ if __name__ == '__main__':
     To try out certain configurations, set the respective flag manually.
     """
 
-    """
+
     # Train
     # Do not uncomment further blocks if used
     
@@ -722,7 +722,7 @@ if __name__ == '__main__':
         _invalid_flag = True
     if not _invalid_flag:
         main(**args)
-    """
+
 
 
     """
@@ -781,7 +781,7 @@ if __name__ == '__main__':
 
     """
 
-
+    """
     # Rollout
     # Do not uncomment further blocks if used
     
@@ -966,7 +966,7 @@ if __name__ == '__main__':
                 args["safety"] = "shield"
                 args["name"] = f"SHIELD_SAS_PUN_S/{model}{it}"
                 _call_main()
-
+    """
 
 
     # Auto-generate averaged deployment plots
