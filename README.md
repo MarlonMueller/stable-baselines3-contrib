@@ -125,11 +125,13 @@ The default reward punishments are as follows:
 
 The benchmark trains and deploys policies on the inverted pendulum task. The safety constraint it set by a precomputed region of attraction (**ROA**). Specifically, three environment configurations are tested: the default one, initializing the pendulum at the equilibrium (often denoted as **0**) and reducing the available actions value-wise (often denoted as **SAS**). Training runs include default A2C & PPO runs, and, PPO runs with all safety wrappers applied. For each wrapper configuration, the wrappers are benchmarked without and with additional reward punishment (**PUN**). For the CBF wrapper, the gamma values 0.1, 0.5 and 0.95 are tested. Deployment is done in two different ways. Firstly, the trained models are deployed using the same configuration. In other words, the safety wrappers are still used in most cases (denoted as suffix **SAFE**). Furthermore, all models are deployed without safety wrappers (denoted as suffix **UNSAFE**). 
 
-By calling ``./tmux.sh``, the default training benchmark will be performed. ``./tmux.sh`` distributes main calls to isolated hardware threads. Note that this might need adaption depending on the available threads. By default, each training is repeated five times, i.e., iteration is set to five. The trained models are saved to ``./models/``. An according ``./tensorboard/`` folder will store the logs. Pretrained models are included in the repository. To use the models, **extract** them into ``./models/``.
+By calling ``./tmux.sh``, the default training benchmark will be performed. ``./tmux.sh`` distributes main calls to isolated hardware threads. Note that this might need adaption depending on the available threads. By default, each training is repeated five times. The trained models are saved to ``./models/``. An according ``./tensorboard/`` folder will store the logs. Pretrained models are included in the repository. To use the models, **extract** them into ``./models/``.
 ```
 tensorboard --logdir tensorboard
 ```
 Uncomment respective parts at the **bottom** of main.py to deploy trained models (by default 5 models for 5 runs each) or to automatically generate plots, which average over all logs in a directory. The plots are saved to ``./plots/``. Precomputed plots are included in the repository. Moreover, at the end of main.py, a code block to manually deploy specific configurations is provided.
+
+If you want to stop the computation, then use ``tmux kill-server``. To see if any processes are still active, use ``tmux ls``.
 
 Tags logged during training
 | tag        | Description      | 
