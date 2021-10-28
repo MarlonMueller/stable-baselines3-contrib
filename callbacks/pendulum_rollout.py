@@ -122,7 +122,7 @@ class PendulumRolloutCallback(BaseCallback):
             # Check whether fail-safe controller is active
             if "shield" in info.keys() and info['shield']["safe_action"] is not None:
                     self.logger.record('main/safe_excl_approx', True)
-            if "mask" in info.keys() and info['mask']["safe_action"] is not None:
+            elif "mask" in info.keys() and info['mask']["safe_action"] is not None:
                     self.logger.record('main/safe_excl_approx', True)
             else:
                 self.logger.record('main/safe_excl_approx', False)
