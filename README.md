@@ -112,17 +112,6 @@ The provided environment's reward function measures the maximum relative distanc
 
 <img src="https://github.com/MarlonMueller/stable-baselines3-contrib/blob/feat/safety-wrappers/gifs/sse.png?raw=true" alt="drawing" width="400"/>
 
-
-The default safety corrections are as follows:
-- Action masking: Masked out actions & absolute fail-safe LQR action
-- Post-posed shielding: Absolute difference of RL action and fail-safe LQR action
-- Discrete-time CBFs: Absolute CBF compensation
-
-The default reward punishments are as follows:
-- Action masking: min(0, difference of masked out actions and masked out actions at next step, minus absolute fail-safe LQR action)
-- Post-posed shielding: Minus absolute difference of RL action and fail-safe LQR action
-- Discrete-time CBFs: Minus absolute CBF compensation
-
 The benchmark trains and deploys policies on the inverted pendulum task. The safety constraint it set by a precomputed region of attraction (**ROA**). Specifically, three environment configurations are tested: the default one, initializing the pendulum at the equilibrium (often denoted as **0**) and reducing the available actions value-wise (often denoted as **SAS**). Training runs include default A2C & PPO runs, and, PPO runs with all safety wrappers applied. For each wrapper configuration, the wrappers are benchmarked without and with additional reward punishment (**PUN**). For the CBF wrapper, the gamma values 0.1, 0.5 and 0.95 are tested. Deployment is done in two different ways. Firstly, the trained models are deployed using the same configuration. In other words, the safety wrappers are still used in most cases (denoted as suffix **S/SAFE**). Furthermore, all models are deployed without safety wrappers (denoted as suffix **U/UNSAFE**). 
 
 By calling ``./tmux.sh``, the default training benchmark will be performed. ``./tmux.sh`` distributes main calls to isolated hardware threads. Note that this might need adaption depending on the available threads. By default, each training is repeated five times. The trained models are saved to ``./models/``. An according ``./tensorboard/`` folder will store the logs. Pretrained models are included in the repository. To use the models, **extract** them into ``./models/``.
@@ -167,6 +156,16 @@ Tags logged during deployment
 | safety_correction     | Safety correction by the wrapper |
 | safety_correction_mask_lqr     | " by the LQR when action masking is used |
 | punishment     | Reward punishment |
+
+The default safety corrections are as follows:
+- Action masking: Masked out actions & absolute fail-safe LQR action
+- Post-posed shielding: Absolute difference of RL action and fail-safe LQR action
+- Discrete-time CBFs: Absolute CBF compensation
+
+The default reward punishments are as follows:
+- Action masking: min(0, difference of masked out actions and masked out actions at next step, minus absolute fail-safe LQR action)
+- Post-posed shielding: Minus absolute difference of RL action and fail-safe LQR action
+- Discrete-time CBFs: Minus absolute CBF compensation
 
 ## Immediate Future Work
 - Fix Tensorboard episode_time measurement<br>
